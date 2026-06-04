@@ -1,0 +1,196 @@
+[
+  {
+    "id": "fiscal_stimulus",
+    "type": "policy",
+    "display_name": "財政刺激",
+    "description": "不況時の需要を支える。債務と財政硬直化を残す。",
+    "tags": ["fiscal", "demand", "cooperation"],
+    "costs": {"fiscal": 2, "political": 1, "administrative": 1},
+    "effects": {"country": {"gdp_gap": 2, "unemployment": -1, "debt": 1}, "world": {"world_demand": 1}},
+    "mutations": {"add_to_deck": ["fiscal_rigidity"]}
+  },
+  {
+    "id": "austerity",
+    "type": "policy",
+    "display_name": "緊縮財政",
+    "description": "債務を抑えるが、不況とデフレを深める。",
+    "tags": ["fiscal", "austerity"],
+    "costs": {"political": 2, "administrative": 1},
+    "effects": {"country": {"gdp_gap": -2, "unemployment": 1, "debt": -1, "political_capital": -1}, "world": {"world_demand": -1}},
+    "mutations": {"add_to_deck": ["reform_fatigue"]}
+  },
+  {
+    "id": "policy_rate_hike",
+    "type": "policy",
+    "display_name": "利上げ",
+    "description": "インフレを抑え、通貨を強める。外貨債務国には波及リスクがある。",
+    "tags": ["monetary", "rate_hike", "credibility"],
+    "costs": {"political": 1, "credibility": 1},
+    "effects": {"country": {"inflation": -1, "exchange_rate": 1, "gdp_gap": -1}, "world": {"world_interest_rate": 1}},
+    "spillovers": [{"target_tag": "foreign_debt", "effects": {"financial_stress": 1, "exchange_rate": -1}}],
+    "mutations": {"add_to_deck": []}
+  },
+  {
+    "id": "rate_cut_and_qe",
+    "type": "policy",
+    "display_name": "利下げ・量的緩和",
+    "description": "需要を押し上げ為替安を誘う。金融不均衡を残しやすい。",
+    "tags": ["monetary", "qe", "currency_depreciation", "demand"],
+    "costs": {"credibility": 2, "administrative": 1},
+    "effects": {"country": {"gdp_gap": 1, "inflation": 1, "exchange_rate": -1, "financial_stress": -1}, "world": {"world_interest_rate": -1}},
+    "mutations": {"add_to_deck": ["asset_price_boom", "financial_imbalance"]}
+  },
+  {
+    "id": "tariff_barrier",
+    "type": "policy",
+    "display_name": "関税引き上げ",
+    "description": "国内政治には効くが、貿易開放度と世界需要を傷つける。",
+    "tags": ["trade", "tariff", "beggar_thy_neighbor"],
+    "costs": {"international": 2, "administrative": 1},
+    "effects": {"country": {"political_capital": 1, "unemployment": -1}, "world": {"trade_openness": -1, "world_demand": -1, "protectionism": 1}},
+    "spillovers": [{"target_tag": "exporter", "effects": {"gdp_gap": -1}}],
+    "mutations": {"add_to_deck": ["protected_industry_lobby"], "add_world_card": "retaliatory_tariffs"}
+  },
+  {
+    "id": "industrial_policy",
+    "type": "policy",
+    "display_name": "産業政策",
+    "description": "投資と雇用を支えるが、行政能力を要求する。",
+    "tags": ["industrial", "investment", "employment"],
+    "costs": {"fiscal": 1, "political": 1, "administrative": 2},
+    "effects": {"country": {"gdp_gap": 1, "unemployment": -1, "current_account": 1}, "world": {}},
+    "mutations": {"add_to_deck": ["productivity_growth", "rent_seeking"]}
+  },
+  {
+    "id": "financial_regulation",
+    "type": "policy",
+    "display_name": "金融規制強化",
+    "description": "短期の信用を冷やすが、金融危機耐性を高める。",
+    "tags": ["financial_regulation", "stability"],
+    "costs": {"political": 2, "administrative": 2},
+    "effects": {"country": {"financial_stress": -2, "gdp_gap": -1}, "world": {"international_financial_instability": -1}},
+    "mutations": {"remove_from_deck": ["financial_imbalance", "housing_bubble"]}
+  },
+  {
+    "id": "structural_reform",
+    "type": "policy",
+    "display_name": "構造改革",
+    "description": "長期生産性を上げるが、短期失業と政治コストが重い。",
+    "tags": ["reform", "productivity", "supply"],
+    "costs": {"political": 4, "administrative": 2},
+    "effects": {"country": {"gdp_gap": -1, "unemployment": 1, "political_capital": -2}, "world": {}},
+    "mutations": {"add_to_deck": ["productivity_growth", "vested_interest_backlash"], "remove_from_deck": ["fiscal_rigidity"]}
+  },
+  {
+    "id": "swap_line",
+    "type": "policy",
+    "display_name": "国際スワップライン",
+    "description": "金融不安を抑える協調政策。外交官で成立しやすい。",
+    "tags": ["international", "cooperation", "liquidity", "reserve_currency"],
+    "costs": {"political": 1, "international": 1, "credibility": 1},
+    "effects": {"country": {"political_capital": -1}, "world": {"international_financial_instability": -2, "global_coordination": 1}},
+    "spillovers": [{"target_tag": "foreign_debt", "effects": {"financial_stress": -1}}],
+    "mutations": {"add_to_deck": []}
+  },
+  {
+    "id": "infrastructure_investment",
+    "type": "policy",
+    "display_name": "インフラ投資",
+    "description": "新興国の成長を押し上げる。債務と汚職リスクに注意。",
+    "tags": ["fiscal", "infrastructure", "growth", "investment"],
+    "costs": {"fiscal": 2, "administrative": 2},
+    "effects": {"country": {"gdp_gap": 2, "unemployment": -1, "debt": 1, "current_account": -1}, "world": {"world_demand": 1}},
+    "mutations": {"add_to_deck": ["productivity_growth", "corruption_risk"]}
+  },
+  {
+    "id": "stabilization_fund_drawdown",
+    "type": "policy",
+    "display_name": "安定化基金取り崩し",
+    "description": "資源価格ショック時の需要と財政を支える。",
+    "tags": ["fiscal", "fund", "resource", "stabilizer"],
+    "costs": {"administrative": 1},
+    "effects": {"country": {"gdp_gap": 1, "debt": -1, "financial_stress": -1}, "world": {}},
+    "mutations": {"add_to_deck": ["fund_depletion_pressure"]}
+  },
+  {
+    "id": "progressive_tax_reform",
+    "type": "policy",
+    "display_name": "累進税制改革",
+    "description": "財政を改善し格差圧力を抑えるが、政治的抵抗が重い。",
+    "tags": ["fiscal", "tax", "reform", "stability"],
+    "costs": {"political": 3, "administrative": 2},
+    "effects": {"country": {"debt": -2, "political_capital": -1, "financial_stress": -1, "gdp_gap": -1}, "world": {}},
+    "mutations": {"add_to_deck": ["vested_interest_backlash"], "remove_from_deck": ["debt_complacency"]}
+  },
+  {
+    "id": "social_safety_net",
+    "type": "policy",
+    "display_name": "雇用・生活安定策",
+    "description": "失業と政治不安を和らげる。財政負担は残る。",
+    "tags": ["fiscal", "employment", "demand", "social_policy"],
+    "costs": {"fiscal": 1, "political": 1, "administrative": 1},
+    "effects": {"country": {"unemployment": -2, "political_capital": 1, "debt": 1, "gdp_gap": 1}, "world": {"world_demand": 1}},
+    "mutations": {"add_to_deck": ["fiscal_rigidity"]}
+  },
+  {
+    "id": "export_subsidy",
+    "type": "policy",
+    "display_name": "輸出補助金",
+    "description": "輸出企業を支え政治資本を得るが、近隣窮乏化とレントを招く。",
+    "tags": ["trade", "export_subsidy", "beggar_thy_neighbor", "industrial"],
+    "costs": {"fiscal": 1, "international": 2},
+    "effects": {"country": {"current_account": 2, "political_capital": 1, "debt": 1}, "world": {"trade_openness": -1, "protectionism": 1}},
+    "spillovers": [{"target_tag": "exporter", "effects": {"current_account": -1, "gdp_gap": -1}}],
+    "mutations": {"add_to_deck": ["export_lobby_pressure", "rent_seeking"], "add_world_card": "retaliatory_tariffs"}
+  },
+  {
+    "id": "capital_controls",
+    "type": "policy",
+    "display_name": "資本規制",
+    "description": "資本流出を止める非常手段。金融危機には効くが国際信認を落とす。",
+    "tags": ["financial_regulation", "capital_controls", "crisis", "fragile_currency"],
+    "costs": {"credibility": 2, "international": 1, "administrative": 2},
+    "effects": {"country": {"financial_stress": -2, "exchange_rate": 1, "political_capital": -1}, "world": {"international_financial_instability": 1, "global_coordination": -1}},
+    "mutations": {"add_to_deck": ["capital_outflow"], "remove_from_deck": ["sudden_stop"]}
+  },
+  {
+    "id": "debt_restructuring",
+    "type": "policy",
+    "display_name": "債務再編",
+    "description": "債務負担を減らすが、信認と金融システムに痛みが出る。",
+    "tags": ["debt", "crisis", "international", "reform"],
+    "costs": {"political": 2, "credibility": 3, "international": 2},
+    "effects": {"country": {"debt": -3, "financial_stress": 2, "political_capital": -2}, "world": {"international_financial_instability": 1}},
+    "mutations": {"add_to_deck": ["reform_fatigue"], "remove_from_deck": ["foreign_currency_debt_burden"]}
+  },
+  {
+    "id": "resource_diversification",
+    "type": "policy",
+    "display_name": "資源依存の多角化",
+    "description": "短期には苦しいが、資源価格依存を弱める。",
+    "tags": ["resource", "industrial", "reform", "productivity"],
+    "costs": {"fiscal": 1, "political": 2, "administrative": 2},
+    "effects": {"country": {"gdp_gap": -1, "current_account": -1, "financial_stress": -1}, "world": {}},
+    "mutations": {"add_to_deck": ["productivity_growth"], "remove_from_deck": ["commodity_price_dependence", "single_industry_dependence"]}
+  },
+  {
+    "id": "joint_fiscal_pact",
+    "type": "policy",
+    "display_name": "同時財政刺激協定",
+    "description": "協調参加国が増えるほど世界需要を支える。国内政治コストは痛い。",
+    "tags": ["fiscal", "cooperation", "demand", "international"],
+    "costs": {"fiscal": 1, "political": 2, "international": 1},
+    "effects": {"country": {"gdp_gap": 1, "debt": 1, "political_capital": -1}, "world": {"world_demand": 1, "global_coordination": 1}},
+    "mutations": {"add_to_deck": ["fiscal_rigidity"]}
+  },
+  {
+    "id": "anti_corruption_drive",
+    "type": "policy",
+    "display_name": "反汚職キャンペーン",
+    "description": "行政の漏れを抑える。庇護政治の国では政治的に危険。",
+    "tags": ["administrative", "stability", "reform", "anti_corruption"],
+    "costs": {"political": 2, "administrative": 2},
+    "effects": {"country": {"political_capital": -1, "financial_stress": -1, "debt": -1}, "world": {}},
+    "mutations": {"remove_from_deck": ["corruption_risk", "rent_seeking", "patronage_network"]}
+  }
+]

@@ -1,0 +1,39 @@
+[
+  {
+    "id": "global_demand_slump",
+    "display_name": "世界需要急減",
+    "message": "世界需要が急減し、輸出依存国に強い逆風が吹いています。",
+    "effects": {"world": {"world_demand": -2, "depression": 1}, "all_countries": {"gdp_gap": -1}, "tagged_countries": [{"tag": "exporter", "effects": {"gdp_gap": -1}}]}
+  },
+  {
+    "id": "global_credit_crunch",
+    "display_name": "国際信用収縮",
+    "message": "国際金融市場が萎縮し、外貨債務国に資本流出圧力がかかっています。",
+    "effects": {"world": {"international_financial_instability": 2, "world_interest_rate": 1}, "tagged_countries": [{"tag": "foreign_debt", "effects": {"financial_stress": 2, "exchange_rate": -1}}]}
+  },
+  {
+    "id": "commodity_price_crash",
+    "display_name": "資源価格暴落",
+    "message": "資源価格が暴落し、資源国の経常収支と財政に打撃が出ています。",
+    "effects": {"world": {"world_demand": -1}, "tagged_countries": [{"tag": "resource", "effects": {"gdp_gap": -2, "current_account": -2, "debt": 1}}]}
+  },
+  {
+    "id": "inflation_scare",
+    "display_name": "インフレ警戒",
+    "message": "供給制約と輸入物価が上昇し、各国でインフレ警戒が強まっています。",
+    "effects": {"world": {"world_interest_rate": 1}, "all_countries": {"inflation": 1, "political_capital": -1}}
+  },
+  {
+    "id": "technology_investment_wave",
+    "display_name": "技術投資ブーム",
+    "message": "技術投資ブームが起き、産業政策と成長投資の効果が高まっています。",
+    "effects": {"world": {"world_demand": 1}, "tagged_countries": [{"tag": "industry", "effects": {"gdp_gap": 1}}, {"tag": "growth", "effects": {"gdp_gap": 1}}]}
+  },
+  {
+    "id": "protectionist_mood",
+    "display_name": "保護主義ムード",
+    "message": "各国で保護主義的な世論が高まり、関税政策の誘惑が増しています。",
+    "effects": {"world": {"trade_openness": -1, "protectionism": 1}, "all_countries": {"political_capital": -1}}
+  }
+]
+

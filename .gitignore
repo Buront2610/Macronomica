@@ -1,0 +1,12 @@
+.godot/
+.import/
+exports/web/*
+!exports/web/.gitkeep
+
+*.tmp
+*.log
+*.translation
+
+__pycache__/
+.pytest_cache/
+tmp/

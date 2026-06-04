@@ -1,0 +1,26 @@
+[
+  {"id": "large_domestic_demand", "display_name": "巨大内需", "category": "economic_structure", "deck_cards": ["consumer_confidence", "housing_bubble"], "cost_modifiers": {"fiscal": -1}, "tags": ["domestic_demand"]},
+  {"id": "reserve_currency_system", "display_name": "基軸通貨体制", "category": "monetary_system", "deck_cards": ["swap_line", "global_capital_inflow"], "cost_modifiers": {"credibility": -1}, "tags": ["reserve_currency"]},
+  {"id": "deep_bond_market", "display_name": "厚い国債市場", "category": "fiscal_structure", "deck_cards": ["safe_asset_demand", "debt_complacency"], "cost_modifiers": {"fiscal": -1}, "tags": ["bond_market"]},
+  {"id": "pluralist_democracy", "display_name": "多元的民主制", "category": "political_system", "deck_cards": ["election_pressure", "financial_sector_lobby"], "cost_modifiers": {}, "tags": ["democracy"]},
+  {"id": "financialized_society", "display_name": "金融化社会", "category": "social_structure", "deck_cards": ["asset_price_sensitivity", "private_debt_overhang"], "cost_modifiers": {}, "tags": ["finance"]},
+
+  {"id": "export_industrial_economy", "display_name": "輸出工業経済", "category": "economic_structure", "deck_cards": ["export_competitiveness", "external_demand_dependence"], "cost_modifiers": {"industrial": -1}, "tags": ["exporter", "industry"]},
+  {"id": "managed_floating_currency", "display_name": "管理フロート通貨", "category": "monetary_system", "deck_cards": ["currency_intervention", "deflation_expectations"], "cost_modifiers": {"credibility": 1}, "tags": ["currency"]},
+  {"id": "balanced_budget_norm", "display_name": "均衡財政規範", "category": "fiscal_structure", "deck_cards": ["fiscal_rigidity", "elderly_health_costs"], "cost_modifiers": {"fiscal": 1}, "tags": ["fiscal_hawk"]},
+  {"id": "coalition_democracy", "display_name": "連立民主制", "category": "political_system", "deck_cards": ["coalition_bargaining", "export_lobby_pressure"], "cost_modifiers": {"political": 1}, "tags": ["democracy", "coalition"]},
+  {"id": "aging_deflationary_society", "display_name": "高齢デフレ社会", "category": "social_structure", "deck_cards": ["aging_society", "reform_fatigue"], "cost_modifiers": {}, "tags": ["aging", "deflation"]},
+
+  {"id": "resource_export_economy", "display_name": "資源輸出経済", "category": "economic_structure", "deck_cards": ["resource_revenue", "commodity_price_dependence"], "cost_modifiers": {}, "tags": ["resource"]},
+  {"id": "commodity_currency", "display_name": "資源通貨", "category": "monetary_system", "deck_cards": ["commodity_currency_swings", "capital_inflow_cycle"], "cost_modifiers": {}, "tags": ["currency", "resource"]},
+  {"id": "stabilization_fund", "display_name": "安定化基金", "category": "fiscal_structure", "deck_cards": ["stabilization_fund_buffer", "fund_governance"], "cost_modifiers": {"fiscal": -1}, "tags": ["fund"]},
+  {"id": "patronage_politics", "display_name": "庇護政治", "category": "political_system", "deck_cards": ["rent_seeking", "patronage_network"], "cost_modifiers": {"political": -1, "administrative": 1}, "tags": ["patronage"]},
+  {"id": "resource_dependence", "display_name": "資源依存", "category": "social_structure", "deck_cards": ["single_industry_dependence", "corruption_risk"], "cost_modifiers": {}, "tags": ["resource_dependence"]},
+
+  {"id": "urbanizing_growth_economy", "display_name": "都市化成長経済", "category": "economic_structure", "deck_cards": ["urbanization_bonus", "infrastructure_gap"], "cost_modifiers": {"industrial": -1}, "tags": ["growth", "infrastructure"]},
+  {"id": "fragile_currency_system", "display_name": "脆弱通貨体制", "category": "monetary_system", "deck_cards": ["currency_crisis_risk", "capital_outflow"], "cost_modifiers": {"credibility": 1}, "tags": ["fragile_currency"]},
+  {"id": "foreign_currency_debt", "display_name": "外貨建て債務", "category": "fiscal_structure", "deck_cards": ["foreign_currency_debt_burden", "sudden_stop"], "cost_modifiers": {"fiscal": 1}, "tags": ["foreign_debt"]},
+  {"id": "developmental_state", "display_name": "開発主義国家", "category": "political_system", "deck_cards": ["development_bank", "industrial_policy_machine"], "cost_modifiers": {"administrative": -1}, "tags": ["developmental"]},
+  {"id": "young_unequal_society", "display_name": "若年・格差社会", "category": "social_structure", "deck_cards": ["youth_employment_pressure", "urban_unrest"], "cost_modifiers": {}, "tags": ["young", "inequality"]}
+]
+
