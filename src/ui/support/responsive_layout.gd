@@ -1,8 +1,8 @@
 extends RefCounted
 class_name ResponsiveLayout
 
-const WIDE_MIN_WIDTH := 1800
-const MID_MIN_WIDTH := 1200
+const WIDE_MIN_WIDTH := 1680
+const MID_MIN_WIDTH := 1440
 const SHORT_MAX_HEIGHT := 760
 
 static func mode_for_width(width: int) -> String:

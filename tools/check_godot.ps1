@@ -11,6 +11,8 @@ if ($godot) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_game_flow.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $godot.Source --headless --path $repo --script "res://tests/smoke_domain_rules.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_policy_recommender.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_ui_layout.gd"
@@ -30,6 +32,8 @@ if (Test-Path $wingetGodot) {
     & $wingetGodot --headless --path $repo --scene "res://scenes/main/main.tscn" --quit-after 3
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_game_flow.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $wingetGodot --headless --path $repo --script "res://tests/smoke_domain_rules.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_policy_recommender.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

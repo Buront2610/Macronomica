@@ -6,13 +6,14 @@ func _init() -> void:
 	var game = GameStateScript.new()
 	game.new_game()
 	_assert(game.current_phase() == "negotiation", "new game starts at negotiation after setup")
-	for i in range(game.countries.size()):
-		_select_first_policy(game, i)
-		game.assign_worker(i, "bureaucrats")
 	game.advance_phase()
 	_assert(game.current_phase() == "policy_planning", "advance to policy planning")
+	for i in range(game.countries.size()):
+		_select_first_policy(game, i)
 	game.advance_phase()
 	_assert(game.current_phase() == "worker_assignment", "advance to worker assignment")
+	for i in range(game.countries.size()):
+		game.assign_worker(i, "bureaucrats")
 	game.advance_phase()
 	_assert(game.current_phase() == "simultaneous_reveal", "advance to simultaneous reveal")
 	game.advance_phase()
@@ -34,4 +35,3 @@ func _assert(condition: bool, message: String) -> void:
 		return
 	push_error(message)
 	quit(1)
-

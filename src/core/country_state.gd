@@ -57,6 +57,7 @@ func has_tag(tag: String) -> bool:
 
 func pay_costs(costs: Dictionary) -> Dictionary:
 	var adjusted := {}
+	var shortages := {}
 	var can_fully_pay := true
 	for key in costs.keys():
 		var cost: int = maxi(0, int(costs[key]) + int(cost_modifiers.get(key, 0)))
@@ -69,15 +70,31 @@ func pay_costs(costs: Dictionary) -> Dictionary:
 		if assigned_worker == "lobbyist" and key == "political":
 			cost = maxi(0, cost - 1)
 		adjusted[key] = cost
-		if key == "political" and int(tracks.get("political_capital", 0)) < cost:
+		var capacity := _cost_capacity(key)
+		if capacity < cost:
 			can_fully_pay = false
-		if key == "fiscal" and int(tracks.get("debt", 0)) + cost > 9:
-			can_fully_pay = false
+			shortages[key] = cost - capacity
 	if adjusted.has("political"):
-		tracks["political_capital"] = int(tracks.get("political_capital", 0)) - int(adjusted["political"])
+		var political_cost := int(adjusted["political"])
+		tracks["political_capital"] = int(tracks.get("political_capital", 0)) - mini(int(tracks.get("political_capital", 0)), political_cost)
 	if adjusted.has("fiscal"):
 		tracks["debt"] = int(tracks.get("debt", 0)) + int(adjusted["fiscal"])
-	return {"costs": adjusted, "success": can_fully_pay}
+	return {"costs": adjusted, "shortages": shortages, "success": can_fully_pay}
+
+func _cost_capacity(key: String) -> int:
+	if key == "political":
+		return int(tracks.get("political_capital", 0))
+	if key == "fiscal":
+		return max(0, 9 - int(tracks.get("debt", 0)))
+	if key == "administrative":
+		return clampi(int(tracks.get("political_capital", 0)) + 1, 0, 6)
+	if key == "credibility":
+		return clampi(8 - int(tracks.get("financial_stress", 0)) + maxi(0, int(tracks.get("inflation", 0))), 0, 6)
+	if key == "international":
+		return clampi(int(tracks.get("current_account", 0)) + int(tracks.get("exchange_rate", 0)) + 3, 0, 6)
+	if key == "industrial":
+		return clampi(4 + int(tracks.get("gdp_gap", 0)) - int(tracks.get("unemployment", 0)) / 2, 0, 6)
+	return 99
 
 func clamp_tracks() -> void:
 	for key in tracks.keys():

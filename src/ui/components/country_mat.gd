@@ -26,6 +26,7 @@ var mode := "compact"
 var token_assets
 var colors: Dictionary = {}
 var accent := Color.WHITE
+var current_phase := ""
 
 var emblem: Label
 var title: Label
@@ -55,6 +56,7 @@ func setup(index: int, next_mode: String, mat_size: Vector2, next_token_assets, 
 	_build()
 
 func refresh(country, selected_index: int, phase: String, revealed_policies: bool, is_finished: bool) -> void:
+	current_phase = phase
 	var is_active := country_index == selected_index
 	add_theme_stylebox_override("panel", _mat_style(colors["mat"].lightened(0.05) if is_active else colors["mat"], accent, 8))
 	emblem.text = UiCatalogScript.country_emblem(country_index)
@@ -67,6 +69,7 @@ func refresh(country, selected_index: int, phase: String, revealed_policies: boo
 
 	for worker in worker_buttons.keys():
 		worker_buttons[worker].button_pressed = worker == country.assigned_worker
+		worker_buttons[worker].disabled = phase != "worker_assignment" or is_finished
 	for key in track_views.keys():
 		_update_track_chip(track_views[key], int(country.tracks.get(key, 0)))
 	_rebuild_hand(country, phase, is_finished)
@@ -185,19 +188,29 @@ func _build() -> void:
 		button.add_theme_stylebox_override("hover", _stylebox(Color(0.15, 0.11, 0.065, 0.98), accent, 4))
 		button.add_theme_stylebox_override("pressed", _stylebox(Color(0.19, 0.13, 0.065, 1.0), accent.lightened(0.18), 4))
 		button.pressed.connect(func() -> void:
-			worker_assigned.emit(country_index, worker)
+			if current_phase == "worker_assignment":
+				worker_assigned.emit(country_index, worker)
 		)
 		worker_box.add_child(button)
 		worker_buttons[worker] = button
 
 	track_views.clear()
+	var track_grid := GridContainer.new()
+	track_grid.columns = 4 if mode == "compact" else 8
+	track_grid.add_theme_constant_override("h_separation", 5)
+	track_grid.add_theme_constant_override("v_separation", 5)
+	box.add_child(_mat_zone(track_grid, accent, "国家トラック"))
+	for key in COUNTRY_TRACKS:
+		var chip := _make_track_chip(key)
+		track_grid.add_child(chip["root"])
+		track_views[key] = chip
 
 	detail = RichTextLabel.new()
 	detail.bbcode_enabled = true
 	detail.fit_content = true
 	detail.scroll_active = false
-	if false:
-		box.add_child(_mat_zone(detail, accent, "カード詳細"))
+	detail.custom_minimum_size = Vector2(0, 70)
+	box.add_child(_mat_zone(detail, accent, "カード詳細"))
 
 func _rebuild_hand(country, phase: String, is_finished: bool) -> void:
 	for child in hand_box.get_children():
@@ -206,7 +219,7 @@ func _rebuild_hand(country, phase: String, is_finished: bool) -> void:
 		hand_box.add_child(_make_hand_card(country, i, country.hand[i], phase, is_finished))
 
 func _make_hand_card(country, hand_index: int, card: Dictionary, phase: String, is_finished: bool) -> Control:
-	var disabled: bool = card.get("type", "") != "policy" or phase == "simultaneous_reveal" or is_finished
+	var disabled: bool = card.get("type", "") != "policy" or phase != "policy_planning" or is_finished
 	var selected: bool = not country.selected_policy.is_empty() and country.selected_policy.get("id", "") == card.get("id", "")
 	var color: Color = colors["card"] if card.get("type", "") == "policy" else colors["card_dark"]
 	var border: Color = accent if selected else colors["line"]
