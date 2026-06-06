@@ -12,6 +12,9 @@ func _run() -> void:
 	get_root().add_child(ui)
 	await process_frame
 	await process_frame
+	ui.game.advance_phase()
+	ui._refresh_board(false)
+	await process_frame
 
 	var policy_index := _first_policy_index(ui.game.countries[0].hand)
 	_assert(policy_index >= 0, "country has a playable policy card")
@@ -20,8 +23,12 @@ func _run() -> void:
 	_assert(not ui.game.countries[0].selected_policy.is_empty(), "policy card can be placed from the board hand")
 	_assert(ui.board_layer.get_node_or_null("PolicyGhost") != null, "policy placement creates a moving card ghost")
 	_assert(ui.board_layer.get_node_or_null("BoardTrail") != null, "policy placement creates a board trail")
-	_assert(ui.policy_slot_label.text != "政策案なし\n手札からカードを伏せます", "policy slot reflects selected card")
+	_assert(ui.policy_slot_label.text.contains("伏せ札"), "policy slot hides selected card before reveal")
+	_assert(not ui.policy_slot_label.text.contains(String(ui.game.countries[0].selected_policy.get("display_name", ""))), "policy slot does not leak the selected policy name before reveal")
 
+	ui.game.advance_phase()
+	ui._refresh_board(false)
+	await process_frame
 	ui._on_worker_assigned(0, "diplomat", Vector2(650, 110))
 	await process_frame
 	_assert(ui.game.countries[0].assigned_worker == "diplomat", "worker token can be assigned from the board")

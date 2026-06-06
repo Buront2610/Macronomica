@@ -6,6 +6,11 @@ func _init() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	var width := int(OS.get_environment("MACRONOMICA_PREVIEW_WIDTH"))
+	var height := int(OS.get_environment("MACRONOMICA_PREVIEW_HEIGHT"))
+	if width > 0 and height > 0:
+		get_root().size = Vector2i(width, height)
+		await process_frame
 	var ui = MainScript.new()
 	ui.size = get_root().size
 	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -13,6 +18,9 @@ func _run() -> void:
 	for i in range(5):
 		await process_frame
 
+	ui.game.advance_phase()
+	ui._refresh_board(false)
+	await process_frame
 	var policy_index := _first_policy_index(ui.game.countries[0].hand)
 	if policy_index >= 0:
 		ui._on_policy_selected(0, policy_index, Vector2(180, 620))

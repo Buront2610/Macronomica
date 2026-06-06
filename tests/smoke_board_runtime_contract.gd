@@ -20,6 +20,8 @@ func _run() -> void:
 	get_root().add_child(ui)
 	await process_frame
 	await process_frame
+	ui._refresh_board(false)
+	await process_frame
 
 	var banned := []
 	_collect_banned(ui, banned)
@@ -29,12 +31,23 @@ func _run() -> void:
 	_assert(ui.phase_pips.size() == ui.GameStateScript.PHASES.size(), "runtime board shows phase pips as board markers")
 	_assert(ui.hand_nodes.size() == ui.game.countries[ui.selected_country_index].hand.size(), "runtime board deals selected hand as board cards")
 	_assert(ui.policy_slot != null, "runtime board has a physical policy slot")
+	for key in ui.WORLD_TRACKS:
+		_assert(ui.board_layer.get_node_or_null("WorldTrack_%s" % key) != null, "runtime board shows world track: %s" % key)
+	_assert(ui.score_panel != null and not ui.score_panel.text.is_empty(), "runtime board shows scores")
+	_assert(ui.log_panel != null and not ui.log_panel.text.is_empty(), "runtime board shows resolution log")
+	_assert(ui.country_detail_label != null and ui.country_detail_label.text.contains("GDP"), "runtime board shows selected country tracks")
 
 	var viewport := ui.get_viewport_rect()
 	for seat in ui.country_seats:
 		_assert(_inside_viewport(seat, viewport), "country seat remains inside the board viewport: %s" % seat.name)
 	for card in ui.hand_nodes:
 		_assert(_inside_viewport(card, viewport), "hand card remains inside the board viewport: %s" % card.name)
+		for seat in ui.country_seats:
+			_assert(not _controls_overlap(card, seat), "hand card does not overlap country seat: %s / %s" % [card.name, seat.name])
+	for key in ui.WORLD_TRACKS:
+		var track: Control = ui.board_layer.get_node("WorldTrack_%s" % key)
+		for card in ui.hand_nodes:
+			_assert(not _controls_overlap(track, card), "world track does not overlap hand card: %s / %s" % [track.name, card.name])
 	for worker in ui.worker_nodes.keys():
 		_assert(_inside_viewport(ui.worker_nodes[worker], viewport), "worker token remains inside the board viewport: %s" % worker)
 	for pip in ui.phase_pips:
@@ -44,6 +57,14 @@ func _run() -> void:
 		_assert(token != null, "action token exists on the board: %s" % token_name)
 		_assert(_inside_viewport(token, viewport), "action token remains inside the board viewport: %s" % token_name)
 	_assert(_inside_viewport(ui.policy_slot, viewport), "policy slot remains inside the board viewport")
+	var score_panel: Control = ui.board_layer.get_node("ScorePanel")
+	var log_panel: Control = ui.board_layer.get_node("LogPanel")
+	var country_detail_panel: Control = ui.board_layer.get_node("CountryDetailPanel")
+	_assert(_inside_viewport(country_detail_panel, viewport), "country detail panel remains inside the board viewport")
+	for i in range(ui.AGENDA.size()):
+		var agenda: Control = ui.board_layer.get_node("Agenda_%s" % String(ui.AGENDA[i]["tag"]))
+		_assert(not _controls_overlap(score_panel, agenda), "score panel does not overlap agenda: %s" % agenda.name)
+		_assert(not _controls_overlap(log_panel, agenda), "log panel does not overlap agenda: %s" % agenda.name)
 
 	print("Smoke board runtime contract passed.")
 	quit(0)
@@ -58,6 +79,9 @@ func _collect_banned(node: Node, banned: Array) -> void:
 func _inside_viewport(control: Control, viewport: Rect2) -> bool:
 	var rect := Rect2(control.global_position, control.size)
 	return viewport.encloses(rect)
+
+func _controls_overlap(a: Control, b: Control) -> bool:
+	return Rect2(a.global_position, a.size).intersects(Rect2(b.global_position, b.size))
 
 func _assert(condition: bool, message: String) -> void:
 	if condition:

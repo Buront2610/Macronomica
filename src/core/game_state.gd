@@ -85,6 +85,8 @@ func new_game() -> void:
 	_assert_invariants("new_game")
 
 func select_policy(country_index: int, hand_index: int) -> void:
+	if not can_select_policy():
+		return
 	if not _require(_valid_country_index(country_index), "select_policy country index is valid"):
 		return
 	var country = countries[country_index]
@@ -98,6 +100,8 @@ func select_policy(country_index: int, hand_index: int) -> void:
 	_assert_invariants("select_policy")
 
 func assign_worker(country_index: int, worker_id: String) -> void:
+	if not can_assign_worker():
+		return
 	if not _require(_valid_country_index(country_index), "assign_worker country index is valid"):
 		return
 	var country = countries[country_index]
@@ -121,6 +125,12 @@ func current_phase_name() -> String:
 		"resolution": "解決処理"
 	}
 	return names.get(current_phase(), current_phase())
+
+func can_select_policy() -> bool:
+	return current_phase() == "policy_planning" and not revealed_policies and not is_finished
+
+func can_assign_worker() -> bool:
+	return current_phase() == "worker_assignment" and not revealed_policies and not is_finished
 
 func advance_phase() -> void:
 	if is_finished:
