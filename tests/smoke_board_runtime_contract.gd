@@ -35,7 +35,8 @@ func _run() -> void:
 		_assert(ui.board_layer.get_node_or_null("WorldTrack_%s" % key) != null, "runtime board shows world track: %s" % key)
 	_assert(ui.score_panel != null and not ui.score_panel.text.is_empty(), "runtime board shows scores")
 	_assert(ui.log_panel != null and not ui.log_panel.text.is_empty(), "runtime board shows resolution log")
-	_assert(ui.country_detail_label != null and ui.country_detail_label.text.contains("GDP"), "runtime board shows selected country tracks")
+	_assert(ui.country_detail_label != null and ui.country_detail_label.text.contains("リスク"), "runtime board shows selected country risk summary")
+	_assert(not ui.country_detail_label.text.contains("GDP"), "runtime board detail avoids always-on numeric dashboards")
 
 	var viewport := ui.get_viewport_rect()
 	for seat in ui.country_seats:

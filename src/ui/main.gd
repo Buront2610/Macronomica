@@ -759,9 +759,10 @@ func _refresh_resolution_links() -> void:
 		if is_focus_country and _resolution_stage_visible(1, active_step):
 			paths.append(_resolution_path(1, _control_center(country_stamp_slots[country_index]), WARN, "費"))
 		if _diff_count(_as_dict(item.get("country_diffs", {}))) > 0 and _resolution_stage_visible(2, active_step):
+			var country_diff_label := _diff_chip_label(_as_dict(_as_dict(item.get("country_diffs", {})).get(country_index, {})), "国")
 			if is_focus_country:
 				paths.append(_resolution_path(2, _control_center(country_seats[country_index]), accent, "国"))
-			_add_result_chip("CountryResult_%d" % country_index, _control_center(country_seats[country_index]) + Vector2(-18, 42), "国", accent)
+			_add_result_chip("CountryResult_%d" % country_index, _control_center(country_seats[country_index]) + Vector2(-18, 42), country_diff_label, accent)
 		if _resolution_stage_visible(3, active_step):
 			for key in item.get("world_effect_keys", []):
 				if world_path_count >= 2:
@@ -770,7 +771,7 @@ func _refresh_resolution_links() -> void:
 				if track != null:
 					var track_color := TrackPresenterScript.track_color(String(key), int(game.world.tracks.get(String(key), 0)), _track_colors())
 					paths.append(_resolution_path(3, _control_center(track), track_color, "世"))
-					_add_result_chip("WorldResult_%d" % world_path_count, _control_center(track) + Vector2(12, -14), "世", track_color)
+					_add_result_chip("WorldResult_%d" % world_path_count, _control_center(track) + Vector2(12, -14), _single_diff_chip_label(_as_dict(item.get("world_diff", {})), String(key), "世"), track_color)
 					world_path_count += 1
 		if int(item.get("mutation_count", 0)) > 0 and _resolution_stage_visible(4, active_step):
 			if is_focus_country:
@@ -782,11 +783,11 @@ func _refresh_resolution_links() -> void:
 		var macro_countries: Dictionary = macro.get("country_diffs", {})
 		if not macro_world.is_empty():
 			paths.append(_resolution_path(5, _control_center(board_layer.get_node("WorldPanel")), WARN, "合"))
-			_add_result_chip("MacroWorldResult", _control_center(board_layer.get_node("WorldPanel")) + Vector2(0, 38), "合", WARN)
+			_add_result_chip("MacroWorldResult", _control_center(board_layer.get_node("WorldPanel")) + Vector2(0, 38), _diff_chip_label(macro_world, "合"), WARN)
 		for key in macro_countries.keys():
 			var country_index := int(key)
 			if country_index >= 0 and country_index < country_seats.size():
-				_add_result_chip("MacroCountryResult_%d" % country_index, _control_center(country_seats[country_index]) + Vector2(0, -36), "合", COUNTRY_ACCENTS[country_index])
+				_add_result_chip("MacroCountryResult_%d" % country_index, _control_center(country_seats[country_index]) + Vector2(0, -36), _diff_chip_label(_as_dict(macro_countries.get(key, {})), "合"), COUNTRY_ACCENTS[country_index])
 	resolution_overlay.set_paths(paths)
 
 func _resolution_stage_visible(stage: int, active_step: int) -> bool:
@@ -813,7 +814,7 @@ func _country_pressure_center(country_index: int) -> Vector2:
 	return _control_center(pressure)
 
 func _add_result_chip(node_name: String, center: Vector2, text: String, accent: Color) -> void:
-	var chip_size := Vector2(28, 28)
+	var chip_size := Vector2(38, 28) if text.length() > 1 else Vector2(28, 28)
 	var chip = BoardPieceScript.new()
 	chip.name = node_name
 	chip.position = center - chip_size * 0.5
@@ -828,31 +829,56 @@ func _add_result_chip(node_name: String, center: Vector2, text: String, accent: 
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", accent.lightened(0.30))
-	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_size_override("font_size", 11 if text.length() > 1 else 12)
 	_apply_label_outline(label, accent.lightened(0.30))
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	chip.add_child(label)
 	resolution_marker_layer.add_child(chip)
+
+func _diff_chip_label(diffs: Dictionary, fallback: String) -> String:
+	for key in diffs.keys():
+		return "%s%s" % [_track_chip_prefix(String(key), fallback), _signed_delta(int(diffs[key]))]
+	return fallback
+
+func _single_diff_chip_label(diffs: Dictionary, key: String, fallback: String) -> String:
+	if diffs.has(key):
+		return "%s%s" % [_track_chip_prefix(key, fallback), _signed_delta(int(diffs[key]))]
+	return fallback
+
+func _track_chip_prefix(key: String, fallback: String) -> String:
+	var names := {
+		"world_demand": "需",
+		"world_interest_rate": "金",
+		"trade_openness": "貿",
+		"international_financial_instability": "融",
+		"depression": "恐",
+		"protectionism": "保",
+		"global_coordination": "協",
+		"gdp_gap": "GDP",
+		"inflation": "物",
+		"unemployment": "失",
+		"debt": "債",
+		"financial_stress": "金",
+		"political_capital": "政"
+	}
+	return names.get(key, fallback)
+
+func _signed_delta(delta: int) -> String:
+	if delta > 0:
+		return "+%d" % delta
+	return str(delta)
 
 func _refresh_country_detail_panel() -> void:
 	if country_detail_label == null:
 		return
 	var country = game.countries[selected_country_index]
 	var pressure := String(country.domestic_pressure.get("display_name", "国内圧力なし"))
-	var track_line := "GDP %d  物価 %d  失業 %d  債務 %d\n金融 %d  政治 %d    山 %d / 捨 %d" % [
-		int(country.tracks.get("gdp_gap", 0)),
-		int(country.tracks.get("inflation", 0)),
-		int(country.tracks.get("unemployment", 0)),
-		int(country.tracks.get("debt", 0)),
-		int(country.tracks.get("financial_stress", 0)),
-		int(country.tracks.get("political_capital", 0)),
-		country.deck.size(),
-		country.discard.size()
-	]
-	country_detail_label.text = "%s\n圧力: %s\n%s" % [
+	country_detail_label.text = "%s\n圧力: %s\nリスク: %s\n山札/捨札: %d/%d" % [
 		country.display_name.substr(0, 12),
 		pressure.substr(0, 14),
-		track_line
+		_country_risk_words(country),
+		country.deck.size(),
+		country.discard.size()
 	]
 
 func _refresh_workers() -> void:
@@ -1430,6 +1456,24 @@ func _short_tag_list(tags: Array, limit: int) -> String:
 	for i in range(mini(limit, tags.size())):
 		parts.append(names.get(String(tags[i]), String(tags[i])))
 	return " / ".join(parts)
+
+func _country_risk_words(country) -> String:
+	var risks := []
+	if int(country.tracks.get("gdp_gap", 0)) <= -3:
+		risks.append("需要低迷")
+	if int(country.tracks.get("inflation", 0)) >= 5:
+		risks.append("物価高")
+	if int(country.tracks.get("unemployment", 0)) >= 5:
+		risks.append("失業")
+	if int(country.tracks.get("debt", 0)) >= 6:
+		risks.append("債務")
+	if int(country.tracks.get("financial_stress", 0)) >= 5:
+		risks.append("金融不安")
+	if int(country.tracks.get("political_capital", 0)) <= 2:
+		risks.append("政治余力低下")
+	if risks.is_empty():
+		return "安定圏"
+	return " / ".join(risks.slice(0, 3))
 
 func _refresh_country_risk_chips(country_index: int, country) -> void:
 	var rack: Control = country_chip_racks[country_index]
