@@ -10,7 +10,8 @@ var hover_lift := 4.0
 var home_position := Vector2.ZERO
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_STOP
+	if mouse_filter != Control.MOUSE_FILTER_IGNORE:
+		mouse_filter = Control.MOUSE_FILTER_STOP
 	pivot_offset = size * 0.5
 	home_position = position
 	mouse_entered.connect(_on_mouse_entered)

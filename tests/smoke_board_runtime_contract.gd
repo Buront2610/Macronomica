@@ -42,6 +42,8 @@ func _run() -> void:
 		_assert(_inside_viewport(seat, viewport), "country seat remains inside the board viewport: %s" % seat.name)
 	for card in ui.hand_nodes:
 		_assert(_inside_viewport(card, viewport), "hand card remains inside the board viewport: %s" % card.name)
+		_assert(not _controls_overlap(card, ui.board_layer.get_node("EventCard")), "hand card does not overlap event card: %s" % card.name)
+		_assert(not _controls_overlap(card, ui.policy_slot), "hand card does not overlap policy slot: %s" % card.name)
 		for seat in ui.country_seats:
 			_assert(not _controls_overlap(card, seat), "hand card does not overlap country seat: %s / %s" % [card.name, seat.name])
 	for key in ui.WORLD_TRACKS:
@@ -61,6 +63,19 @@ func _run() -> void:
 	var log_panel: Control = ui.board_layer.get_node("LogPanel")
 	var country_detail_panel: Control = ui.board_layer.get_node("CountryDetailPanel")
 	_assert(_inside_viewport(country_detail_panel, viewport), "country detail panel remains inside the board viewport")
+	_assert(country_detail_panel.size.y >= 88.0, "country detail panel remains large enough to read")
+	_assert(ui.country_detail_label.get_theme_font_size("font_size") >= 13, "country detail text remains readable")
+	for panel in [score_panel, log_panel, country_detail_panel]:
+		_assert(_inside_viewport(panel, viewport), "status panel remains inside the board viewport: %s" % panel.name)
+		_assert(not _controls_overlap(panel, ui.policy_slot), "status panel does not overlap policy slot: %s" % panel.name)
+		_assert(not _controls_overlap(panel, ui.board_layer.get_node("EventCard")), "status panel does not overlap event card: %s" % panel.name)
+		for seat in ui.country_seats:
+			_assert(not _controls_overlap(panel, seat), "status panel does not overlap country seat: %s / %s" % [panel.name, seat.name])
+		for card in ui.hand_nodes:
+			_assert(not _controls_overlap(panel, card), "status panel does not overlap hand card: %s / %s" % [panel.name, card.name])
+		for key in ui.WORLD_TRACKS:
+			var track: Control = ui.board_layer.get_node("WorldTrack_%s" % key)
+			_assert(not _controls_overlap(panel, track), "status panel does not overlap world track: %s / %s" % [panel.name, track.name])
 	for i in range(ui.AGENDA.size()):
 		var agenda: Control = ui.board_layer.get_node("Agenda_%s" % String(ui.AGENDA[i]["tag"]))
 		_assert(not _controls_overlap(score_panel, agenda), "score panel does not overlap agenda: %s" % agenda.name)
