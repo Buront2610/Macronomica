@@ -96,7 +96,7 @@ function Export-Token {
     $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
 
     $clip = [System.Drawing.Drawing2D.GraphicsPath]::new()
-    $inset = [Math]::Max(1.0, $Size * 0.018)
+    $inset = [Math]::Max(1.0, $Size * 0.035)
     $clip.AddEllipse($inset, $inset, $Size - $inset * 2.0, $Size - $inset * 2.0)
     $graphics.SetClip($clip)
     $graphics.DrawImage($Source, [System.Drawing.RectangleF]::new(0, 0, $Size, $Size), $Crop, [System.Drawing.GraphicsUnit]::Pixel)
@@ -118,9 +118,9 @@ try {
         throw "Expected 4 token rows, found $($yBands.Count)."
     }
     $yCenters = foreach ($band in $yBands) { ($band[0] + $band[1]) / 2.0 }
-    # Keep a small gutter inside each atlas cell. The generated coins nearly touch the
-    # neighboring cells, so a full-cell crop pulls stray rim fragments into the token.
-    $side = 196.0
+    # 204 preserves the coin rim from the source sheet while avoiding the worst
+    # edge pickup from the nearly-adjacent atlas cells.
+    $side = 204.0
 
     Write-Output "atlas: $($atlas.Width)x$($atlas.Height)"
     Write-Output "x centers: $([string]::Join(', ', ($xCenters | ForEach-Object { [Math]::Round($_, 1) })))"
