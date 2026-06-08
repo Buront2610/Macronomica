@@ -118,7 +118,9 @@ try {
         throw "Expected 4 token rows, found $($yBands.Count)."
     }
     $yCenters = foreach ($band in $yBands) { ($band[0] + $band[1]) / 2.0 }
-    $side = 208.0
+    # Keep a small gutter inside each atlas cell. The generated coins nearly touch the
+    # neighboring cells, so a full-cell crop pulls stray rim fragments into the token.
+    $side = 196.0
 
     Write-Output "atlas: $($atlas.Width)x$($atlas.Height)"
     Write-Output "x centers: $([string]::Join(', ', ($xCenters | ForEach-Object { [Math]::Round($_, 1) })))"
