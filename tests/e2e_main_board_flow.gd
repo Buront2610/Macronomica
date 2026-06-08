@@ -20,6 +20,8 @@ func _run() -> void:
 	ui._refresh_board(false)
 	await process_frame
 	_assert(ui.game.current_phase() == "policy_planning", "E2E reaches policy planning")
+	_assert(_major_icons_are_visible_and_inside(ui), "major icons are visible and stay inside their frames")
+	_assert(_major_icons_are_pixel_snapped(ui), "major icons are snapped to whole pixels")
 
 	for country_index in range(ui.game.countries.size()):
 		_assert(ui.selected_country_index == country_index, "policy planning focuses country %d automatically" % country_index)
@@ -89,7 +91,6 @@ func _run() -> void:
 	var log_panel: Label = ui.log_panel
 	_assert(log_panel != null and log_panel.text.contains("・"), "newspaper shows summarized headlines")
 	_assert(_control_min_size(ui.board_layer.get_node("ResolutionFlow"), Vector2(520, 48)), "resolution flow has enough physical size")
-	_assert(_major_icons_are_visible_and_inside(ui), "major icons are visible and stay inside their frames")
 
 	if failed:
 		quit(1)
@@ -121,6 +122,30 @@ func _major_icons_are_visible_and_inside(ui) -> bool:
 				push_error("Icon is outside parent: %s icon=%s parent=%s" % [icon.get_path(), icon_rect, parent_rect])
 				return false
 	return true
+
+func _major_icons_are_pixel_snapped(ui) -> bool:
+	for icon in _collect_texture_rects(ui):
+		if not icon.visible:
+			continue
+		if _has_transient_ancestor(icon):
+			continue
+		var pos: Vector2 = icon.global_position
+		var size: Vector2 = icon.size
+		if absf(pos.x - roundf(pos.x)) > 0.01 or absf(pos.y - roundf(pos.y)) > 0.01:
+			push_error("Icon is on a fractional pixel: %s pos=%s" % [icon.get_path(), pos])
+			return false
+		if absf(size.x - roundf(size.x)) > 0.01 or absf(size.y - roundf(size.y)) > 0.01:
+			push_error("Icon has fractional size: %s size=%s" % [icon.get_path(), size])
+			return false
+	return true
+
+func _has_transient_ancestor(node: Node) -> bool:
+	var current := node.get_parent()
+	while current != null:
+		if String(current.name).contains("Ghost"):
+			return true
+		current = current.get_parent()
+	return false
 
 func _collect_texture_rects(node: Node) -> Array:
 	var icons := []

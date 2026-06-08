@@ -165,7 +165,6 @@ func _build_table_marks() -> void:
 func _build_event_card() -> void:
 	var card = _make_piece("EventCard", board_layout["event_pos"], board_layout["event_size"], Color(0.13, 0.085, 0.040, 0.94), WARN, 2, "card")
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.rotation_degrees = -0.4
 	card.add_child(_make_icon("world_demand_globe", Vector2(14, 46), Vector2(50, 50), WARN))
 	_add_label_to(card, "EventCaption", "公開イベント", Vector2(0, 10), Vector2(card.size.x, 20), 13, WARN.lightened(0.2))
 	_add_label_to(card, "EventTitle", "", Vector2(68, 34), Vector2(card.size.x - 78, 34), 17, TEXT, true)
@@ -1084,8 +1083,8 @@ func _add_action_token(node_name: String, text: String, position: Vector2, size:
 func _make_piece(node_name: String, position: Vector2, piece_size: Vector2, fill: Color, border: Color, border_width := 1.0, shape := "rect"):
 	var piece = BoardPieceScript.new()
 	piece.name = node_name
-	piece.position = position
-	piece.size = piece_size
+	piece.position = _snap_vec(position)
+	piece.size = _snap_vec(piece_size)
 	piece.set_skin(fill, border, border_width, shape)
 	board_layer.add_child(piece)
 	return piece
@@ -1093,8 +1092,8 @@ func _make_piece(node_name: String, position: Vector2, piece_size: Vector2, fill
 func _make_overlay_piece(parent: Control, node_name: String, position: Vector2, piece_size: Vector2, fill: Color, border: Color, border_width := 1.0, shape := "rect"):
 	var piece = BoardPieceScript.new()
 	piece.name = node_name
-	piece.position = position
-	piece.size = piece_size
+	piece.position = _snap_vec(position)
+	piece.size = _snap_vec(piece_size)
 	piece.set_skin(fill, border, border_width, shape)
 	parent.add_child(piece)
 	return piece
@@ -1109,8 +1108,8 @@ func _make_entry_button(parent: Control, node_name: String, text: String, positi
 func _make_child_piece(parent: Control, node_name: String, position: Vector2, piece_size: Vector2, fill: Color, border: Color, border_width := 1.0, shape := "rect"):
 	var piece = BoardPieceScript.new()
 	piece.name = node_name
-	piece.position = position
-	piece.size = piece_size
+	piece.position = _snap_vec(position)
+	piece.size = _snap_vec(piece_size)
 	piece.set_skin(fill, border, border_width, shape)
 	piece.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(piece)
@@ -1124,18 +1123,19 @@ func _make_icon(token_name: String, position: Vector2, icon_size: Vector2, tint:
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.custom_minimum_size = Vector2.ZERO
 	icon.texture = token_assets.texture(token_name)
-	icon.position = position
-	icon.size = icon_size
+	icon.position = _snap_vec(position)
+	icon.size = _snap_vec(icon_size)
 	icon.modulate = tint
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return icon
 
 func _make_icon_medallion(token_name: String, position: Vector2, accent: Color, diameter := 46):
 	var medallion := Control.new()
-	medallion.position = position
-	medallion.size = Vector2(diameter, diameter)
+	var snapped_diameter := roundf(diameter)
+	medallion.position = _snap_vec(position)
+	medallion.size = Vector2(snapped_diameter, snapped_diameter)
 	medallion.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	medallion.add_child(_make_icon(token_name, Vector2.ZERO, Vector2(diameter, diameter), Color.WHITE))
+	medallion.add_child(_make_icon(token_name, Vector2.ZERO, medallion.size, Color.WHITE))
 	return medallion
 
 func _make_disc_label(node_name: String, text: String, position: Vector2, diameter: float, accent: Color):
@@ -1160,8 +1160,8 @@ func _add_label(node_name: String, text: String, position: Vector2, label_size: 
 	var label := Label.new()
 	label.name = node_name
 	label.text = text
-	label.position = position
-	label.size = label_size
+	label.position = _snap_vec(position)
+	label.size = _snap_vec(label_size)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if node_name != "Title" and node_name != "TurnLabel" else HORIZONTAL_ALIGNMENT_LEFT
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if wrap else TextServer.AUTOWRAP_OFF
@@ -1176,8 +1176,8 @@ func _add_label_to(parent: Control, node_name: String, text: String, position: V
 	var label := Label.new()
 	label.name = node_name
 	label.text = text
-	label.position = position
-	label.size = label_size
+	label.position = _snap_vec(position)
+	label.size = _snap_vec(label_size)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if wrap else TextServer.AUTOWRAP_OFF
@@ -1187,6 +1187,9 @@ func _add_label_to(parent: Control, node_name: String, text: String, position: V
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(label)
 	return label
+
+func _snap_vec(value: Vector2) -> Vector2:
+	return Vector2(roundf(value.x), roundf(value.y))
 
 func _apply_label_outline(label: Label, color: Color) -> void:
 	var luma := color.r * 0.299 + color.g * 0.587 + color.b * 0.114
@@ -1212,8 +1215,7 @@ func _clear_children(node: Node) -> void:
 func _animate_card_to_slot(country_index: int, card: Dictionary, from_pos: Vector2, to_pos: Vector2) -> void:
 	var ghost = _make_policy_card(card, -1, country_index)
 	ghost.name = "PolicyGhost"
-	ghost.position = from_pos
-	ghost.rotation_degrees = -5
+	ghost.position = _snap_vec(from_pos)
 	board_layer.add_child(ghost)
 	var card_center: Vector2 = ghost.size * 0.5
 	_animate_trail(from_pos + card_center, to_pos + card_center, COUNTRY_ACCENTS[country_index], 0.28)
