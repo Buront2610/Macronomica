@@ -27,7 +27,9 @@ func _run() -> void:
 	await process_frame
 	_assert(not ui.game.countries[0].selected_policy.is_empty(), "policy card can be placed from the board hand")
 	_assert(ui.board_layer.get_node_or_null("PolicyGhost") != null, "policy placement creates a moving card ghost")
-	_assert(ui.board_layer.get_node_or_null("BoardTrail") != null, "policy placement creates a board trail")
+	var policy_trail = ui.board_layer.get_node_or_null("BoardTrail")
+	_assert(policy_trail != null, "policy placement creates a board trail")
+	_assert(_colors_close(policy_trail.color, ui.COUNTRY_ACCENTS[0]), "policy placement trail keeps the submitting country color")
 	_assert(ui.country_policy_labels[0].text.contains("伏せ札"), "submitted country policy slot hides selected card before reveal")
 	_assert(not ui.country_policy_labels[0].text.contains(String(ui.game.countries[0].selected_policy.get("display_name", ""))), "submitted country policy slot does not leak the selected policy name before reveal")
 	_assert(ui.selected_country_index == 1, "policy submission advances focus to the next country")
@@ -54,6 +56,26 @@ func _run() -> void:
 	_assert(ui.game.phase_index == previous_phase, "advance token does not skip unfinished worker assignment")
 	_assert(ui.selected_country_index != 1, "advance token focuses the next unfinished country")
 
+	var ui2 = MainScript.new()
+	ui2.size = get_root().size
+	ui2.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	get_root().add_child(ui2)
+	await process_frame
+	await process_frame
+	ui2._hide_entry_overlays()
+	ui2.game.advance_phase()
+	for country_index in range(ui2.game.countries.size()):
+		var plan_index := _first_policy_index(ui2.game.countries[country_index].hand)
+		_assert(plan_index >= 0, "policy exists for recommendation worker setup country %d" % country_index)
+		ui2.game.select_policy(country_index, plan_index)
+	ui2._enter_worker_assignment()
+	ui2._on_recommend_pressed()
+	await process_frame
+	_assert(ui2._all_workers_confirmed(), "recommend helper confirms all worker assignments in UI state")
+	ui2._on_advance_pressed()
+	await process_frame
+	_assert(ui2.game.current_phase() == "simultaneous_reveal", "recommended worker assignments can advance to simultaneous reveal")
+
 	print("Smoke board interaction passed.")
 	quit(0)
 
@@ -70,6 +92,9 @@ func _descendants_ignore_mouse(node: Node) -> bool:
 		if not _descendants_ignore_mouse(child):
 			return false
 	return true
+
+func _colors_close(a: Color, b: Color) -> bool:
+	return abs(a.r - b.r) < 0.01 and abs(a.g - b.g) < 0.01 and abs(a.b - b.b) < 0.01
 
 func _assert(condition: bool, message: String) -> void:
 	if condition:

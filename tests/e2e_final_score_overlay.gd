@@ -36,17 +36,23 @@ func _run() -> void:
 	_assert(ui.game.current_phase() == "simultaneous_reveal", "final-score E2E reaches simultaneous reveal")
 	ui._on_advance_pressed()
 	await process_frame
-	for _i in range(5):
+	for _i in range(6):
 		ui._on_advance_pressed()
 		await process_frame
 
 	_assert(ui.game.is_finished, "one-turn game finishes after resolution review")
 	_assert(ui.final_score_panel != null and ui.final_score_panel.visible, "final score overlay appears")
+	_assert(ui.final_score_panel.mouse_filter == Control.MOUSE_FILTER_STOP, "final score overlay blocks board input behind it")
 	_assert(ui.final_score_labels.size() == 4, "final score overlay has four country result cards")
 	for label in ui.final_score_labels:
 		_assert(label.text.contains("点"), "final score card shows score text")
 		_assert(label.text.contains("レガシー"), "final score card shows legacy text")
 	_assert(ui.final_news_label != null and ui.final_news_label.text.contains("・"), "final score overlay shows newspaper summary")
+	var restart: Control = ui.final_score_panel.get_node_or_null("FinalRestartButton")
+	_assert(restart != null, "final score overlay has a real restart button")
+	_click(restart)
+	await process_frame
+	_assert(not ui.game.is_finished and ui.title_overlay.visible, "restart returns to a fresh title state")
 
 	if failed:
 		quit(1)
@@ -59,6 +65,12 @@ func _first_policy_index(hand: Array) -> int:
 		if hand[i].get("type", "") == "policy":
 			return i
 	return -1
+
+func _click(control: Control) -> void:
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	control._gui_input(click)
 
 func _assert(condition: bool, message: String) -> void:
 	if condition:

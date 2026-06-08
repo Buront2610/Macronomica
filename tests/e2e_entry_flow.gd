@@ -17,7 +17,12 @@ func _run() -> void:
 	await process_frame
 
 	_assert(ui.title_overlay != null and ui.title_overlay.visible, "entry flow starts on title overlay")
+	_assert(ui.title_overlay.mouse_filter == Control.MOUSE_FILTER_STOP, "title overlay blocks board input behind it")
 	_assert(ui.country_select_overlay != null and not ui.country_select_overlay.visible, "country selection is hidden on title")
+	var continue_label: Label = ui.title_overlay.find_child("ContinueText", true, false)
+	var settings_label: Label = ui.title_overlay.find_child("SettingsText", true, false)
+	_assert(continue_label != null and continue_label.text.contains("準備中"), "continue affordance is explicitly disabled")
+	_assert(settings_label != null and settings_label.text.contains("準備中"), "settings affordance is explicitly disabled")
 	var start: Control = ui.title_overlay.get_node_or_null("TitleStart")
 	_assert(start != null and start.size.x >= 180.0 and start.size.y >= 56.0, "title start token is large enough")
 	_click(start)
@@ -25,6 +30,7 @@ func _run() -> void:
 
 	_assert(not ui.title_overlay.visible, "title overlay closes after start")
 	_assert(ui.country_select_overlay.visible, "country selection opens after start")
+	_assert(ui.country_select_overlay.mouse_filter == Control.MOUSE_FILTER_STOP, "country selection overlay blocks board input behind it")
 	for i in range(ui.game.countries.size()):
 		var choice: Control = ui.country_select_overlay.get_node_or_null("CountryChoice_%d" % i)
 		_assert(choice != null, "country choice exists: %d" % i)

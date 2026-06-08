@@ -166,11 +166,11 @@ func _build_event_card() -> void:
 	var card = _make_piece("EventCard", board_layout["event_pos"], board_layout["event_size"], Color(0.13, 0.085, 0.040, 0.94), WARN, 2, "card")
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.rotation_degrees = -0.4
-	card.add_child(_make_icon("world_demand_globe", Vector2(18, 52), Vector2(58, 58), WARN))
-	_add_label_to(card, "EventCaption", "公開イベント", Vector2(86, 12), Vector2(170, 20), 13, WARN.lightened(0.2))
-	_add_label_to(card, "EventTitle", "", Vector2(86, 36), Vector2(178, 34), 19, TEXT)
-	_add_label_to(card, "EventMessage", "", Vector2(86, 72), Vector2(178, 46), 13, TEXT, true)
-	_add_label_to(card, "EventDeck", "", Vector2(86, 118), Vector2(160, 20), 13, TEXT)
+	card.add_child(_make_icon("world_demand_globe", Vector2(14, 46), Vector2(50, 50), WARN))
+	_add_label_to(card, "EventCaption", "公開イベント", Vector2(0, 10), Vector2(card.size.x, 20), 13, WARN.lightened(0.2))
+	_add_label_to(card, "EventTitle", "", Vector2(68, 34), Vector2(card.size.x - 78, 34), 17, TEXT, true)
+	_add_label_to(card, "EventMessage", "", Vector2(68, 70), Vector2(card.size.x - 78, 38), 11, TEXT, true)
+	_add_label_to(card, "EventDeck", "", Vector2(68, 108), Vector2(card.size.x - 78, 18), 11, TEXT)
 
 func _build_world_tracks() -> void:
 	var panel = _make_piece("WorldPanel", board_layout["world_panel_pos"], board_layout["world_panel_size"], Color(0.030, 0.035, 0.034, 0.70), BLUE.lightened(0.05), 2, "plaque")
@@ -182,15 +182,15 @@ func _build_world_tracks() -> void:
 	for i in range(WORLD_TRACKS.size()):
 		var key: String = WORLD_TRACKS[i]
 		var tile_pos := start + Vector2(step.x * i, 0)
-		var tile = _make_piece("WorldTrack_%s" % key, tile_pos, board_layout["world_track_size"], Color(0.020, 0.019, 0.016, 0.72), BLUE, 1, "plaque")
+		var tile = _make_piece("WorldTrack_%s" % key, tile_pos, board_layout["world_track_size"], Color(0.020, 0.019, 0.016, 0.72), BLUE, 1, "card")
 		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tile.add_child(_make_icon(UiCatalogScript.track_token(key), Vector2(7, 6), Vector2(44, 44), Color.WHITE, "TrackIcon"))
-		var label := _add_label_to(tile, "TrackLabel", _world_short_name(key), Vector2(0, 50), Vector2(tile.size.x, 30), 10, TEXT, true)
+		tile.add_child(_make_icon(UiCatalogScript.track_token(key), Vector2(tile.size.x * 0.5 - 22, 7), Vector2(44, 44), Color.WHITE, "TrackIcon"))
+		var label := _add_label_to(tile, "TrackLabel", _world_short_name(key), Vector2(6, 50), Vector2(tile.size.x - 12, 26), 13, TEXT, true)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		var rail := Control.new()
 		rail.name = "TrackRail"
-		rail.position = Vector2(tile.size.x * 0.5 - 5, 78)
-		rail.size = Vector2(10, tile.size.y - 86)
+		rail.position = Vector2(tile.size.x * 0.5 - 43, tile.size.y - 23)
+		rail.size = Vector2(86, 13)
 		tile.add_child(rail)
 
 func _build_agenda_tiles() -> void:
@@ -203,12 +203,12 @@ func _build_agenda_tiles() -> void:
 		var item: Dictionary = AGENDA[i]
 		var tile = _make_piece("Agenda_%s" % item["tag"], start + step * i, board_layout["agenda_size"], Color(0.15, 0.105, 0.055, 0.92), BOARD_LINE, 2, "card")
 		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_add_label_to(tile, "AgendaIcon", String(item["icon"]), Vector2(0, 6), Vector2(tile.size.x, 24), 20, WARN.lightened(0.05))
-		_add_label_to(tile, "AgendaName", String(item["name"]), Vector2(0, 31), Vector2(tile.size.x, 20), 12, TEXT)
+		_add_label_to(tile, "AgendaIcon", String(item["icon"]), Vector2(0, 5), Vector2(tile.size.x, 25), 22, WARN.lightened(0.05))
+		_add_label_to(tile, "AgendaName", String(item["name"]), Vector2(0, 31), Vector2(tile.size.x, 22), 13, TEXT)
 		var pips := Control.new()
 		pips.name = "AgendaPips"
-		pips.position = Vector2(20, 55)
-		pips.size = Vector2(64, 8)
+		pips.position = Vector2(24, 57)
+		pips.size = Vector2(70, 8)
 		tile.add_child(pips)
 
 func _build_country_seats() -> void:
@@ -227,25 +227,25 @@ func _build_country_seats() -> void:
 		seat.pressed = func(country_index := i) -> void:
 			_on_country_selected(country_index)
 		var country = game.countries[i]
-		var title := _add_label_to(seat, "CountryTitle", "%s国" % UiCatalogScript.country_emblem(i), Vector2(12, 8), Vector2(44, 24), 22, accent.lightened(0.22))
+		var title := _add_label_to(seat, "CountryTitle", "%s国" % UiCatalogScript.country_emblem(i), Vector2(14, 8), Vector2(48, 26), 24, accent.lightened(0.22))
 		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var subtitle := _add_label_to(seat, "CountryType", country.display_name.substr(3, 16), Vector2(54, 9), Vector2(seat_size.x - 66, 20), 11, MUTED)
+		var subtitle := _add_label_to(seat, "CountryType", country.display_name.substr(3, 18), Vector2(62, 10), Vector2(seat_size.x - 76, 20), 12, MUTED)
 		subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 
-		var pressure = _make_child_piece(seat, "PressureCard", Vector2(12, 34), Vector2(seat_size.x * 0.39, seat_size.y - 48), Color(0.86, 0.76, 0.55, 0.96), accent, 1, "card")
-		var pressure_label := _add_label_to(pressure, "PressureLabel", "", Vector2(8, 7), pressure.size - Vector2(16, 14), 11, INK, true)
+		var pressure = _make_child_piece(seat, "PressureCard", Vector2(14, 36), Vector2(seat_size.x * 0.42, seat_size.y - 50), Color(0.86, 0.76, 0.55, 0.96), accent, 1, "card")
+		var pressure_label := _add_label_to(pressure, "PressureLabel", "", Vector2(9, 7), pressure.size - Vector2(18, 14), 12, INK, true)
 		pressure_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		country_pressure_labels.append(pressure_label)
 
-		var policy = _make_child_piece(seat, "PolicySlot", Vector2(seat_size.x * 0.43, 34), Vector2(seat_size.x * 0.34, seat_size.y - 48), Color(0.032, 0.038, 0.038, 0.94), accent, 2, "card")
-		policy.add_child(_make_icon("coordination_ring", Vector2(policy.size.x * 0.5 - 23, 8), Vector2(46, 46), Color(0.75, 0.68, 0.45, 0.72), "PolicyBackIcon"))
-		var policy_label := _add_label_to(policy, "PolicyLabel", "", Vector2(6, policy.size.y - 36), Vector2(policy.size.x - 12, 30), 11, TEXT, true)
+		var policy = _make_child_piece(seat, "PolicySlot", Vector2(seat_size.x * 0.47, 36), Vector2(seat_size.x * 0.31, seat_size.y - 50), Color(0.032, 0.038, 0.038, 0.94), accent, 2, "card")
+		policy.add_child(_make_icon("coordination_ring", Vector2(policy.size.x * 0.5 - 26, 8), Vector2(52, 52), Color(0.75, 0.68, 0.45, 0.72), "PolicyBackIcon"))
+		var policy_label := _add_label_to(policy, "PolicyLabel", "", Vector2(6, policy.size.y - 40), Vector2(policy.size.x - 12, 34), 12, TEXT, true)
 		country_policy_slots.append(policy)
 		country_policy_labels.append(policy_label)
 
-		var stamp = _make_child_piece(seat, "StampSlot", Vector2(seat_size.x - 58, 43), Vector2(46, 46), Color(0.020, 0.018, 0.014, 0.68), accent, 1, "circle")
-		stamp.add_child(_make_icon("bureaucrat_seal", Vector2(0, 0), Vector2(46, 46), Color.WHITE, "WorkerIcon"))
-		var stamp_label := _add_label_to(seat, "StampLabel", "担当印", Vector2(seat_size.x - 66, 90), Vector2(58, 18), 10, MUTED)
+		var stamp = _make_child_piece(seat, "StampSlot", Vector2(seat_size.x - 64, 44), Vector2(52, 52), Color(0.020, 0.018, 0.014, 0.68), accent, 1, "circle")
+		stamp.add_child(_make_icon("bureaucrat_seal", Vector2(0, 0), Vector2(52, 52), Color.WHITE, "WorkerIcon"))
+		var stamp_label := _add_label_to(seat, "StampLabel", "担当印", Vector2(seat_size.x - 72, 98), Vector2(64, 18), 11, MUTED)
 		stamp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		country_stamp_slots.append(stamp)
 		country_worker_icons.append(stamp.get_node("WorkerIcon"))
@@ -274,7 +274,7 @@ func _build_resolution_flow() -> void:
 	var panel = _make_piece("ResolutionFlow", flow_pos, flow_size, Color(0.055, 0.040, 0.026, 0.68), BOARD_LINE, 1, "plaque")
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_add_label_to(panel, "ResolutionFlowTitle", "解決処理", Vector2(10, 6), Vector2(68, 18), 12, WARN.lightened(0.18))
-	var names := ["圧力", "コスト", "国内", "世界", "デッキ"]
+	var names := ["圧力", "コスト", "国内", "世界", "デッキ", "合成"]
 	var step_w := (flow_size.x - 94.0) / float(names.size())
 	for i in range(names.size()):
 		var step = _make_child_piece(panel, "ResolutionStep_%d" % i, Vector2(82 + step_w * i, 8), Vector2(step_w - 8, 48), Color(0.030, 0.026, 0.020, 0.76), BOARD_LINE.darkened(0.18), 1, "card")
@@ -303,7 +303,7 @@ func _build_final_score_overlay() -> void:
 	var panel_pos := (screen - panel_size) * 0.5
 	final_score_panel = _make_piece("FinalScoreOverlay", panel_pos, panel_size, Color(0.055, 0.040, 0.026, 0.96), BOARD_LINE, 3, "plaque")
 	final_score_panel.z_index = 60
-	final_score_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	final_score_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_add_label_to(final_score_panel, "FinalScoreTitle", "最終評議会", Vector2(0, 18), Vector2(panel_size.x, 34), 28, WARN.lightened(0.20))
 	_add_label_to(final_score_panel, "FinalScoreSubtitle", "8ターン後の順位とレガシー目標", Vector2(0, 54), Vector2(panel_size.x, 22), 14, MUTED)
 	var card_w := (panel_size.x - 82.0) / 4.0
@@ -318,7 +318,8 @@ func _build_final_score_overlay() -> void:
 	final_news_label = _add_label_to(news, "FinalNewsText", "", Vector2(18, 34), Vector2(news.size.x - 36, 72), 13, INK, true)
 	final_news_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	final_news_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-	_add_label_to(final_score_panel, "FinalRestartHint", "↺  再戦", Vector2(panel_size.x - 116, panel_size.y - 42), Vector2(88, 24), 15, TEXT)
+	var restart = _make_entry_button(final_score_panel, "FinalRestartButton", "↺  再戦", Vector2(panel_size.x - 128, panel_size.y - 48), Vector2(100, 34), _on_restart_pressed)
+	restart.set_skin(Color(0.060, 0.044, 0.028, 0.94), BOARD_LINE, 2, "card")
 	final_score_panel.visible = false
 
 func _build_turn_news_overlay() -> void:
@@ -365,10 +366,12 @@ func _build_title_overlay() -> void:
 	_add_label_to(memo, "TitleMemoText", "カード・担当印・世界トラックを卓上で読み、8ターン後のレガシー目標を競います。", Vector2(22, 18), Vector2(memo.size.x - 44, 68), 18, INK, true)
 	var start = _make_entry_button(title_overlay, "TitleStart", "開始", panel_pos + Vector2(panel_size.x * 0.5 - 102, panel_size.y - 112), Vector2(204, 62), _show_country_select)
 	_add_label_to(start, "StartHint", "国家を選ぶ", Vector2(0, 38), Vector2(start.size.x, 18), 11, MUTED)
-	var continue_token = _make_overlay_piece(title_overlay, "TitleContinue", panel_pos + Vector2(panel_size.x * 0.5 - 184, panel_size.y - 42), Vector2(132, 34), Color(0.036, 0.030, 0.022, 0.84), BOARD_LINE.darkened(0.25), 1, "card")
-	_add_label_to(continue_token, "ContinueText", "続きから", Vector2.ZERO, continue_token.size, 14, MUTED)
-	var settings_token = _make_overlay_piece(title_overlay, "TitleSettings", panel_pos + Vector2(panel_size.x * 0.5 + 52, panel_size.y - 42), Vector2(132, 34), Color(0.036, 0.030, 0.022, 0.84), BOARD_LINE.darkened(0.25), 1, "card")
-	_add_label_to(settings_token, "SettingsText", "設定", Vector2.ZERO, settings_token.size, 14, MUTED)
+	var continue_token = _make_overlay_piece(title_overlay, "TitleContinue", panel_pos + Vector2(panel_size.x * 0.5 - 206, panel_size.y - 42), Vector2(160, 34), Color(0.024, 0.022, 0.020, 0.72), BOARD_LINE.darkened(0.42), 1, "card")
+	continue_token.modulate = Color(1, 1, 1, 0.58)
+	_add_label_to(continue_token, "ContinueText", "続きから（準備中）", Vector2.ZERO, continue_token.size, 13, MUTED)
+	var settings_token = _make_overlay_piece(title_overlay, "TitleSettings", panel_pos + Vector2(panel_size.x * 0.5 + 46, panel_size.y - 42), Vector2(160, 34), Color(0.024, 0.022, 0.020, 0.72), BOARD_LINE.darkened(0.42), 1, "card")
+	settings_token.modulate = Color(1, 1, 1, 0.58)
+	_add_label_to(settings_token, "SettingsText", "設定（準備中）", Vector2.ZERO, settings_token.size, 13, MUTED)
 
 func _build_country_select_overlay() -> void:
 	var screen := _screen()
@@ -389,7 +392,7 @@ func _build_country_select_overlay() -> void:
 	var panel = _make_overlay_piece(country_select_overlay, "CountrySelectPlaque", panel_pos, panel_size, Color(0.060, 0.044, 0.028, 0.96), BOARD_LINE, 3, "plaque")
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_add_label_to(panel, "CountrySelectTitle", "国家選択", Vector2(0, 26), Vector2(panel_size.x, 40), 32, TEXT)
-	_add_label_to(panel, "CountrySelectSub", "担当する国家を選び、卓上の読み合いを始めます。", Vector2(0, 68), Vector2(panel_size.x, 26), 15, MUTED)
+	_add_label_to(panel, "CountrySelectSub", "最初に操作する視点国家を選びます。全国家を順に操作するホットシート進行です。", Vector2(0, 68), Vector2(panel_size.x, 26), 15, MUTED)
 	var card_gap := 16.0
 	var card_w := (panel_size.x - 72.0 - card_gap) / 2.0
 	var card_h := (panel_size.y - 152.0 - card_gap) / 2.0
@@ -539,11 +542,12 @@ func _rebuild_hand(animate: bool, origin := Vector2.INF) -> void:
 		if animate:
 			_animate_hand_deal(card_node, source, final_pos, 0.025 * i)
 
-func _make_policy_card(card: Dictionary, hand_index: int):
-	var country = game.countries[selected_country_index]
+func _make_policy_card(card: Dictionary, hand_index: int, display_country_index := -1):
+	var country_index := selected_country_index if display_country_index < 0 else display_country_index
+	var country = game.countries[country_index]
 	var selected: bool = not country.selected_policy.is_empty() and country.selected_policy.get("id", "") == card.get("id", "")
 	var face: Color = CARD_FACE if card.get("type", "") == "policy" else Color(0.16, 0.15, 0.12, 1.0)
-	var border: Color = COUNTRY_ACCENTS[selected_country_index] if selected else BOARD_LINE
+	var border: Color = COUNTRY_ACCENTS[country_index] if selected else BOARD_LINE
 	var card_size: Vector2 = board_layout.get("hand_card_size", Vector2(82, 108))
 	var card_node = BoardPieceScript.new()
 	card_node.name = "HandCard_%d" % hand_index
@@ -554,7 +558,7 @@ func _make_policy_card(card: Dictionary, hand_index: int):
 		if card.get("type", "") == "policy" and game.can_select_policy():
 			_on_policy_selected(selected_country_index, hand_index, card_node.position)
 	var medallion := minf(card_size.x * 0.58, 58.0)
-	card_node.add_child(_make_icon_medallion(UiCatalogScript.card_token(card), Vector2((card_size.x - medallion) * 0.5, 16), COUNTRY_ACCENTS[selected_country_index], medallion))
+	card_node.add_child(_make_icon_medallion(UiCatalogScript.card_token(card), Vector2((card_size.x - medallion) * 0.5, 16), COUNTRY_ACCENTS[country_index], medallion))
 	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(8, card_size.y - 42), Vector2(card_size.x - 16, 34), 13, INK if card.get("type", "") == "policy" else TEXT, true)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
@@ -600,13 +604,13 @@ func _refresh_world() -> void:
 			continue
 		var value := int(game.world.tracks.get(key, 0))
 		var color := TrackPresenterScript.track_color(key, value, _track_colors())
-		tile.set_skin(Color(0.020, 0.019, 0.016, 0.72), color, 1, "plaque")
+		tile.set_skin(Color(0.020, 0.019, 0.016, 0.72), color, 1, "card")
 		var rail := tile.get_node("TrackRail")
 		_clear_children(rail)
 		var filled := TrackPresenterScript.marker_count(key, value)
 		for i in range(7):
-			var y := (6 - i) * 8
-			rail.add_child(_make_pip(Vector2(1, y), 8, color if i < filled else TOKEN_EMPTY))
+			var x := i * 12.0
+			rail.add_child(_make_pip(Vector2(x, 0), 10, color if i < filled else TOKEN_EMPTY))
 		var icon: TextureRect = tile.get_node_or_null("TrackIcon")
 		if icon != null:
 			icon.modulate = color.lightened(0.20)
@@ -702,18 +706,23 @@ func _refresh_resolution_flow() -> void:
 	var country_effects := 0
 	var world_effects := 0
 	var mutations := 0
+	var macro_changes := 0
 	for item in items:
 		if bool(item.get("pressure_satisfied", false)):
 			satisfied += 1
-		costs += int(item.get("cost_count", 0))
-		country_effects += int(item.get("country_effect_count", 0))
-		world_effects += int(item.get("world_effect_count", 0))
+		costs += _as_dict(item.get("costs", {})).size()
+		country_effects += _diff_count(_as_dict(item.get("country_diffs", {})))
+		world_effects += _as_dict(item.get("world_diff", {})).size()
 		mutations += int(item.get("mutation_count", 0))
+	var macro: Dictionary = last_resolution_snapshot.get("macro", {})
+	if not macro.is_empty():
+		macro_changes = _diff_count(_as_dict(macro.get("country_diffs", {}))) + _as_dict(macro.get("world_diff", {})).size()
 	_set_resolution_step(0, "満 %d/%d" % [satisfied, items.size()] if has_items else "提出待ち", GOOD if satisfied == items.size() and has_items else WARN)
 	_set_resolution_step(1, "費 %d" % costs if has_items else "未判定", WARN if costs > 0 else MUTED)
 	_set_resolution_step(2, "国 %d" % country_effects if has_items else "未適用", GOOD if country_effects > 0 else MUTED)
 	_set_resolution_step(3, "世 %d" % world_effects if has_items else "未波及", BLUE if world_effects > 0 else MUTED)
 	_set_resolution_step(4, "変 %d" % mutations if has_items else "未変質", BAD if mutations > 0 else MUTED)
+	_set_resolution_step(5, "合 %d" % macro_changes if has_items else "未合成", WARN if macro_changes > 0 else MUTED)
 
 func _set_resolution_step(index: int, text: String, accent: Color) -> void:
 	if index < 0 or index >= resolution_step_nodes.size():
@@ -738,7 +747,7 @@ func _refresh_resolution_links() -> void:
 		return
 	var paths := []
 	var world_path_count := 0
-	var active_step := resolution_step_index if resolution_review_active else 4
+	var active_step := resolution_step_index if resolution_review_active else 5
 	for item in items:
 		var country_index := int(item.get("country_index", -1))
 		if country_index < 0 or country_index >= country_seats.size():
@@ -749,7 +758,7 @@ func _refresh_resolution_links() -> void:
 			paths.append(_resolution_path(0, _country_pressure_center(country_index), GOOD if bool(item.get("pressure_satisfied", false)) else BAD, "圧"))
 		if is_focus_country and _resolution_stage_visible(1, active_step):
 			paths.append(_resolution_path(1, _control_center(country_stamp_slots[country_index]), WARN, "費"))
-		if int(item.get("country_effect_count", 0)) > 0 and _resolution_stage_visible(2, active_step):
+		if _diff_count(_as_dict(item.get("country_diffs", {}))) > 0 and _resolution_stage_visible(2, active_step):
 			if is_focus_country:
 				paths.append(_resolution_path(2, _control_center(country_seats[country_index]), accent, "国"))
 			_add_result_chip("CountryResult_%d" % country_index, _control_center(country_seats[country_index]) + Vector2(-18, 42), "国", accent)
@@ -767,6 +776,17 @@ func _refresh_resolution_links() -> void:
 			if is_focus_country:
 				paths.append(_resolution_path(4, _control_center(country_seats[country_index]) + Vector2(0, 56), BAD, "変"))
 			_add_result_chip("DeckResult_%d" % country_index, _control_center(country_seats[country_index]) + Vector2(18, 42), "変", BAD)
+	var macro: Dictionary = last_resolution_snapshot.get("macro", {})
+	if not macro.is_empty() and _resolution_stage_visible(5, active_step):
+		var macro_world: Dictionary = macro.get("world_diff", {})
+		var macro_countries: Dictionary = macro.get("country_diffs", {})
+		if not macro_world.is_empty():
+			paths.append(_resolution_path(5, _control_center(board_layer.get_node("WorldPanel")), WARN, "合"))
+			_add_result_chip("MacroWorldResult", _control_center(board_layer.get_node("WorldPanel")) + Vector2(0, 38), "合", WARN)
+		for key in macro_countries.keys():
+			var country_index := int(key)
+			if country_index >= 0 and country_index < country_seats.size():
+				_add_result_chip("MacroCountryResult_%d" % country_index, _control_center(country_seats[country_index]) + Vector2(0, -36), "合", COUNTRY_ACCENTS[country_index])
 	resolution_overlay.set_paths(paths)
 
 func _resolution_stage_visible(stage: int, active_step: int) -> bool:
@@ -875,13 +895,13 @@ func _start_resolution_review(previous_phase: int) -> void:
 	resolution_review_active = true
 	resolution_step_index = 0
 	game.revealed_policies = true
-	game.phase_index = GameStateScript.PHASES.find("resolution")
+	_set_game_phase("resolution")
 	game.log.append("全政策が同時公開されました。")
 	_refresh_board(true)
 	_animate_phase_marker(previous_phase, game.phase_index)
 
 func _advance_resolution_review() -> void:
-	if resolution_step_index < 4:
+	if resolution_step_index < 5:
 		resolution_step_index += 1
 		_refresh_board(true)
 		if resolution_step_index >= 0 and resolution_step_index < resolution_step_nodes.size():
@@ -908,11 +928,13 @@ func _on_recommend_pressed() -> void:
 				continue
 			game.select_policy(i, int(recommendation["hand_index"]))
 	elif game.can_assign_worker():
+		_ensure_worker_confirmations()
 		for i in range(game.countries.size()):
 			var recommendation := PolicyRecommenderScript.recommend_for_country(game, i)
 			if recommendation.is_empty():
 				continue
 			game.assign_worker(i, String(recommendation["worker"]))
+			worker_assignment_confirmed[i] = true
 	_refresh_board(true)
 
 func _on_restart_pressed() -> void:
@@ -959,7 +981,7 @@ func _on_policy_selected(country_index: int, hand_index: int, from_pos: Vector2)
 	_refresh_board(false)
 	var card_size: Vector2 = board_layout.get("hand_card_size", Vector2(82, 108))
 	var slot: Control = country_policy_slots[country_index]
-	_animate_card_to_slot(card, from_pos, slot.global_position + (slot.size - card_size) * 0.5)
+	_animate_card_to_slot(country_index, card, from_pos, slot.global_position + (slot.size - card_size) * 0.5)
 
 func _on_worker_assigned(country_index: int, worker_id: String, from_pos: Vector2) -> void:
 	if not game.can_assign_worker():
@@ -1005,11 +1027,11 @@ func _all_workers_confirmed() -> bool:
 func _enter_worker_assignment() -> void:
 	_reset_worker_confirmations()
 	selected_country_index = 0
-	game.phase_index = GameStateScript.PHASES.find("worker_assignment")
+	_set_game_phase("worker_assignment")
 
 func _enter_simultaneous_reveal() -> void:
 	selected_country_index = 0
-	game.phase_index = GameStateScript.PHASES.find("simultaneous_reveal")
+	_set_game_phase("simultaneous_reveal")
 
 func _reset_worker_confirmations() -> void:
 	worker_assignment_confirmed.clear()
@@ -1020,6 +1042,11 @@ func _ensure_worker_confirmations() -> void:
 	if worker_assignment_confirmed.size() == game.countries.size():
 		return
 	_reset_worker_confirmations()
+
+func _set_game_phase(phase_key: String) -> void:
+	var index := GameStateScript.PHASES.find(phase_key)
+	if index >= 0:
+		game.phase_index = index
 
 func _add_action_token(node_name: String, text: String, position: Vector2, size: Vector2, action: Callable):
 	var token = _make_piece(node_name, position, size, Color(0.05, 0.038, 0.024, 0.72), BOARD_LINE, 1, "circle")
@@ -1156,14 +1183,14 @@ func _clear_children(node: Node) -> void:
 	for child in node.get_children():
 		child.queue_free()
 
-func _animate_card_to_slot(card: Dictionary, from_pos: Vector2, to_pos: Vector2) -> void:
-	var ghost = _make_policy_card(card, -1)
+func _animate_card_to_slot(country_index: int, card: Dictionary, from_pos: Vector2, to_pos: Vector2) -> void:
+	var ghost = _make_policy_card(card, -1, country_index)
 	ghost.name = "PolicyGhost"
 	ghost.position = from_pos
 	ghost.rotation_degrees = -5
 	board_layer.add_child(ghost)
 	var card_center: Vector2 = ghost.size * 0.5
-	_animate_trail(from_pos + card_center, to_pos + card_center, COUNTRY_ACCENTS[selected_country_index], 0.28)
+	_animate_trail(from_pos + card_center, to_pos + card_center, COUNTRY_ACCENTS[country_index], 0.28)
 	_animate_move_and_fade(ghost, to_pos, 0.28)
 
 func _animate_token_to_seat(token_name: String, from_pos: Vector2, to_pos: Vector2, tint: Color) -> void:
@@ -1270,26 +1297,25 @@ func _resolution_items() -> Array:
 	return _capture_resolution_snapshot().get("items", [])
 
 func _capture_resolution_snapshot() -> Dictionary:
-	var items := []
-	for i in range(game.countries.size()):
-		var country = game.countries[i]
-		if country.selected_policy.is_empty():
-			continue
-		var policy: Dictionary = country.selected_policy
-		var effects: Dictionary = policy.get("effects", {})
-		items.append({
-			"country_index": i,
-			"country": "%s国" % UiCatalogScript.country_emblem(i),
-			"policy": UiCatalogScript.short_card_name(policy),
-			"worker": country.assigned_worker,
-			"pressure_satisfied": _policy_satisfies_pressure(country, policy),
-			"cost_count": policy.get("costs", {}).size(),
-			"country_effect_count": effects.get("country", {}).size(),
-			"world_effect_count": effects.get("world", {}).size(),
-			"world_effect_keys": effects.get("world", {}).keys(),
-			"mutation_count": _mutation_count(policy)
-		})
-	return {"items": items}
+	var outcome: Dictionary = game.preview_resolution_outcome()
+	for item_value in outcome.get("items", []):
+		var item: Dictionary = item_value
+		var policy: Dictionary = item.get("policy", {})
+		item["country"] = "%s国" % UiCatalogScript.country_emblem(int(item.get("country_index", 0)))
+		item["policy_name"] = UiCatalogScript.short_card_name(policy)
+	return outcome
+
+func _diff_count(diffs: Dictionary) -> int:
+	var count := 0
+	for value in diffs.values():
+		if value is Dictionary:
+			count += _as_dict(value).size()
+		else:
+			count += 1
+	return count
+
+func _as_dict(value) -> Dictionary:
+	return value if value is Dictionary else {}
 
 func _policy_satisfies_pressure(country, policy: Dictionary) -> bool:
 	var pressure: Dictionary = country.domestic_pressure
@@ -1321,7 +1347,7 @@ func _phase_short_name(key: String) -> String:
 	return names.get(key, key)
 
 func _resolution_step_name(index: int) -> String:
-	var names := ["国内圧力", "コスト", "国内効果", "世界波及", "デッキ変質"]
+	var names := ["国内圧力", "コスト", "国内効果", "世界波及", "デッキ変質", "マクロ合成"]
 	if index < 0 or index >= names.size():
 		return "解決処理"
 	return names[index]

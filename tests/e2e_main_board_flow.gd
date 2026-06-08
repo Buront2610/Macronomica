@@ -57,14 +57,16 @@ func _run() -> void:
 	_assert(ui.resolution_step_index == 0, "resolution review starts at pressure step")
 	_assert(not ui.last_resolution_snapshot.is_empty(), "resolution keeps a board snapshot after simultaneous reveal")
 	_assert(ui.last_resolution_snapshot.get("items", []).size() == 4, "resolution snapshot covers all four countries")
-	_assert(ui.resolution_step_nodes.size() == 5, "resolution flow shows five board steps")
+	_assert(ui.resolution_step_nodes.size() == 6, "resolution flow shows six board steps")
 	_assert(ui.resolution_overlay != null and ui.resolution_overlay.paths.size() >= 1, "resolution overlay draws focused board result links")
+	var first_item: Dictionary = ui.last_resolution_snapshot.get("items", [])[0]
+	_assert(first_item.has("country_diffs") and first_item.has("world_diff"), "resolution snapshot is based on actual outcome diffs")
 	for i in range(ui.resolution_step_nodes.size()):
 		var step: Control = ui.resolution_step_nodes[i]
 		_assert(_control_min_size(step, Vector2(70, 34)), "resolution step remains readable: %s" % step.name)
 		var label: Label = ui.resolution_step_labels[i]
 		_assert(not label.text.is_empty() and label.text != "-", "resolution step has visible result text: %s" % step.name)
-	for expected_step in range(1, 5):
+	for expected_step in range(1, 6):
 		ui._on_advance_pressed()
 		await process_frame
 		_assert(ui.resolution_review_active, "resolution review remains active at step %d" % expected_step)
