@@ -243,7 +243,7 @@ func _build_country_seats() -> void:
 		country_policy_labels.append(policy_label)
 
 		var stamp = _make_child_piece(seat, "StampSlot", Vector2(seat_size.x - 64, 44), Vector2(52, 52), Color(0.020, 0.018, 0.014, 0.68), accent, 1, "circle")
-		stamp.add_child(_make_icon("bureaucrat_seal", Vector2(0, 0), Vector2(52, 52), Color.WHITE, "WorkerIcon"))
+		stamp.add_child(_make_icon("bureaucrat_seal", Vector2(4, 4), Vector2(44, 44), Color.WHITE, "WorkerIcon"))
 		var stamp_label := _add_label_to(seat, "StampLabel", "担当印", Vector2(seat_size.x - 72, 98), Vector2(64, 18), 11, MUTED)
 		stamp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		country_stamp_slots.append(stamp)
@@ -516,7 +516,7 @@ func _build_worker_tokens() -> void:
 		token.pressed = func(worker_id := worker) -> void:
 			if game.can_assign_worker():
 				_on_worker_assigned(selected_country_index, worker_id, token.position)
-		token.add_child(_make_icon(UiCatalogScript.worker_token(worker), Vector2(0, 0), token_size, Color.WHITE))
+		token.add_child(_make_icon(UiCatalogScript.worker_token(worker), Vector2(5, 5), token_size - Vector2(10, 10), Color.WHITE))
 		worker_nodes[worker] = token
 
 func _rebuild_hand(animate: bool, origin := Vector2.INF) -> void:
@@ -556,8 +556,18 @@ func _make_policy_card(card: Dictionary, hand_index: int, display_country_index 
 	card_node.pressed = func() -> void:
 		if card.get("type", "") == "policy" and game.can_select_policy():
 			_on_policy_selected(selected_country_index, hand_index, card_node.position)
-	var medallion := minf(card_size.x * 0.58, 58.0)
-	card_node.add_child(_make_icon_medallion(UiCatalogScript.card_token(card), Vector2((card_size.x - medallion) * 0.5, 16), COUNTRY_ACCENTS[country_index], medallion))
+	var socket_size := minf(card_size.x * 0.66, 64.0)
+	var socket = _make_child_piece(
+		card_node,
+		"CardTokenSocket",
+		Vector2((card_size.x - socket_size) * 0.5, 10),
+		Vector2(socket_size, socket_size),
+		Color(0.026, 0.024, 0.020, 0.88),
+		COUNTRY_ACCENTS[country_index],
+		1,
+		"circle"
+	)
+	socket.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2(4, 4), socket.size - Vector2(8, 8), Color.WHITE))
 	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(8, card_size.y - 42), Vector2(card_size.x - 16, 34), 13, INK if card.get("type", "") == "policy" else TEXT, true)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
