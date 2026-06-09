@@ -104,6 +104,32 @@ function Export-Token {
     $out.Dispose()
 }
 
+function Export-ScaledToken {
+    param(
+        [string] $SourcePath,
+        [string] $Path,
+        [int] $Size
+    )
+
+    $source = [System.Drawing.Bitmap]::new($SourcePath)
+    try {
+        $out = New-TokenBitmap -Size $Size
+        $graphics = New-TokenGraphics -Bitmap $out
+        $graphics.DrawImage(
+            $source,
+            [System.Drawing.Rectangle]::new(0, 0, $Size, $Size),
+            [System.Drawing.Rectangle]::new(0, 0, $source.Width, $source.Height),
+            [System.Drawing.GraphicsUnit]::Pixel
+        )
+        $graphics.Dispose()
+        $out.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
+        $out.Dispose()
+    }
+    finally {
+        $source.Dispose()
+    }
+}
+
 function New-TokenBitmap {
     param([int] $Size)
 
@@ -448,8 +474,9 @@ try {
                 [float]$side,
                 [float]$side
             )
-            Export-Token -Source $atlas -Crop $crop -Path (Join-Path $tokenDir "$name.png") -Size 256
-            Export-Token -Source $atlas -Crop $crop -Path (Join-Path $smallDir "$name.png") -Size 64
+            $fullPath = Join-Path $tokenDir "$name.png"
+            Export-Token -Source $atlas -Crop $crop -Path $fullPath -Size 256
+            Export-ScaledToken -SourcePath $fullPath -Path (Join-Path $smallDir "$name.png") -Size 64
         }
     }
 }

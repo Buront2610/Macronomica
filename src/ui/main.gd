@@ -60,6 +60,7 @@ var country_worker_icons: Array = []
 var country_pressure_labels: Array = []
 var country_chip_racks: Array = []
 var hand_nodes: Array = []
+var hand_coin_nodes: Array = []
 var worker_nodes := {}
 var policy_slot
 var policy_slot_label: Label
@@ -526,25 +527,33 @@ func _rebuild_hand(animate: bool, origin := Vector2.INF) -> void:
 	for node in hand_nodes:
 		node.queue_free()
 	hand_nodes.clear()
+	for node in hand_coin_nodes:
+		node.queue_free()
+	hand_coin_nodes.clear()
 	var country = game.countries[selected_country_index]
 	var hand_origin: Vector2 = board_layout["hand_origin"]
 	var hand_step: Vector2 = board_layout["hand_step"]
+	var card_size: Vector2 = board_layout.get("hand_card_size", Vector2(82, 108))
 	var source := origin
 	if source == Vector2.INF and selected_country_index < country_seats.size():
 		source = country_seats[selected_country_index].position + Vector2(60, 46)
 	for i in range(country.hand.size()):
 		var card: Dictionary = country.hand[i]
-		var card_node = _make_policy_card(card, i)
+		var card_node = _make_policy_card(card, i, -1, false)
 		var final_pos := hand_origin + hand_step * i
 		card_node.position = final_pos
 		card_node.rotation_degrees = 0.0
 		card_node.z_index = 12
 		board_layer.add_child(card_node)
 		hand_nodes.append(card_node)
+		var coin_node = _make_hand_card_coin(card, final_pos, card_size)
+		board_layer.add_child(coin_node)
+		hand_coin_nodes.append(coin_node)
 		if animate:
 			_animate_hand_deal(card_node, source, final_pos, 0.025 * i)
+			_animate_hand_deal(coin_node, source + coin_node.position - final_pos, coin_node.position, 0.025 * i)
 
-func _make_policy_card(card: Dictionary, hand_index: int, display_country_index := -1):
+func _make_policy_card(card: Dictionary, hand_index: int, display_country_index := -1, include_coin := true):
 	var country_index := selected_country_index if display_country_index < 0 else display_country_index
 	var country = game.countries[country_index]
 	var selected: bool = not country.selected_policy.is_empty() and country.selected_policy.get("id", "") == card.get("id", "")
@@ -559,17 +568,32 @@ func _make_policy_card(card: Dictionary, hand_index: int, display_country_index 
 	card_node.pressed = func() -> void:
 		if card.get("type", "") == "policy" and game.can_select_policy():
 			_on_policy_selected(selected_country_index, hand_index, card_node.position)
-	var socket_size := minf(card_size.x * 0.68, 66.0)
-	var socket := Control.new()
-	socket.name = "CardTokenSocket"
-	socket.position = _snap_vec(Vector2((card_size.x - socket_size) * 0.5, 10))
-	socket.size = _snap_vec(Vector2(socket_size, socket_size))
-	socket.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card_node.add_child(socket)
-	socket.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2.ZERO, socket.size, Color.WHITE))
+	if include_coin:
+		var coin_size := minf(card_size.x * 0.68, 66.0)
+		var coin_layer := Control.new()
+		coin_layer.name = "CardCoinLayer"
+		coin_layer.position = _snap_vec(Vector2((card_size.x - coin_size) * 0.5, 10))
+		coin_layer.size = _snap_vec(Vector2(coin_size, coin_size))
+		coin_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		coin_layer.z_index = 4
+		card_node.add_child(coin_layer)
+		coin_layer.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2.ZERO, coin_layer.size, Color.WHITE, "CardCoin"))
 	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(8, card_size.y - 42), Vector2(card_size.x - 16, 34), 13, INK if card.get("type", "") == "policy" else TEXT, true)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
+
+func _make_hand_card_coin(card: Dictionary, card_position: Vector2, card_size: Vector2) -> TextureRect:
+	var coin_size := minf(card_size.x * 0.75, 78.0)
+	var coin := _make_icon(
+		UiCatalogScript.card_token(card),
+		card_position + Vector2((card_size.x - coin_size) * 0.5, 6),
+		Vector2(coin_size, coin_size),
+		Color.WHITE,
+		"HandCardCoin",
+		true
+	)
+	coin.z_index = 13
+	return coin
 
 func _refresh_board(animate: bool) -> void:
 	if board_layer == null:
@@ -1124,14 +1148,14 @@ func _make_child_piece(parent: Control, node_name: String, position: Vector2, pi
 	parent.add_child(piece)
 	return piece
 
-func _make_icon(token_name: String, position: Vector2, icon_size: Vector2, tint: Color, node_name := "") -> TextureRect:
+func _make_icon(token_name: String, position: Vector2, icon_size: Vector2, tint: Color, node_name := "", prefer_small := false) -> TextureRect:
 	var icon := TextureRect.new()
 	if not node_name.is_empty():
 		icon.name = node_name
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.custom_minimum_size = Vector2.ZERO
-	icon.texture = token_assets.texture(token_name)
+	icon.texture = token_assets.texture(token_name, prefer_small)
 	icon.position = _snap_vec(position)
 	icon.size = _snap_vec(icon_size)
 	icon.modulate = tint
