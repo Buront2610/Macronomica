@@ -23,6 +23,14 @@ if ($godot) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_board_interaction.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $godot.Source --headless --path $repo --script "res://tests/e2e_entry_flow.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $godot.Source --headless --path $repo --script "res://tests/e2e_main_board_flow.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $godot.Source --headless --path $repo --script "res://tests/e2e_resolution_outcome.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $godot.Source --headless --path $repo --script "res://tests/e2e_final_score_overlay.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_ui_components.gd"
     exit $LASTEXITCODE
 }
@@ -44,6 +52,14 @@ if (Test-Path $wingetGodot) {
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_board_runtime_contract.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_board_interaction.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $wingetGodot --headless --path $repo --script "res://tests/e2e_entry_flow.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $wingetGodot --headless --path $repo --script "res://tests/e2e_main_board_flow.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $wingetGodot --headless --path $repo --script "res://tests/e2e_resolution_outcome.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $wingetGodot --headless --path $repo --script "res://tests/e2e_final_score_overlay.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_ui_components.gd"
     exit $LASTEXITCODE

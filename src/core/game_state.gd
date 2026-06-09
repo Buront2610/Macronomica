@@ -180,6 +180,63 @@ func resolve_turn() -> void:
 func get_scores() -> Array:
 	return ScoringScript.final_scores(countries, world)
 
+func preview_resolution_outcome() -> Dictionary:
+	var preview_countries := []
+	for country in countries:
+		preview_countries.append(_clone_country(country))
+	var preview_world = _clone_world(world)
+	var outcome := {"items": [], "macro": {}, "log": []}
+	for country in preview_countries:
+		if country.selected_policy.is_empty():
+			for card in country.hand:
+				if card.get("type", "") == "policy":
+					country.selected_policy = card
+					break
+	for i in range(preview_countries.size()):
+		var country = preview_countries[i]
+		if country.selected_policy.is_empty():
+			continue
+		var policy: Dictionary = country.selected_policy
+		var pressure_before: Dictionary = country.tracks.duplicate(true)
+		var pressure_log := PublicChoiceResolverScript.resolve_pressure(country, policy)
+		var pressure_diff := _track_diff(pressure_before, country.tracks)
+		var before_countries := _country_track_snapshots(preview_countries)
+		var before_world: Dictionary = preview_world.tracks.duplicate(true)
+		var before_cards := _card_zone_snapshot(country, preview_world)
+		var cost_result: Dictionary = _preview_policy_cost(country, policy)
+		var policy_log: Array = PolicyResolverScript.resolve_policy(country, preview_countries, preview_world, policy, card_index)
+		var after_cards := _card_zone_snapshot(country, preview_world)
+		var country_diffs := _country_track_diffs(before_countries, preview_countries)
+		var world_diff := _track_diff(before_world, preview_world.tracks)
+		outcome["items"].append({
+			"country_index": i,
+			"policy": policy,
+			"worker": country.assigned_worker,
+			"pressure_satisfied": _policy_satisfies_pressure(country, policy),
+			"pressure_diff": pressure_diff,
+			"pressure_log": pressure_log,
+			"costs": cost_result.get("costs", {}),
+			"shortages": cost_result.get("shortages", {}),
+			"policy_success": bool(cost_result.get("success", false)),
+			"country_diffs": country_diffs,
+			"world_diff": world_diff,
+			"world_effect_keys": world_diff.keys(),
+			"mutation_count": _card_zone_change_count(before_cards, after_cards),
+			"policy_log": policy_log
+		})
+		outcome["log"].append(pressure_log)
+		outcome["log"].append_array(policy_log)
+	var macro_before_countries := _country_track_snapshots(preview_countries)
+	var macro_before_world: Dictionary = preview_world.tracks.duplicate(true)
+	var macro_log: Array = WorldResolverScript.apply_macro_feedback(preview_countries, preview_world)
+	outcome["macro"] = {
+		"country_diffs": _country_track_diffs(macro_before_countries, preview_countries),
+		"world_diff": _track_diff(macro_before_world, preview_world.tracks),
+		"log": macro_log
+	}
+	outcome["log"].append_array(macro_log)
+	return outcome
+
 func _start_turn() -> void:
 	phase_index = 0
 	revealed_policies = false
@@ -223,6 +280,95 @@ func _find_by_id(items: Array, id_value: String) -> Dictionary:
 		if String(item.get("country_id", item.get("id", ""))) == id_value:
 			return item
 	return {}
+
+func _clone_country(source) -> CountryStateScript:
+	var clone = CountryStateScript.new()
+	clone.country_id = source.country_id
+	clone.display_name = source.display_name
+	clone.summary = source.summary
+	clone.legacy_goal = source.legacy_goal
+	clone.modules = source.modules.duplicate(true)
+	clone.tags = source.tags.duplicate(true)
+	clone.cost_modifiers = source.cost_modifiers.duplicate(true)
+	clone.tracks = source.tracks.duplicate(true)
+	clone.deck = source.deck.duplicate(true)
+	clone.discard = source.discard.duplicate(true)
+	clone.hand = source.hand.duplicate(true)
+	clone.domestic_pressure = source.domestic_pressure.duplicate(true)
+	clone.selected_policy = source.selected_policy.duplicate(true)
+	clone.assigned_worker = source.assigned_worker
+	return clone
+
+func _clone_world(source) -> WorldStateScript:
+	var clone = WorldStateScript.new(source.tracks.duplicate(true))
+	clone.event_deck = source.event_deck.duplicate(true)
+	clone.event_discard = source.event_discard.duplicate(true)
+	clone.current_event = source.current_event.duplicate(true)
+	return clone
+
+func _preview_policy_cost(country, policy: Dictionary) -> Dictionary:
+	var clone = _clone_country(country)
+	return clone.pay_costs(policy.get("costs", {}))
+
+func _policy_satisfies_pressure(country, policy: Dictionary) -> bool:
+	var preferred: Array = country.domestic_pressure.get("demand", {}).get("preferred_policy_tags", [])
+	var tags: Array = policy.get("tags", [])
+	for tag in preferred:
+		if tags.has(tag):
+			return true
+	return false
+
+func _country_track_snapshots(country_list: Array) -> Array:
+	var result := []
+	for country in country_list:
+		result.append(country.tracks.duplicate(true))
+	return result
+
+func _country_track_diffs(before: Array, after: Array) -> Dictionary:
+	var result := {}
+	for i in range(mini(before.size(), after.size())):
+		var diff := _track_diff(before[i], after[i].tracks)
+		if not diff.is_empty():
+			result[i] = diff
+	return result
+
+func _track_diff(before: Dictionary, after: Dictionary) -> Dictionary:
+	var diff := {}
+	var keys := []
+	for key in before.keys():
+		if not keys.has(key):
+			keys.append(key)
+	for key in after.keys():
+		if not keys.has(key):
+			keys.append(key)
+	for key in keys:
+		var delta := int(after.get(key, 0)) - int(before.get(key, 0))
+		if delta != 0:
+			diff[key] = delta
+	return diff
+
+func _card_zone_snapshot(country, preview_world) -> Dictionary:
+	return {
+		"deck": _card_ids(country.deck),
+		"discard": _card_ids(country.discard),
+		"hand": _card_ids(country.hand),
+		"world_deck": _card_ids(preview_world.event_deck),
+		"world_discard": _card_ids(preview_world.event_discard)
+	}
+
+func _card_ids(cards: Array) -> Array:
+	var ids := []
+	for card in cards:
+		ids.append(String(card.get("id", "")))
+	ids.sort()
+	return ids
+
+func _card_zone_change_count(before: Dictionary, after: Dictionary) -> int:
+	var count := 0
+	for key in before.keys():
+		if before.get(key, []) != after.get(key, []):
+			count += 1
+	return count
 
 func _valid_country_index(country_index: int) -> bool:
 	return country_index >= 0 and country_index < countries.size()

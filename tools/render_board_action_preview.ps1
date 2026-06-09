@@ -7,11 +7,17 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repo = Resolve-Path (Join-Path $PSScriptRoot "..")
-$godot = Get-Command godot -ErrorAction SilentlyContinue
+$godot = Get-Command godot_console -ErrorAction SilentlyContinue
+if (-not $godot) {
+    $godot = Get-Command godot -ErrorAction SilentlyContinue
+}
 if ($godot) {
     $godotPath = $godot.Source
 } else {
-    $godotPath = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64.exe"
+    $godotPath = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64_console.exe"
+    if (-not (Test-Path $godotPath)) {
+        $godotPath = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64.exe"
+    }
 }
 if (-not (Test-Path $godotPath)) {
     throw "Godot executable was not found."

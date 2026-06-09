@@ -35,13 +35,16 @@ func _run() -> void:
 		_assert(ui.board_layer.get_node_or_null("WorldTrack_%s" % key) != null, "runtime board shows world track: %s" % key)
 	_assert(ui.score_panel != null and not ui.score_panel.text.is_empty(), "runtime board shows scores")
 	_assert(ui.log_panel != null and not ui.log_panel.text.is_empty(), "runtime board shows resolution log")
-	_assert(ui.country_detail_label != null and ui.country_detail_label.text.contains("GDP"), "runtime board shows selected country tracks")
+	_assert(ui.country_detail_label != null and ui.country_detail_label.text.contains("リスク"), "runtime board shows selected country risk summary")
+	_assert(not ui.country_detail_label.text.contains("GDP"), "runtime board detail avoids always-on numeric dashboards")
 
 	var viewport := ui.get_viewport_rect()
 	for seat in ui.country_seats:
 		_assert(_inside_viewport(seat, viewport), "country seat remains inside the board viewport: %s" % seat.name)
 	for card in ui.hand_nodes:
 		_assert(_inside_viewport(card, viewport), "hand card remains inside the board viewport: %s" % card.name)
+		_assert(not _controls_overlap(card, ui.board_layer.get_node("EventCard")), "hand card does not overlap event card: %s" % card.name)
+		_assert(not _controls_overlap(card, ui.policy_slot), "hand card does not overlap policy slot: %s" % card.name)
 		for seat in ui.country_seats:
 			_assert(not _controls_overlap(card, seat), "hand card does not overlap country seat: %s / %s" % [card.name, seat.name])
 	for key in ui.WORLD_TRACKS:
@@ -60,11 +63,35 @@ func _run() -> void:
 	var score_panel: Control = ui.board_layer.get_node("ScorePanel")
 	var log_panel: Control = ui.board_layer.get_node("LogPanel")
 	var country_detail_panel: Control = ui.board_layer.get_node("CountryDetailPanel")
+	var play_surface: Control = ui.board_layer.get_node("PlaySurface")
+	var world_panel: Control = ui.board_layer.get_node("WorldPanel")
+	_assert(play_surface.size.x >= viewport.size.x * 0.66, "play surface owns the screen width")
+	_assert(world_panel.size.x >= viewport.size.x * 0.58, "world board is visually dominant")
+	_assert(world_panel.size.y >= 178.0, "world board is tall enough to read")
+	_assert(log_panel.size.x * log_panel.size.y < viewport.size.x * viewport.size.y * 0.10, "newspaper rail does not dominate the board")
 	_assert(_inside_viewport(country_detail_panel, viewport), "country detail panel remains inside the board viewport")
+	_assert(country_detail_panel.size.y >= 88.0, "country detail panel remains large enough to read")
+	_assert(ui.country_detail_label.get_theme_font_size("font_size") >= 13, "country detail text remains readable")
+	for panel in [score_panel, log_panel, country_detail_panel]:
+		_assert(_inside_viewport(panel, viewport), "status panel remains inside the board viewport: %s" % panel.name)
+		_assert(not _controls_overlap(panel, ui.policy_slot), "status panel does not overlap policy slot: %s" % panel.name)
+		_assert(not _controls_overlap(panel, ui.board_layer.get_node("EventCard")), "status panel does not overlap event card: %s" % panel.name)
+		for seat in ui.country_seats:
+			_assert(not _controls_overlap(panel, seat), "status panel does not overlap country seat: %s / %s" % [panel.name, seat.name])
+		for card in ui.hand_nodes:
+			_assert(not _controls_overlap(panel, card), "status panel does not overlap hand card: %s / %s" % [panel.name, card.name])
+		for key in ui.WORLD_TRACKS:
+			var track: Control = ui.board_layer.get_node("WorldTrack_%s" % key)
+			_assert(not _controls_overlap(panel, track), "status panel does not overlap world track: %s / %s" % [panel.name, track.name])
 	for i in range(ui.AGENDA.size()):
 		var agenda: Control = ui.board_layer.get_node("Agenda_%s" % String(ui.AGENDA[i]["tag"]))
 		_assert(not _controls_overlap(score_panel, agenda), "score panel does not overlap agenda: %s" % agenda.name)
 		_assert(not _controls_overlap(log_panel, agenda), "log panel does not overlap agenda: %s" % agenda.name)
+	for key in ui.WORLD_TRACKS:
+		var track: Control = ui.board_layer.get_node("WorldTrack_%s" % key)
+		var rail: Control = track.get_node("TrackRail")
+		_assert(track.size.x > track.size.y, "world crisis card is horizontal, not a vertical meter: %s" % key)
+		_assert(rail.size.x > rail.size.y * 4.0, "world crisis pips run horizontally: %s" % key)
 
 	print("Smoke board runtime contract passed.")
 	quit(0)

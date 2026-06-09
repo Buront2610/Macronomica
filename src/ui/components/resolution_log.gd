@@ -1,7 +1,7 @@
 extends RichTextLabel
 class_name ResolutionLog
 
-const VISIBLE_LINES := 22
+const VISIBLE_LINES := 14
 
 func setup(min_height: float = 0.0) -> void:
 	bbcode_enabled = true
