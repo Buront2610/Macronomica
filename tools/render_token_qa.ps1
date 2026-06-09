@@ -25,6 +25,56 @@ function New-Graphics {
     return $graphics
 }
 
+function Test-GoldRimPixel {
+    param([System.Drawing.Color] $Color)
+
+    if ($Color.A -lt 20) {
+        return $false
+    }
+    $max = [Math]::Max($Color.R, [Math]::Max($Color.G, $Color.B))
+    $min = [Math]::Min($Color.R, [Math]::Min($Color.G, $Color.B))
+    $chroma = $max - $min
+    return $Color.R -gt 92 -and $Color.G -gt 58 -and $Color.R -gt ($Color.B + 26) -and $Color.G -gt ($Color.B + 8) -and $chroma -gt 32
+}
+
+function Measure-AtlasRim {
+    param(
+        [System.Drawing.Bitmap] $Bitmap,
+        [double] $GridCenterX,
+        [double] $GridCenterY
+    )
+
+    $side = 190
+    $left = [int][Math]::Round($GridCenterX - $side / 2.0)
+    $top = [int][Math]::Round($GridCenterY - $side / 2.0)
+    $minX = $Bitmap.Width
+    $minY = $Bitmap.Height
+    $maxX = -1
+    $maxY = -1
+    for ($y = $top; $y -lt $top + $side; $y++) {
+        for ($x = $left; $x -lt $left + $side; $x++) {
+            if ($x -lt 0 -or $y -lt 0 -or $x -ge $Bitmap.Width -or $y -ge $Bitmap.Height) {
+                continue
+            }
+            if (Test-GoldRimPixel $Bitmap.GetPixel($x, $y)) {
+                if ($x -lt $minX) { $minX = $x }
+                if ($x -gt $maxX) { $maxX = $x }
+                if ($y -lt $minY) { $minY = $y }
+                if ($y -gt $maxY) { $maxY = $y }
+            }
+        }
+    }
+    if ($maxX -lt $minX -or $maxY -lt $minY) {
+        throw "Could not detect token rim near $GridCenterX, $GridCenterY."
+    }
+    return [PSCustomObject]@{
+        CenterX = ($minX + $maxX) / 2.0
+        CenterY = ($minY + $maxY) / 2.0
+        Width = $maxX - $minX + 1
+        Height = $maxY - $minY + 1
+    }
+}
+
 function Render-ContactSheet {
     param([string[]] $TokenNames)
 
@@ -81,14 +131,17 @@ function Render-SourceComparison {
             $baseX = 8 + $pair * 360
             $baseY = 8 + $row * 184
             $name = $TokenNames[$i]
+            $gridX = $xCenters[$i % 6]
+            $gridY = $yCenters[[Math]::Floor($i / 6)]
+            $rim = Measure-AtlasRim -Bitmap $Atlas -GridCenterX $gridX -GridCenterY $gridY
             $src = [System.Drawing.RectangleF]::new(
-                [float]($xCenters[$i % 6] - $side / 2.0),
-                [float]($yCenters[[Math]::Floor($i / 6)] - $side / 2.0),
+                [float]($rim.CenterX - $side / 2.0),
+                [float]($rim.CenterY - $side / 2.0),
                 [float]$side,
                 [float]$side
             )
             $graphics.DrawString($name, $font, [System.Drawing.Brushes]::White, $baseX, $baseY)
-            $graphics.DrawString("source crop 230", $small, [System.Drawing.Brushes]::Wheat, $baseX + 22, $baseY + 14)
+            $graphics.DrawString("rim crop 230", $small, [System.Drawing.Brushes]::Wheat, $baseX + 22, $baseY + 14)
             $graphics.DrawImage($Atlas, [System.Drawing.RectangleF]::new($baseX, $baseY + 30, 118, 118), $src, [System.Drawing.GraphicsUnit]::Pixel)
             $graphics.DrawRectangle($blue, $baseX, $baseY + 30, 118, 118)
             $graphics.DrawLine($red, $baseX + 59, $baseY + 30, $baseX + 59, $baseY + 148)
@@ -134,11 +187,14 @@ function Render-SourceCropSheet {
     try {
         for ($row = 0; $row -lt 4; $row++) {
             for ($col = 0; $col -lt 6; $col++) {
-                $x = $xCenters[$col] - $side / 2.0
-                $y = $yCenters[$row] - $side / 2.0
+                $gridX = $xCenters[$col]
+                $gridY = $yCenters[$row]
+                $rim = Measure-AtlasRim -Bitmap $Atlas -GridCenterX $gridX -GridCenterY $gridY
+                $x = $rim.CenterX - $side / 2.0
+                $y = $rim.CenterY - $side / 2.0
                 $graphics.DrawRectangle($cropPen, [single]$x, [single]$y, [single]$side, [single]$side)
-                $graphics.DrawLine($centerPen, [single]$xCenters[$col], [single]($y + 10), [single]$xCenters[$col], [single]($y + $side - 10))
-                $graphics.DrawLine($centerPen, [single]($x + 10), [single]$yCenters[$row], [single]($x + $side - 10), [single]$yCenters[$row])
+                $graphics.DrawLine($centerPen, [single]$rim.CenterX, [single]($y + 10), [single]$rim.CenterX, [single]($y + $side - 10))
+                $graphics.DrawLine($centerPen, [single]($x + 10), [single]$rim.CenterY, [single]($x + $side - 10), [single]$rim.CenterY)
             }
         }
         $sheet.Save((Join-Path $outDir "token-crop-source.png"), [System.Drawing.Imaging.ImageFormat]::Png)

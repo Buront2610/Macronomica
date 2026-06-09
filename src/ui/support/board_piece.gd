@@ -21,7 +21,7 @@ func _draw() -> void:
 	if shape == "circle":
 		var radius := minf(size.x, size.y) * 0.5
 		var center := size * 0.5
-		draw_circle(center + Vector2(4, 5), radius, Color(0, 0, 0, 0.26))
+		draw_circle(center, radius - 1.0, Color(0, 0, 0, 0.18))
 		draw_circle(center, radius, fill)
 		draw_arc(center, radius - border_width * 0.5, 0.0, TAU, 72, border, border_width, true)
 		return

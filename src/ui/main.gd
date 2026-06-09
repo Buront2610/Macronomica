@@ -183,12 +183,14 @@ func _build_world_tracks() -> void:
 		var tile_pos := start + Vector2(step.x * i, 0)
 		var tile = _make_piece("WorldTrack_%s" % key, tile_pos, board_layout["world_track_size"], Color(0.020, 0.019, 0.016, 0.72), BLUE, 1, "card")
 		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tile.add_child(_make_icon(UiCatalogScript.track_token(key), Vector2(tile.size.x * 0.5 - 22, 7), Vector2(44, 44), Color.WHITE, "TrackIcon"))
-		var label := _add_label_to(tile, "TrackLabel", _world_short_name(key), Vector2(6, 50), Vector2(tile.size.x - 12, 26), 13, TEXT, true)
+		var icon_size: float = minf(68.0, tile.size.y - 40.0)
+		tile.add_child(_make_icon(UiCatalogScript.track_token(key), Vector2(tile.size.x * 0.5 - icon_size * 0.5, 8), Vector2(icon_size, icon_size), Color.WHITE, "TrackIcon"))
+		var label_y: float = icon_size + 14.0
+		var label := _add_label_to(tile, "TrackLabel", _world_short_name(key), Vector2(6, label_y), Vector2(tile.size.x - 12, 22), 14, TEXT, true)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		var rail := Control.new()
 		rail.name = "TrackRail"
-		rail.position = Vector2(tile.size.x * 0.5 - 43, tile.size.y - 23)
+		rail.position = Vector2(tile.size.x * 0.5 - 43, tile.size.y - 19)
 		rail.size = Vector2(86, 13)
 		tile.add_child(rail)
 
@@ -237,13 +239,14 @@ func _build_country_seats() -> void:
 		country_pressure_labels.append(pressure_label)
 
 		var policy = _make_child_piece(seat, "PolicySlot", Vector2(seat_size.x * 0.47, 36), Vector2(seat_size.x * 0.31, seat_size.y - 50), Color(0.032, 0.038, 0.038, 0.94), accent, 2, "card")
-		policy.add_child(_make_icon("coordination_ring", Vector2(policy.size.x * 0.5 - 26, 8), Vector2(52, 52), Color(0.75, 0.68, 0.45, 0.72), "PolicyBackIcon"))
-		var policy_label := _add_label_to(policy, "PolicyLabel", "", Vector2(6, policy.size.y - 40), Vector2(policy.size.x - 12, 34), 12, TEXT, true)
+		var policy_icon_size: float = minf(policy.size.x - 12.0, policy.size.y - 26.0)
+		policy.add_child(_make_icon("coordination_ring", Vector2(policy.size.x * 0.5 - policy_icon_size * 0.5, 5), Vector2(policy_icon_size, policy_icon_size), Color(0.75, 0.68, 0.45, 0.86), "PolicyBackIcon"))
+		var policy_label := _add_label_to(policy, "PolicyLabel", "", Vector2(4, policy.size.y - 23), Vector2(policy.size.x - 8, 20), 11, TEXT, true)
 		country_policy_slots.append(policy)
 		country_policy_labels.append(policy_label)
 
 		var stamp = _make_child_piece(seat, "StampSlot", Vector2(seat_size.x - 64, 44), Vector2(52, 52), Color(0.020, 0.018, 0.014, 0.68), accent, 1, "circle")
-		stamp.add_child(_make_icon("bureaucrat_seal", Vector2(4, 4), Vector2(44, 44), Color.WHITE, "WorkerIcon"))
+		stamp.add_child(_make_icon("bureaucrat_seal", Vector2.ZERO, stamp.size, Color.WHITE, "WorkerIcon"))
 		var stamp_label := _add_label_to(seat, "StampLabel", "担当印", Vector2(seat_size.x - 72, 98), Vector2(64, 18), 11, MUTED)
 		stamp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		country_stamp_slots.append(stamp)
@@ -251,8 +254,8 @@ func _build_country_seats() -> void:
 
 		var chips := Control.new()
 		chips.name = "RiskChips"
-		chips.position = Vector2(seat_size.x * 0.43, seat_size.y - 18)
-		chips.size = Vector2(seat_size.x * 0.42, 12)
+		chips.position = Vector2(68, seat_size.y - 17)
+		chips.size = Vector2(seat_size.x * 0.30, 12)
 		chips.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		seat.add_child(chips)
 		country_chip_racks.append(chips)
@@ -556,18 +559,14 @@ func _make_policy_card(card: Dictionary, hand_index: int, display_country_index 
 	card_node.pressed = func() -> void:
 		if card.get("type", "") == "policy" and game.can_select_policy():
 			_on_policy_selected(selected_country_index, hand_index, card_node.position)
-	var socket_size := minf(card_size.x * 0.66, 64.0)
-	var socket = _make_child_piece(
-		card_node,
-		"CardTokenSocket",
-		Vector2((card_size.x - socket_size) * 0.5, 10),
-		Vector2(socket_size, socket_size),
-		Color(0.026, 0.024, 0.020, 0.88),
-		COUNTRY_ACCENTS[country_index],
-		1,
-		"circle"
-	)
-	socket.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2(4, 4), socket.size - Vector2(8, 8), Color.WHITE))
+	var socket_size := minf(card_size.x * 0.68, 66.0)
+	var socket := Control.new()
+	socket.name = "CardTokenSocket"
+	socket.position = _snap_vec(Vector2((card_size.x - socket_size) * 0.5, 10))
+	socket.size = _snap_vec(Vector2(socket_size, socket_size))
+	socket.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card_node.add_child(socket)
+	socket.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2.ZERO, socket.size, Color.WHITE))
 	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(8, card_size.y - 42), Vector2(card_size.x - 16, 34), 13, INK if card.get("type", "") == "policy" else TEXT, true)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
@@ -1432,13 +1431,10 @@ func _pressure_summary(country) -> String:
 
 func _policy_slot_summary(country) -> String:
 	if country.selected_policy.is_empty():
-		return "政策案\n未提出"
+		return "未提出"
 	if game.revealed_policies or resolution_review_active or game.current_phase() == "resolution" or game.is_finished:
-		return "%s\n%s" % [
-			UiCatalogScript.short_card_name(country.selected_policy),
-			_short_tag_list(country.selected_policy.get("tags", []), 2)
-		]
-	return "伏せ札\n非公開"
+		return UiCatalogScript.short_card_name(country.selected_policy)
+	return "伏せ札"
 
 func _short_tag_list(tags: Array, limit: int) -> String:
 	var names := {

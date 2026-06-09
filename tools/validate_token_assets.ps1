@@ -4,8 +4,8 @@ Add-Type -AssemblyName System.Drawing
 
 $repo = Resolve-Path (Join-Path $PSScriptRoot "..")
 $tokenDirs = @(
-    @{ Path = Join-Path $repo "assets\ui\tokens"; MinimumEdge = 12 },
-    @{ Path = Join-Path $repo "assets\ui\tokens\small"; MinimumEdge = 3 }
+    @{ Path = Join-Path $repo "assets\ui\tokens"; MinimumEdge = 10; MaxDelta = 0.6; Label = "full-size" },
+    @{ Path = Join-Path $repo "assets\ui\tokens\small"; MinimumEdge = 2; MaxDelta = 0.6; Label = "small" }
 )
 
 function Test-GoldRimPixel {
@@ -18,6 +18,7 @@ function Test-GoldRimPixel {
 }
 
 $failures = @()
+$stats = @()
 foreach ($entry in $tokenDirs) {
     $files = Get-ChildItem -Path $entry.Path -Filter "*.png" |
         Where-Object { $_.Name -ne "macronomica_token_atlas.png" } |
@@ -52,7 +53,14 @@ foreach ($entry in $tokenDirs) {
             $dx = $centerX - $targetX
             $dy = $centerY - $targetY
             $edge = [Math]::Min([Math]::Min($minX, $minY), [Math]::Min($bitmap.Width - 1 - $maxX, $bitmap.Height - 1 - $maxY))
-            if ([Math]::Abs($dx) -gt 1.0 -or [Math]::Abs($dy) -gt 1.0 -or $edge -lt $entry.MinimumEdge) {
+            $stats += [pscustomobject]@{
+                Set = $entry.Label
+                File = $relative
+                DeltaX = [Math]::Abs($dx)
+                DeltaY = [Math]::Abs($dy)
+                Edge = $edge
+            }
+            if ([Math]::Abs($dx) -gt $entry.MaxDelta -or [Math]::Abs($dy) -gt $entry.MaxDelta -or $edge -lt $entry.MinimumEdge) {
                 $failures += "$relative`: rim center delta=($([Math]::Round($dx, 1)), $([Math]::Round($dy, 1))) edge=$edge"
             }
         }
@@ -66,4 +74,7 @@ if ($failures.Count -gt 0) {
     throw "Token validation failed:`n$($failures -join "`n")"
 }
 
-Write-Output "Token validation passed: full-size and small coin tokens are centered and unclipped."
+$maxDeltaX = ($stats | Measure-Object -Property DeltaX -Maximum).Maximum
+$maxDeltaY = ($stats | Measure-Object -Property DeltaY -Maximum).Maximum
+$minEdge = ($stats | Measure-Object -Property Edge -Minimum).Minimum
+Write-Output "Token validation passed: $($stats.Count) icons, max rim delta=($([Math]::Round($maxDeltaX, 2)), $([Math]::Round($maxDeltaY, 2))), min edge=$minEdge."

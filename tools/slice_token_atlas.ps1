@@ -88,7 +88,7 @@ function Export-Token {
 
     $out = New-TokenBitmap -Size $Size
     $graphics = New-TokenGraphics -Bitmap $out
-    $padding = [Math]::Max(2.0, $Size * 0.04)
+    $padding = [Math]::Max(2.0, $Size * 0.02)
     $graphics.DrawImage(
         $Source,
         [System.Drawing.RectangleF]::new($padding, $padding, $Size - $padding * 2.0, $Size - $padding * 2.0),
@@ -275,20 +275,31 @@ function Test-GoldRimPixel {
     if ($Color.A -lt 20) {
         return $false
     }
-    return $Color.R -gt 85 -and $Color.G -gt 55 -and $Color.R -gt ($Color.B + 25) -and $Color.G -gt ($Color.B + 10)
+    $max = [Math]::Max($Color.R, [Math]::Max($Color.G, $Color.B))
+    $min = [Math]::Min($Color.R, [Math]::Min($Color.G, $Color.B))
+    $chroma = $max - $min
+    return $Color.R -gt 92 -and $Color.G -gt 58 -and $Color.R -gt ($Color.B + 26) -and $Color.G -gt ($Color.B + 8) -and $chroma -gt 32
 }
 
-function Center-TokenRim {
-    param([System.Drawing.Bitmap] $Bitmap)
+function Measure-AtlasRim {
+    param(
+        [System.Drawing.Bitmap] $Bitmap,
+        [double] $GridCenterX,
+        [double] $GridCenterY
+    )
 
-    $w = $Bitmap.Width
-    $h = $Bitmap.Height
-    $minX = $w
-    $minY = $h
+    $side = 190
+    $left = [int][Math]::Round($GridCenterX - $side / 2.0)
+    $top = [int][Math]::Round($GridCenterY - $side / 2.0)
+    $minX = $Bitmap.Width
+    $minY = $Bitmap.Height
     $maxX = -1
     $maxY = -1
-    for ($y = 0; $y -lt $h; $y++) {
-        for ($x = 0; $x -lt $w; $x++) {
+    for ($y = $top; $y -lt $top + $side; $y++) {
+        for ($x = $left; $x -lt $left + $side; $x++) {
+            if ($x -lt 0 -or $y -lt 0 -or $x -ge $Bitmap.Width -or $y -ge $Bitmap.Height) {
+                continue
+            }
             if (Test-GoldRimPixel $Bitmap.GetPixel($x, $y)) {
                 if ($x -lt $minX) { $minX = $x }
                 if ($x -gt $maxX) { $maxX = $x }
@@ -298,31 +309,65 @@ function Center-TokenRim {
         }
     }
     if ($maxX -lt $minX -or $maxY -lt $minY) {
-        return
+        throw "Could not detect token rim near $GridCenterX, $GridCenterY."
     }
-
-    $rimCenterX = ($minX + $maxX) / 2.0
-    $rimCenterY = ($minY + $maxY) / 2.0
-    $targetCenterX = ($w - 1) / 2.0
-    $targetCenterY = ($h - 1) / 2.0
-    $dx = [int][Math]::Round($targetCenterX - $rimCenterX)
-    $dy = [int][Math]::Round($targetCenterY - $rimCenterY)
-    if ($dx -eq 0 -and $dy -eq 0) {
-        return
+    return [PSCustomObject]@{
+        CenterX = ($minX + $maxX) / 2.0
+        CenterY = ($minY + $maxY) / 2.0
+        Width = $maxX - $minX + 1
+        Height = $maxY - $minY + 1
     }
+}
 
-    $copy = [System.Drawing.Bitmap]::new($w, $h, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
-    $graphics = [System.Drawing.Graphics]::FromImage($copy)
-    $graphics.Clear([System.Drawing.Color]::Transparent)
-    $graphics.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
-    $graphics.DrawImageUnscaled($Bitmap, $dx, $dy)
-    $graphics.Dispose()
+function Center-TokenRim {
+    param([System.Drawing.Bitmap] $Bitmap)
 
-    $replace = [System.Drawing.Graphics]::FromImage($Bitmap)
-    $replace.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
-    $replace.DrawImageUnscaled($copy, 0, 0)
-    $replace.Dispose()
-    $copy.Dispose()
+    $w = $Bitmap.Width
+    $h = $Bitmap.Height
+    for ($attempt = 0; $attempt -lt 4; $attempt++) {
+        $minX = $w
+        $minY = $h
+        $maxX = -1
+        $maxY = -1
+        for ($y = 0; $y -lt $h; $y++) {
+            for ($x = 0; $x -lt $w; $x++) {
+                if (Test-GoldRimPixel $Bitmap.GetPixel($x, $y)) {
+                    if ($x -lt $minX) { $minX = $x }
+                    if ($x -gt $maxX) { $maxX = $x }
+                    if ($y -lt $minY) { $minY = $y }
+                    if ($y -gt $maxY) { $maxY = $y }
+                }
+            }
+        }
+        if ($maxX -lt $minX -or $maxY -lt $minY) {
+            return
+        }
+
+        $rimCenterX = ($minX + $maxX) / 2.0
+        $rimCenterY = ($minY + $maxY) / 2.0
+        $targetCenterX = ($w - 1) / 2.0
+        $targetCenterY = ($h - 1) / 2.0
+        $deltaX = $targetCenterX - $rimCenterX
+        $deltaY = $targetCenterY - $rimCenterY
+        $dx = if ([Math]::Abs($deltaX) -le 0.5) { 0 } elseif ($deltaX -gt 0) { [int][Math]::Ceiling($deltaX) } else { [int][Math]::Floor($deltaX) }
+        $dy = if ([Math]::Abs($deltaY) -le 0.5) { 0 } elseif ($deltaY -gt 0) { [int][Math]::Ceiling($deltaY) } else { [int][Math]::Floor($deltaY) }
+        if ($dx -eq 0 -and $dy -eq 0) {
+            return
+        }
+
+        $copy = [System.Drawing.Bitmap]::new($w, $h, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+        $graphics = [System.Drawing.Graphics]::FromImage($copy)
+        $graphics.Clear([System.Drawing.Color]::Transparent)
+        $graphics.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
+        $graphics.DrawImageUnscaled($Bitmap, $dx, $dy)
+        $graphics.Dispose()
+
+        $replace = [System.Drawing.Graphics]::FromImage($Bitmap)
+        $replace.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
+        $replace.DrawImageUnscaled($copy, 0, 0)
+        $replace.Dispose()
+        $copy.Dispose()
+    }
 }
 
 function Center-TokenContent {
@@ -382,9 +427,8 @@ try {
         throw "Expected 4 token rows, found $($yBands.Count)."
     }
     $yCenters = foreach ($band in $yBands) { ($band[0] + $band[1]) / 2.0 }
-    # Take a larger source region than the atlas cell spacing so rim/shadow detail
-    # is not shaved off. Neighboring coins are removed after export by keeping only
-    # the main connected coin component.
+    # Crop around the detected coin rim, not the atlas grid center. The generated
+    # atlas has several coins shifted by up to ~8px inside their grid cells.
     $side = 230.0
 
     Write-Output "atlas: $($atlas.Width)x$($atlas.Height)"
@@ -396,9 +440,11 @@ try {
         for ($col = 0; $col -lt 6; $col++) {
             $index = $row * 6 + $col
             $name = $names[$index]
+            $rim = Measure-AtlasRim -Bitmap $atlas -GridCenterX $xCenters[$col] -GridCenterY $yCenters[$row]
+            Write-Output "$name rim delta: $([Math]::Round($rim.CenterX - $xCenters[$col], 1)), $([Math]::Round($rim.CenterY - $yCenters[$row], 1)) size: $($rim.Width)x$($rim.Height)"
             $crop = [System.Drawing.RectangleF]::new(
-                [float]($xCenters[$col] - $side / 2.0),
-                [float]($yCenters[$row] - $side / 2.0),
+                [float]($rim.CenterX - $side / 2.0),
+                [float]($rim.CenterY - $side / 2.0),
                 [float]$side,
                 [float]$side
             )
