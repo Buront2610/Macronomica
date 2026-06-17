@@ -12,7 +12,7 @@ This MVP keeps the game as a local tabletop-style Godot app. The architecture sh
 - `src/data/` is the data access layer. JSON files are data sources; loaders translate them into dictionaries used by the domain.
 - `src/ui/` is the presentation layer. It renders `GameState` and sends commands such as `select_policy`, `assign_worker`, and `advance_phase`.
 - `src/ui/components/` contains stateful Godot UI components that own their own controls, signals, and refresh behavior.
-- `src/ui/support/` contains UI-only support code: responsive breakpoints, display labels, icon-token mapping, and token texture caching.
+- `src/ui/support/` contains UI-only support code: display labels, icon-token mapping, panel construction, and token texture caching.
 
 ## Folder Map
 
@@ -23,7 +23,7 @@ src/
   data/               JSON loaders and indexing helpers
   ui/                 Godot Control scripts and screen composition
     components/       Stateful UI components such as mats, boards, header, log
-    support/          UI catalogs, layout rules, panel factory, visual asset helpers
+    support/          UI catalogs, panel factory, visual asset helpers
 tests/                Godot smoke tests for domain flow, app services, and UI layout
 tools/                Local validation, Godot launch, screenshot, and balance scripts
 data/                 Versioned game content JSON
@@ -41,10 +41,11 @@ Button press -> GameState command -> resolver/domain mutation -> UI refresh
 
 Current high-value commands:
 
-- `GameState.select_policy(country_index, hand_index)`
+- `GameState.select_policy(country_index, policy_index)`
 - `GameState.assign_worker(country_index, worker_id)`
 - `GameState.advance_phase()`
 - `GameState.resolve_turn()`
+- `GameState.declare_agenda(country_index, agenda_tag)`
 - `PolicyRecommender.recommend_for_country(game, country_index)`
 
 Current UI component ownership:
@@ -58,7 +59,6 @@ Current UI component ownership:
 
 Current UI support ownership:
 
-- `ResponsiveLayout`: breakpoint and viewport sizing policy
 - `UiCatalog`: display names and token id mapping
 - `TokenAssets`: token texture loading and cache
 - `TrackPresenter`: track color and pip count presentation logic
