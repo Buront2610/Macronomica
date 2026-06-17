@@ -19,19 +19,29 @@ func _init() -> void:
 	game.advance_phase()
 	_assert(game.turn == 2, "simultaneous reveal resolves and starts next turn")
 	_assert(game.current_phase() == "negotiation", "next turn returns to negotiation")
+	for country in game.countries:
+		_assert(country.hand.size() == 2, "next turn reveals two state cards")
+		_assert(_policy_count(country.deck) + _policy_count(country.hand) + _policy_count(country.discard) == 0, "state deck zones do not contain policy cards")
 	print("Smoke game flow passed.")
 	quit(0)
 
 func _select_first_policy(game, country_index: int) -> void:
 	var country = game.countries[country_index]
-	for i in range(country.hand.size()):
-		if country.hand[i].get("type", "") == "policy":
+	for i in range(country.policy_menu.size()):
+		if country.policy_menu[i].get("type", "") == "policy":
 			game.select_policy(country_index, i)
 			return
-	_assert(false, "country has at least one policy in hand")
+	_assert(false, "country has at least one policy in menu")
 
 func _assert(condition: bool, message: String) -> void:
 	if condition:
 		return
 	push_error(message)
 	quit(1)
+
+func _policy_count(cards: Array) -> int:
+	var count := 0
+	for card in cards:
+		if String(card.get("type", "")) == "policy":
+			count += 1
+	return count

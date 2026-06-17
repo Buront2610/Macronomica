@@ -3,19 +3,26 @@
     "id": "global_demand_slump",
     "display_name": "世界需要急減",
     "message": "世界需要が急減し、輸出依存国に強い逆風が吹いています。",
-    "effects": {"world": {"world_demand": -2, "depression": 1}, "all_countries": {"gdp_gap": -1}, "tagged_countries": [{"tag": "exporter", "effects": {"gdp_gap": -1}}]}
+    "effects": {"world": {"world_demand": -2, "depression": 1}, "all_countries": {"gdp_gap": -1}, "tagged_countries": [{"tag": "exporter", "effects": {"gdp_gap": -1}, "add_state_cards": ["external_demand_dependence"]}, {"tag": "resource", "effects": {"current_account": -1}, "add_state_cards": ["single_industry_dependence"]}]}
   },
   {
     "id": "global_credit_crunch",
     "display_name": "国際信用収縮",
     "message": "国際金融市場が萎縮し、外貨債務国に資本流出圧力がかかっています。",
-    "effects": {"world": {"international_financial_instability": 2, "world_interest_rate": 1}, "tagged_countries": [{"tag": "foreign_debt", "effects": {"financial_stress": 2, "exchange_rate": -1}}]}
+    "effects": {"world": {"international_financial_instability": 2, "world_interest_rate": 1}, "tagged_countries": [{"tag": "foreign_debt", "effects": {"financial_stress": 2, "exchange_rate": -1}, "add_state_cards": ["sudden_stop", "foreign_currency_debt_burden"]}, {"tag": "reserve_currency", "effects": {"political_capital": -1}, "add_policy_menu": ["last_resort_lender"]}]},
+    "persistent_crisis": {
+      "duration": 3,
+      "clear_text": "世界協調4以上",
+      "clear_when": {"world_min": {"global_coordination": 4}},
+      "effects": {"world": {"international_financial_instability": 1}, "tagged_countries": [{"tag": "foreign_debt", "effects": {"financial_stress": 1, "exchange_rate": -1}}]}
+    }
   },
   {
     "id": "commodity_price_crash",
     "display_name": "資源価格暴落",
     "message": "資源価格が暴落し、資源国の経常収支と財政に打撃が出ています。",
-    "effects": {"world": {"world_demand": -1}, "tagged_countries": [{"tag": "resource", "effects": {"gdp_gap": -2, "current_account": -2, "debt": 1}}]}
+    "commodity_shock": true,
+    "effects": {"world": {"world_demand": -1}, "tagged_countries": [{"tag": "resource", "effects": {"gdp_gap": -2, "current_account": -2, "debt": 1}, "add_state_cards": ["commodity_price_dependence", "single_industry_dependence"]}]}
   },
   {
     "id": "inflation_scare",
@@ -33,7 +40,12 @@
     "id": "protectionist_mood",
     "display_name": "保護主義ムード",
     "message": "各国で保護主義的な世論が高まり、関税政策の誘惑が増しています。",
-    "effects": {"world": {"trade_openness": -1, "protectionism": 1}, "all_countries": {"political_capital": -1}}
+    "effects": {"world": {"trade_openness": -1, "protectionism": 1}, "all_countries": {"political_capital": -1}, "tagged_countries": [{"tag": "exporter", "effects": {}, "add_state_cards": ["export_lobby_capture"]}, {"tag": "domestic_demand", "effects": {}, "add_state_cards": ["protected_industry_lobby"]}]},
+    "persistent_crisis": {
+      "duration": 3,
+      "clear_text": "世界協調4以上",
+      "clear_when": {"world_min": {"global_coordination": 4}},
+      "effects": {"world": {"trade_openness": -1, "protectionism": 1}, "all_countries": {"political_capital": -1}}
+    }
   }
 ]
-

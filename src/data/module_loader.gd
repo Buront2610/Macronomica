@@ -11,6 +11,12 @@ static func load_modules(path: String) -> Dictionary:
 	if typeof(parsed) != TYPE_ARRAY:
 		return result
 	for module in parsed:
-		result[module["id"]] = module
+		if not (module is Dictionary):
+			push_error("Module entry must be a dictionary.")
+			continue
+		var id := String(module.get("id", ""))
+		if id.is_empty():
+			push_error("Module entry is missing id.")
+			continue
+		result[id] = module
 	return result
-

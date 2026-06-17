@@ -3,17 +3,25 @@ extends SceneTree
 const GameStateScript := preload("res://src/core/game_state.gd")
 const CountryStateScript := preload("res://src/core/country_state.gd")
 const PolicyResolverScript := preload("res://src/core/policy_resolver.gd")
+const PublicChoiceResolverScript := preload("res://src/core/public_choice_resolver.gd")
+const WorldResolverScript := preload("res://src/core/world_resolver.gd")
+
+var had_failure := false
 
 func _init() -> void:
 	var game = GameStateScript.new()
 	game.new_game()
+	for country in game.countries:
+		_assert(country.deck.size() + country.hand.size() + country.discard.size() == 12, "%s starts with a 12-card state deck" % country.display_name)
+		_assert(_policy_count(country.deck) + _policy_count(country.hand) + _policy_count(country.discard) == 0, "%s state deck contains no policy cards" % country.display_name)
+		_assert(country.policy_menu.size() >= 12, "%s has a persistent policy menu" % country.display_name)
 	_assert(game.current_phase() == "negotiation", "game starts before policy input")
 	var initial_selection: Dictionary = game.countries[0].selected_policy
-	game.select_policy(0, _first_policy_index(game.countries[0].hand))
+	game.select_policy(0, 0)
 	_assert(game.countries[0].selected_policy == initial_selection, "policy selection is blocked outside policy planning")
 
 	game.advance_phase()
-	game.select_policy(0, _first_policy_index(game.countries[0].hand))
+	game.select_policy(0, 0)
 	_assert(not game.countries[0].selected_policy.is_empty(), "policy selection is allowed during policy planning")
 	var initial_worker: String = game.countries[0].assigned_worker
 	game.assign_worker(0, "diplomat")
@@ -22,10 +30,69 @@ func _init() -> void:
 	game.advance_phase()
 	game.assign_worker(0, "diplomat")
 	_assert(game.countries[0].assigned_worker == "diplomat", "worker assignment is allowed during worker assignment")
+	game.toggle_worker(0, "bureaucrats")
+	_assert(game.countries[0].assigned_worker_list().has("diplomat") and game.countries[0].assigned_worker_list().has("bureaucrats"), "worker assignment supports multiple workers")
+
+	var response_country = CountryStateScript.new()
+	response_country.display_name = "対応国"
+	response_country.tracks = {"gdp_gap": 0, "inflation": 2, "expected_inflation": 2, "unemployment": 3, "debt": 0, "financial_stress": 0, "political_capital": 5, "exchange_rate": 0, "current_account": 0, "influence": 0}
+	response_country.assign_workers(["bureaucrats"])
+	var response_policy := {"id": "response_probe", "display_name": "需要対応", "type": "policy", "tags": ["demand"], "costs": {}, "effects": {"country": {}, "world": {}}}
+	response_country.hand = [
+		{"id": "state_probe_a", "display_name": "状態プローブA", "type": "vulnerability", "response": {"removed_by_tags": ["demand"], "extra_costs": {"political": 1}}},
+		{"id": "state_probe_b", "display_name": "状態プローブB", "type": "vulnerability", "response": {"removed_by_tags": ["demand"], "extra_costs": {"political": 1}}}
+	]
+	response_country.selected_response_index = 1
+	PolicyResolverScript.resolve_paid_policy(response_country, [response_country], game.world, response_policy, {}, {"success": true, "shortages": {}, "costs": {}})
+	_assert(response_country.hand.size() == 1 and String(response_country.hand[0].get("id", "")) == "state_probe_a", "response task removes the explicitly selected vulnerability from hand")
+	_assert(int(response_country.tracks.get("political_capital", 0)) == 4, "response task pays its extra political cost")
+
+	var target_game = GameStateScript.new()
+	target_game.new_game()
+	target_game.advance_phase()
+	var target_policy := {
+		"id": "target_probe",
+		"type": "policy",
+		"display_name": "対象政策",
+		"target": "country",
+		"costs": {},
+		"effects": {
+			"donor": {"influence": 2},
+			"recipient": {"financial_stress": -2, "exchange_rate": 1},
+			"world": {"global_coordination": 1}
+		}
+	}
+	target_game.countries[0].policy_menu = [target_policy]
+	target_game.select_policy(0, 0)
+	_assert(target_game.countries[0].selected_target_index == 1, "targeted policies receive a default non-self target")
+	target_game.select_policy_target(0, 2)
+	_assert(target_game.countries[0].selected_target_index == 2, "targeted policies can designate another country")
+	target_game.countries[0].tracks = {"gdp_gap": 0, "inflation": 0, "expected_inflation": 0, "unemployment": 0, "debt": 0, "financial_stress": 0, "political_capital": 10, "exchange_rate": 0, "current_account": 0, "influence": 0}
+	target_game.countries[2].tracks = {"gdp_gap": 0, "inflation": 0, "expected_inflation": 0, "unemployment": 0, "debt": 0, "financial_stress": 4, "political_capital": 10, "exchange_rate": 0, "current_account": 0, "influence": 0}
+	PolicyResolverScript.resolve_policy(target_game.countries[0], target_game.countries, target_game.world, target_policy, {})
+	_assert(int(target_game.countries[0].tracks.get("influence", 0)) == 2, "targeted policy applies donor effects to the source")
+	_assert(int(target_game.countries[2].tracks.get("financial_stress", 0)) == 2, "targeted policy applies recipient effects to the designated country")
+	_assert(int(target_game.countries[2].tracks.get("exchange_rate", 0)) == 1, "targeted policy applies recipient exchange-rate support")
+
+	var support_game = GameStateScript.new()
+	support_game.new_game()
+	support_game.request_support(0, "debt")
+	support_game.pledge_support(1, 0, "debt")
+	support_game.advance_phase()
+	var debt_support_policy := {"id": "debt_support_probe", "display_name": "債務支援", "type": "policy", "tags": ["debt"], "costs": {}, "effects": {"country": {}, "world": {}}}
+	support_game.countries[0].tracks["debt"] = 4
+	support_game.countries[0].tracks["financial_stress"] = 4
+	support_game.countries[1].policy_menu = [debt_support_policy]
+	support_game.select_policy(1, 0)
+	support_game.countries[0].selected_policy = {"id": "neutral_probe", "display_name": "中立", "type": "policy", "tags": [], "costs": {}, "effects": {"country": {}, "world": {}}}
+	var support_log: Array = support_game._resolve_support_pledges(support_game.countries)
+	_assert(_contains(support_log, "支援要請"), "fulfilled support pledges are logged")
+	_assert(int(support_game.countries[1].tracks.get("influence", 0)) >= 1, "fulfilled support pledges reward the supporter with influence")
+	_assert(int(support_game.countries[0].tracks.get("debt", 0)) == 3 and int(support_game.countries[0].tracks.get("financial_stress", 0)) == 3, "fulfilled debt support helps the requester")
 
 	var country = CountryStateScript.new()
 	country.display_name = "試験国"
-	country.tracks = {"gdp_gap": -2, "inflation": 1, "unemployment": 8, "debt": 9, "financial_stress": 8, "political_capital": 0, "exchange_rate": -3, "current_account": -3}
+	country.tracks = {"gdp_gap": -2, "inflation": 1, "expected_inflation": 1, "unemployment": 8, "debt": 9, "financial_stress": 8, "political_capital": 0, "exchange_rate": -3, "current_account": -3, "influence": 0}
 	country.assigned_worker = "bureaucrats"
 	var world = game.world
 	var policy := {
@@ -34,16 +101,161 @@ func _init() -> void:
 		"effects": {"country": {"gdp_gap": 2}, "world": {"world_demand": 1}}
 	}
 	var log := PolicyResolverScript.resolve_policy(country, [], world, policy, {})
-	_assert(_contains(log, "不足で骨抜き"), "non-payable costs weaken policy resolution")
+	_assert(_contains(log, "延期"), "administrative shortage delays policy resolution")
 	_assert(_contains(log, "行政能力不足"), "administrative shortage is logged")
 	_assert(_contains(log, "信認不足"), "credibility shortage is logged")
 	_assert(_contains(log, "国際調整不足"), "international shortage is logged")
 	_assert(_contains(log, "産業実行力不足"), "industrial shortage is logged")
+	_assert(country.pending_effects.size() == 1, "administrative shortage creates a pending implementation")
+	var pending_before := int(country.tracks.get("gdp_gap", 0))
+	game.countries = [country]
+	game.world = world
+	var pending_log: Array = game._resolve_pending_effects()
+	_assert(_contains(pending_log, "実施ラグ"), "pending implementation fires on the next start turn")
+	_assert(int(country.tracks.get("gdp_gap", 0)) > pending_before, "pending implementation applies delayed country effects")
+	game.new_game()
+
+	var liquidity_country = CountryStateScript.new()
+	liquidity_country.display_name = "流動性国"
+	liquidity_country.tracks = {"gdp_gap": -2, "inflation": -1, "expected_inflation": -1, "unemployment": 4, "debt": 2, "financial_stress": 0, "political_capital": 8, "exchange_rate": 0, "current_account": 0, "influence": 0}
+	var monetary_policy := {"display_name": "緩和", "tags": ["monetary"], "costs": {}, "effects": {"country": {"gdp_gap": 2}, "world": {}}}
+	PolicyResolverScript.resolve_policy(liquidity_country, [], world, monetary_policy, {})
+	_assert(int(liquidity_country.tracks.get("gdp_gap", 0)) == -1, "liquidity trap reduces monetary gdp effect")
+
+	var pressure_country = CountryStateScript.new()
+	pressure_country.display_name = "圧力国"
+	pressure_country.tracks = {"gdp_gap": 0, "inflation": 0, "expected_inflation": 0, "unemployment": 0, "debt": 0, "financial_stress": 0, "political_capital": 0, "exchange_rate": 0, "current_account": 0, "influence": 0}
+	pressure_country.domestic_pressure = {"display_name": "試験圧力", "demand": {"preferred_policy_tags": ["fiscal"], "if_satisfied": {"political_capital": 1}, "if_ignored": {"political_capital": -1}}}
+	var pressure_log := PublicChoiceResolverScript.resolve_pressure(pressure_country, {"tags": ["fiscal"]}, false)
+	_assert(int(pressure_country.tracks.get("political_capital", 0)) == -1, "failed policies do not satisfy matching domestic pressure")
+	_assert(pressure_log.contains("無視"), "failed pressure match is logged as ignored")
+	pressure_country.tracks["political_capital"] = 0
+	pressure_log = PublicChoiceResolverScript.resolve_pressure(pressure_country, {"tags": ["fiscal"]}, "subsidized")
+	_assert(int(pressure_country.tracks.get("political_capital", 0)) == 1, "subsidized policies partially satisfy matching domestic pressure")
+	_assert(pressure_log.contains("部分的"), "partial pressure match is logged")
+
+	var mutation_country = CountryStateScript.new()
+	mutation_country.display_name = "変質国"
+	mutation_country.tracks = {"gdp_gap": 0, "inflation": 0, "expected_inflation": 0, "unemployment": 0, "debt": 0, "financial_stress": 0, "political_capital": 10, "exchange_rate": 0, "current_account": 0, "influence": 0}
+	var mutation_policy := {
+		"display_name": "変質政策",
+		"costs": {},
+		"effects": {"country": {}, "world": {}},
+		"mutations": {"add_to_deck": ["productivity_growth", "vested_interest_backlash"]}
+	}
+	var mutation_cards := {
+		"productivity_growth": {"id": "productivity_growth", "display_name": "生産性上昇"},
+		"vested_interest_backlash": {"id": "vested_interest_backlash", "display_name": "既得権益の反発"}
+	}
+	PolicyResolverScript.resolve_policy(mutation_country, [], world, mutation_policy, mutation_cards)
+	_assert(String(mutation_country.deck[0].get("id", "")) == "productivity_growth", "deck mutations are placed on top in listed order")
+	_assert(String(mutation_country.deck[1].get("id", "")) == "vested_interest_backlash", "all deck mutations are placed on top")
+
+	var spillover_policy := {
+		"id": "spillover_probe",
+		"display_name": "先行波及",
+		"type": "policy",
+		"tags": ["cooperation"],
+		"costs": {},
+		"effects": {"country": {}, "world": {}},
+		"spillovers": [{"target_tag": "victim", "effects": {"financial_stress": 10}}]
+	}
+	var costly_policy := {
+		"id": "credibility_probe",
+		"display_name": "信認政策",
+		"type": "policy",
+		"tags": ["cooperation"],
+		"costs": {"credibility": 3},
+		"effects": {"country": {"gdp_gap": 4}, "world": {}}
+	}
+	for active_country in game.countries:
+		active_country.hand = []
+		active_country.selected_policy = {}
+		active_country.assigned_worker = "bureaucrats"
+		active_country.tracks = {"gdp_gap": 0, "inflation": 0, "expected_inflation": 0, "unemployment": 0, "debt": 0, "financial_stress": 0, "political_capital": 10, "exchange_rate": 0, "current_account": 0, "influence": 0}
+	game.world.tracks = {"world_demand": 0, "world_interest_rate": 0, "trade_openness": 5, "international_financial_instability": 0, "depression": 0, "protectionism": 0, "global_coordination": 0}
+	game.countries[0].hand = [spillover_policy]
+	game.countries[0].selected_policy = spillover_policy
+	game.countries[1].tags = ["victim"]
+	game.countries[1].hand = [costly_policy]
+	game.countries[1].selected_policy = costly_policy
+	game.countries[0].declared_agenda = "cooperation"
+	game.countries[1].declared_agenda = "cooperation"
+	game.turn = game.turn_limit
+	game.resolve_turn()
+	_assert(int(game.countries[1].tracks.get("gdp_gap", 0)) >= 4, "simultaneous reveal freezes policy affordability before spillovers")
+	_assert(int(game.countries[0].tracks.get("influence", 0)) == 1, "kept joint declarations add influence")
+	_assert(int(game.world.tracks.get("world_demand", 0)) > 0, "kept joint declarations support world demand")
+	_assert(game.countries[0].welfare_history.size() == 1, "resolved turns record welfare points")
+	_assert(game.countries[0].track_history.size() >= 2, "resolved turns record track history")
+
+	var election_game = GameStateScript.new()
+	election_game.new_game()
+	election_game.turn = election_game.countries[0].election_turn
+	election_game.countries[0].tracks["political_capital"] = 1
+	election_game.countries[0].pending_effects = [{"turns": 1, "display_name": "延期政策", "country": {"gdp_gap": 2}, "world": {}}]
+	var election_log: Array = election_game._resolve_elections()
+	_assert(_contains(election_log, "政権交代"), "low political capital loses an election")
+	_assert(int(election_game.countries[0].tracks.get("political_capital", 0)) == 4, "election turnover resets political capital")
+	_assert(election_game.countries[0].pending_effects.is_empty(), "election turnover drops one pending reform")
+
+	var crisis_game = GameStateScript.new()
+	crisis_game.new_game()
+	crisis_game.world.tracks = {"world_demand": 0, "world_interest_rate": 0, "trade_openness": 5, "international_financial_instability": 0, "depression": 0, "protectionism": 0, "global_coordination": 0}
+	crisis_game.world.event_deck = [{
+		"id": "test_persistent_crisis",
+		"display_name": "試験持続危機",
+		"message": "試験",
+		"effects": {"world": {"international_financial_instability": 1}},
+		"persistent_crisis": {
+			"duration": 2,
+			"clear_text": "協調4",
+			"clear_when": {"world_min": {"global_coordination": 4}},
+			"effects": {"world": {"international_financial_instability": 1}}
+		}
+	}]
+	crisis_game.world.event_discard = []
+	WorldResolverScript.reveal_event(crisis_game.world, crisis_game.countries, crisis_game.rng)
+	_assert(crisis_game.world.active_crises.size() == 1, "persistent crisis starts from event data")
+	WorldResolverScript.apply_persistent_crises(crisis_game.countries, crisis_game.world)
+	_assert(int(crisis_game.world.tracks.get("international_financial_instability", 0)) == 2, "persistent crisis applies recurring world effects")
+	_assert(int(crisis_game.world.active_crises[0].get("turns", 0)) == 1, "persistent crisis tracks remaining turns")
+	crisis_game.world.tracks["global_coordination"] = 4
+	var clear_log: Array = WorldResolverScript.apply_persistent_crises(crisis_game.countries, crisis_game.world)
+	_assert(crisis_game.world.active_crises.is_empty(), "persistent crisis clears when condition is met")
+	_assert(_contains(clear_log, "解除条件"), "persistent crisis clear is logged")
+
+	var injection_game = GameStateScript.new()
+	injection_game.new_game()
+	var reserve_menu_before := _policy_menu_has(injection_game.countries[0], "last_resort_lender")
+	injection_game.world.event_deck = [{
+		"id": "test_asymmetric_event",
+		"display_name": "試験非対称イベント",
+		"message": "試験",
+		"effects": {
+			"world": {"international_financial_instability": 1},
+			"tagged_countries": [
+				{"tag": "exporter", "effects": {}, "add_state_cards": ["external_demand_dependence"]},
+				{"tag": "reserve_currency", "effects": {}, "add_policy_menu": ["last_resort_lender"]}
+			]
+		}
+	}]
+	WorldResolverScript.reveal_event(injection_game.world, injection_game.countries, injection_game.rng, injection_game.card_index, injection_game.policy_index)
+	_assert(String(injection_game.countries[1].deck[0].get("id", "")) == "external_demand_dependence", "world event stamps exporter history into the state deck")
+	_assert(not reserve_menu_before and _policy_menu_has(injection_game.countries[0], "last_resort_lender"), "world event grants reserve-currency crisis policy")
 
 	var scores: Array = game.get_scores()
 	_assert(scores[0].has("legacy_bonus"), "scores include legacy bonus")
-	print("Smoke domain rules passed.")
-	quit(0)
+	game.world.tracks["depression"] = 10
+	var collapse_scores: Array = game.get_scores()
+	_assert(bool(collapse_scores[0].get("global_collapse", false)), "scores mark global collapse at depression 10")
+	_assert(int(collapse_scores[0].get("score", -1)) == 0, "global collapse invalidates country scores")
+	if had_failure:
+		print("Smoke domain rules failed.")
+		quit(1)
+	else:
+		print("Smoke domain rules passed.")
+		quit(0)
 
 func _first_policy_index(hand: Array) -> int:
 	for i in range(hand.size()):
@@ -57,8 +269,21 @@ func _contains(lines: Array, needle: String) -> bool:
 			return true
 	return false
 
+func _policy_menu_has(country, policy_id: String) -> bool:
+	for policy in country.policy_menu:
+		if String(policy.get("id", "")) == policy_id:
+			return true
+	return false
+
+func _policy_count(cards: Array) -> int:
+	var count := 0
+	for card in cards:
+		if String(card.get("type", "")) == "policy":
+			count += 1
+	return count
+
 func _assert(condition: bool, message: String) -> void:
 	if condition:
 		return
+	had_failure = true
 	push_error(message)
-	quit(1)

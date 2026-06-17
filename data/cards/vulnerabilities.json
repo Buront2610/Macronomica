@@ -1,48 +1,938 @@
 [
-  {"id": "deflation_expectations", "type": "vulnerability", "display_name": "デフレ期待", "tags": ["deflation"], "effects": {"on_turn_start": {"inflation": -1, "gdp_gap": -1}}},
-  {"id": "external_demand_dependence", "type": "vulnerability", "display_name": "外需依存", "tags": ["exporter"], "effects": {"when_world_demand_negative": {"gdp_gap": -1}}},
-  {"id": "commodity_price_dependence", "type": "vulnerability", "display_name": "資源価格依存", "tags": ["resource"], "effects": {"when_commodity_shock": {"gdp_gap": -2, "current_account": -1}}},
-  {"id": "elderly_health_costs", "type": "vulnerability", "display_name": "高齢者医療費", "tags": ["aging"], "effects": {"on_turn_start": {"debt": 1}}},
-  {"id": "fiscal_rigidity", "type": "vulnerability", "display_name": "財政硬直化", "tags": ["fiscal"], "effects": {"on_turn_start": {"political_capital": -1}}},
-  {"id": "protected_industry_lobby", "type": "vulnerability", "display_name": "保護産業ロビー", "tags": ["tariff", "public_choice"], "effects": {"on_turn_start": {"political_capital": -1}}},
-  {"id": "private_debt_overhang", "type": "vulnerability", "display_name": "民間債務の重荷", "tags": ["finance"], "effects": {"on_turn_start": {"financial_stress": 1}}},
-  {"id": "foreign_currency_debt_burden", "type": "vulnerability", "display_name": "外貨建て債務", "tags": ["foreign_debt"], "effects": {"when_currency_down": {"financial_stress": 1, "debt": 1}}},
-  {"id": "housing_bubble", "type": "vulnerability", "display_name": "住宅バブル", "tags": ["finance", "bubble"], "effects": {"on_turn_start": {"financial_stress": 1}}},
-  {"id": "reform_fatigue", "type": "vulnerability", "display_name": "改革疲れ", "tags": ["reform"], "effects": {"on_turn_start": {"political_capital": -1}}},
-  {"id": "rent_seeking", "type": "vulnerability", "display_name": "レントシーキング", "tags": ["rent", "public_choice"], "effects": {"on_turn_start": {"administrative_drag": 1}}},
-  {"id": "corruption_risk", "type": "vulnerability", "display_name": "汚職リスク", "tags": ["corruption"], "effects": {"on_turn_start": {"political_capital": -1, "debt": 1}}},
-  {"id": "asset_price_boom", "type": "legacy", "display_name": "資産価格上昇", "tags": ["finance", "bubble"], "effects": {"on_turn_start": {"gdp_gap": 1, "financial_stress": 1}}},
-  {"id": "financial_imbalance", "type": "vulnerability", "display_name": "金融不均衡", "tags": ["finance"], "effects": {"on_turn_start": {"financial_stress": 1}}},
-  {"id": "productivity_growth", "type": "legacy", "display_name": "生産性上昇", "tags": ["productivity"], "effects": {"on_turn_start": {"gdp_gap": 1, "unemployment": -1}}},
-  {"id": "vested_interest_backlash", "type": "vulnerability", "display_name": "既得権益の反発", "tags": ["public_choice"], "effects": {"on_turn_start": {"political_capital": -1}}},
-  {"id": "fund_depletion_pressure", "type": "vulnerability", "display_name": "基金枯渇圧力", "tags": ["fund"], "effects": {"on_turn_start": {"debt": 1}}},
-  {"id": "debt_complacency", "type": "vulnerability", "display_name": "債務への慢心", "tags": ["debt"], "effects": {"on_turn_start": {"debt": 1}}},
-  {"id": "safe_asset_demand", "type": "legacy", "display_name": "安全資産需要", "tags": ["bond_market"], "effects": {"on_turn_start": {"financial_stress": -1}}},
-  {"id": "consumer_confidence", "type": "legacy", "display_name": "消費者信頼", "tags": ["domestic_demand"], "effects": {"on_turn_start": {"gdp_gap": 1}}},
-  {"id": "global_capital_inflow", "type": "legacy", "display_name": "世界資本流入", "tags": ["reserve_currency"], "effects": {"on_turn_start": {"financial_stress": -1, "exchange_rate": 1}}},
-  {"id": "financial_sector_lobby", "type": "vulnerability", "display_name": "金融部門ロビー", "tags": ["finance", "public_choice"], "effects": {"on_turn_start": {"political_capital": -1}}},
-  {"id": "election_pressure", "type": "vulnerability", "display_name": "選挙圧力", "tags": ["democracy", "public_choice"], "effects": {"on_turn_start": {"political_capital": -1}}},
-  {"id": "asset_price_sensitivity", "type": "vulnerability", "display_name": "資産価格への敏感性", "tags": ["finance"], "effects": {"on_turn_start": {"financial_stress": 1}}},
-  {"id": "export_competitiveness", "type": "legacy", "display_name": "輸出競争力", "tags": ["exporter"], "effects": {"on_turn_start": {"current_account": 1}}},
-  {"id": "currency_intervention", "type": "legacy", "display_name": "為替介入能力", "tags": ["currency"], "effects": {"on_turn_start": {"exchange_rate": 1}}},
-  {"id": "coalition_bargaining", "type": "vulnerability", "display_name": "連立交渉", "tags": ["democracy"], "effects": {"on_turn_start": {"political_capital": -1}}},
-  {"id": "export_lobby_pressure", "type": "vulnerability", "display_name": "輸出企業ロビー圧力", "tags": ["exporter", "public_choice"], "effects": {"on_turn_start": {"political_capital": -1, "current_account": 1}}},
-  {"id": "aging_society", "type": "vulnerability", "display_name": "高齢社会", "tags": ["aging"], "effects": {"on_turn_start": {"debt": 1}}},
-  {"id": "resource_revenue", "type": "legacy", "display_name": "資源収入", "tags": ["resource"], "effects": {"on_turn_start": {"debt": -1, "current_account": 1}}},
-  {"id": "commodity_currency_swings", "type": "vulnerability", "display_name": "資源通貨の振れ", "tags": ["resource", "currency"], "effects": {"on_turn_start": {"financial_stress": 1}}},
-  {"id": "capital_inflow_cycle", "type": "vulnerability", "display_name": "資本流入循環", "tags": ["finance"], "effects": {"on_turn_start": {"financial_stress": 1}}},
-  {"id": "stabilization_fund_buffer", "type": "legacy", "display_name": "安定化基金バッファ", "tags": ["fund"], "effects": {"on_turn_start": {"financial_stress": -1}}},
-  {"id": "fund_governance", "type": "legacy", "display_name": "基金ガバナンス", "tags": ["fund"], "effects": {"on_turn_start": {"political_capital": 1}}},
-  {"id": "patronage_network", "type": "vulnerability", "display_name": "庇護ネットワーク", "tags": ["patronage"], "effects": {"on_turn_start": {"political_capital": -1}}},
-  {"id": "single_industry_dependence", "type": "vulnerability", "display_name": "産業単一化", "tags": ["resource_dependence"], "effects": {"on_turn_start": {"gdp_gap": -1}}},
-  {"id": "urbanization_bonus", "type": "legacy", "display_name": "都市化ボーナス", "tags": ["growth"], "effects": {"on_turn_start": {"gdp_gap": 1}}},
-  {"id": "infrastructure_gap", "type": "vulnerability", "display_name": "インフラ不足", "tags": ["infrastructure"], "effects": {"on_turn_start": {"gdp_gap": -1}}},
-  {"id": "currency_crisis_risk", "type": "vulnerability", "display_name": "通貨危機リスク", "tags": ["fragile_currency"], "effects": {"on_turn_start": {"financial_stress": 1, "exchange_rate": -1}}},
-  {"id": "capital_outflow", "type": "vulnerability", "display_name": "資本流出", "tags": ["fragile_currency"], "effects": {"on_turn_start": {"financial_stress": 1}}},
-  {"id": "sudden_stop", "type": "vulnerability", "display_name": "サドンストップ", "tags": ["foreign_debt"], "effects": {"on_turn_start": {"gdp_gap": -1, "financial_stress": 1}}},
-  {"id": "development_bank", "type": "legacy", "display_name": "開発銀行", "tags": ["developmental"], "effects": {"on_turn_start": {"gdp_gap": 1}}},
-  {"id": "industrial_policy_machine", "type": "legacy", "display_name": "産業政策マシン", "tags": ["developmental"], "effects": {"on_turn_start": {"unemployment": -1}}},
-  {"id": "youth_employment_pressure", "type": "vulnerability", "display_name": "若年雇用圧力", "tags": ["young"], "effects": {"on_turn_start": {"political_capital": -1}}},
-  {"id": "urban_unrest", "type": "vulnerability", "display_name": "都市不満", "tags": ["inequality"], "effects": {"on_turn_start": {"financial_stress": 1}}},
-  {"id": "retaliatory_tariffs", "type": "world_event", "display_name": "報復関税", "tags": ["tariff", "protectionism"], "effects": {"world": {"trade_openness": -1, "world_demand": -1, "protectionism": 1}}}
+  {
+    "id": "deflation_expectations",
+    "type": "vulnerability",
+    "display_name": "デフレ期待",
+    "tags": [
+      "deflation"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "inflation": -1,
+        "gdp_gap": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "demand",
+        "monetary",
+        "social_policy"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "external_demand_dependence",
+    "type": "vulnerability",
+    "display_name": "外需依存",
+    "tags": [
+      "exporter"
+    ],
+    "effects": {},
+    "response": {
+      "removed_by_tags": [
+        "trade",
+        "industrial",
+        "cooperation"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "commodity_price_dependence",
+    "type": "vulnerability",
+    "display_name": "資源価格依存",
+    "tags": [
+      "resource"
+    ],
+    "effects": {
+      "when_commodity_shock": {
+        "gdp_gap": -2,
+        "current_account": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "resource",
+        "industrial",
+        "stabilizer"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "administrative": 1
+      }
+    }
+  },
+  {
+    "id": "elderly_health_costs",
+    "type": "vulnerability",
+    "display_name": "高齢者医療費",
+    "tags": [
+      "aging"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "debt": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "social_policy",
+        "fiscal",
+        "reform"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "fiscal_rigidity",
+    "type": "vulnerability",
+    "display_name": "財政硬直化",
+    "tags": [
+      "fiscal"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "fiscal",
+        "tax",
+        "reform"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "protected_industry_lobby",
+    "type": "vulnerability",
+    "display_name": "保護産業ロビー",
+    "tags": [
+      "tariff",
+      "public_choice"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "trade",
+        "cooperation",
+        "anti_corruption",
+        "reform"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "private_debt_overhang",
+    "type": "vulnerability",
+    "display_name": "民間債務の重荷",
+    "tags": [
+      "finance"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "financial_regulation",
+        "stability"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "foreign_currency_debt_burden",
+    "type": "vulnerability",
+    "display_name": "外貨建て債務",
+    "tags": [
+      "foreign_debt"
+    ],
+    "effects": {
+      "when_currency_down": {
+        "financial_stress": 1,
+        "debt": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "debt",
+        "international",
+        "capital_controls"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "credibility": 1
+      }
+    }
+  },
+  {
+    "id": "housing_bubble",
+    "type": "vulnerability",
+    "display_name": "住宅バブル",
+    "tags": [
+      "finance",
+      "bubble"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "financial_regulation",
+        "stability"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "reform_fatigue",
+    "type": "vulnerability",
+    "display_name": "改革疲れ",
+    "tags": [
+      "reform"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "reform",
+        "social_policy"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "rent_seeking",
+    "type": "vulnerability",
+    "display_name": "レントシーキング",
+    "tags": [
+      "rent",
+      "public_choice"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "anti_corruption",
+        "administrative",
+        "reform"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "administrative": 1
+      }
+    }
+  },
+  {
+    "id": "corruption_risk",
+    "type": "vulnerability",
+    "display_name": "汚職リスク",
+    "tags": [
+      "corruption"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1,
+        "debt": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "anti_corruption",
+        "administrative"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "administrative": 1
+      }
+    }
+  },
+  {
+    "id": "asset_price_boom",
+    "type": "legacy",
+    "display_name": "資産価格上昇",
+    "tags": [
+      "finance",
+      "bubble"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "gdp_gap": 1,
+        "financial_stress": 1
+      }
+    }
+  },
+  {
+    "id": "financial_imbalance",
+    "type": "vulnerability",
+    "display_name": "金融不均衡",
+    "tags": [
+      "finance"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "financial_regulation",
+        "stability"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "productivity_growth",
+    "type": "legacy",
+    "display_name": "生産性上昇",
+    "tags": [
+      "productivity"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "gdp_gap": 1,
+        "unemployment": -1
+      }
+    }
+  },
+  {
+    "id": "vested_interest_backlash",
+    "type": "vulnerability",
+    "display_name": "既得権益の反発",
+    "tags": [
+      "public_choice"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "anti_corruption",
+        "reform"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "fund_depletion_pressure",
+    "type": "vulnerability",
+    "display_name": "基金枯渇圧力",
+    "tags": [
+      "fund"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "debt": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "fund",
+        "fiscal"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "debt_complacency",
+    "type": "vulnerability",
+    "display_name": "債務への慢心",
+    "tags": [
+      "debt"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "debt": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "fiscal",
+        "tax",
+        "debt"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "safe_asset_demand",
+    "type": "legacy",
+    "display_name": "安全資産需要",
+    "tags": [
+      "bond_market"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": -1
+      }
+    }
+  },
+  {
+    "id": "consumer_confidence",
+    "type": "legacy",
+    "display_name": "消費者信頼",
+    "tags": [
+      "domestic_demand"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "gdp_gap": 1
+      }
+    }
+  },
+  {
+    "id": "global_capital_inflow",
+    "type": "legacy",
+    "display_name": "世界資本流入",
+    "tags": [
+      "reserve_currency"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": -1,
+        "exchange_rate": 1
+      }
+    }
+  },
+  {
+    "id": "financial_sector_lobby",
+    "type": "vulnerability",
+    "display_name": "金融部門ロビー",
+    "tags": [
+      "finance",
+      "public_choice"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "financial_regulation",
+        "stability",
+        "anti_corruption",
+        "reform"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "election_pressure",
+    "type": "vulnerability",
+    "display_name": "選挙圧力",
+    "tags": [
+      "democracy",
+      "public_choice"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "cooperation",
+        "social_policy",
+        "anti_corruption",
+        "reform"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "asset_price_sensitivity",
+    "type": "vulnerability",
+    "display_name": "資産価格への敏感性",
+    "tags": [
+      "finance"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "financial_regulation",
+        "stability"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "export_competitiveness",
+    "type": "legacy",
+    "display_name": "輸出競争力",
+    "tags": [
+      "exporter"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "current_account": 1
+      }
+    }
+  },
+  {
+    "id": "currency_intervention",
+    "type": "legacy",
+    "display_name": "為替介入能力",
+    "tags": [
+      "currency"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "exchange_rate": 1
+      }
+    }
+  },
+  {
+    "id": "coalition_bargaining",
+    "type": "vulnerability",
+    "display_name": "連立交渉",
+    "tags": [
+      "democracy"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "cooperation",
+        "social_policy"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "export_lobby_capture",
+    "type": "vulnerability",
+    "display_name": "輸出企業ロビー圧力",
+    "tags": [
+      "exporter",
+      "public_choice"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1,
+        "current_account": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "trade",
+        "industrial",
+        "cooperation",
+        "anti_corruption"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "aging_society",
+    "type": "vulnerability",
+    "display_name": "高齢社会",
+    "tags": [
+      "aging"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "debt": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "social_policy",
+        "fiscal",
+        "reform"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "resource_revenue",
+    "type": "legacy",
+    "display_name": "資源収入",
+    "tags": [
+      "resource"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "debt": -1,
+        "current_account": 1
+      }
+    }
+  },
+  {
+    "id": "commodity_currency_swings",
+    "type": "vulnerability",
+    "display_name": "資源通貨の振れ",
+    "tags": [
+      "resource",
+      "currency"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "resource",
+        "industrial",
+        "stabilizer",
+        "monetary"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "credibility": 1
+      }
+    }
+  },
+  {
+    "id": "capital_inflow_cycle",
+    "type": "vulnerability",
+    "display_name": "資本流入循環",
+    "tags": [
+      "finance"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "financial_regulation",
+        "stability"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "stabilization_fund_buffer",
+    "type": "legacy",
+    "display_name": "安定化基金バッファ",
+    "tags": [
+      "fund"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": -1
+      }
+    }
+  },
+  {
+    "id": "fund_governance",
+    "type": "legacy",
+    "display_name": "基金ガバナンス",
+    "tags": [
+      "fund"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": 1
+      }
+    }
+  },
+  {
+    "id": "patronage_network",
+    "type": "vulnerability",
+    "display_name": "庇護ネットワーク",
+    "tags": [
+      "patronage"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "anti_corruption",
+        "reform"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "administrative": 1
+      }
+    }
+  },
+  {
+    "id": "single_industry_dependence",
+    "type": "vulnerability",
+    "display_name": "産業単一化",
+    "tags": [
+      "resource_dependence"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "gdp_gap": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "resource",
+        "industrial",
+        "productivity"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "administrative": 1
+      }
+    }
+  },
+  {
+    "id": "urbanization_bonus",
+    "type": "legacy",
+    "display_name": "都市化ボーナス",
+    "tags": [
+      "growth"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "gdp_gap": 1
+      }
+    }
+  },
+  {
+    "id": "infrastructure_gap",
+    "type": "vulnerability",
+    "display_name": "インフラ不足",
+    "tags": [
+      "infrastructure"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "gdp_gap": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "infrastructure",
+        "investment"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "administrative": 1
+      }
+    }
+  },
+  {
+    "id": "currency_crisis_risk",
+    "type": "vulnerability",
+    "display_name": "通貨危機リスク",
+    "tags": [
+      "fragile_currency"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": 1,
+        "exchange_rate": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "capital_controls",
+        "financial_regulation"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "credibility": 1
+      }
+    }
+  },
+  {
+    "id": "capital_outflow",
+    "type": "vulnerability",
+    "display_name": "資本流出",
+    "tags": [
+      "fragile_currency"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "capital_controls",
+        "financial_regulation"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "credibility": 1
+      }
+    }
+  },
+  {
+    "id": "sudden_stop",
+    "type": "vulnerability",
+    "display_name": "サドンストップ",
+    "tags": [
+      "foreign_debt"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "gdp_gap": -1,
+        "financial_stress": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "debt",
+        "international",
+        "capital_controls"
+      ],
+      "extra_costs": {
+        "political": 1,
+        "credibility": 1
+      }
+    }
+  },
+  {
+    "id": "development_bank",
+    "type": "legacy",
+    "display_name": "開発銀行",
+    "tags": [
+      "developmental"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "gdp_gap": 1
+      }
+    }
+  },
+  {
+    "id": "industrial_policy_machine",
+    "type": "legacy",
+    "display_name": "産業政策マシン",
+    "tags": [
+      "developmental"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "unemployment": -1
+      }
+    }
+  },
+  {
+    "id": "youth_employment_pressure",
+    "type": "vulnerability",
+    "display_name": "若年雇用圧力",
+    "tags": [
+      "young"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "political_capital": -1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "employment",
+        "infrastructure"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "urban_unrest",
+    "type": "vulnerability",
+    "display_name": "都市不満",
+    "tags": [
+      "inequality"
+    ],
+    "effects": {
+      "on_turn_start": {
+        "financial_stress": 1
+      }
+    },
+    "response": {
+      "removed_by_tags": [
+        "social_policy",
+        "tax"
+      ],
+      "extra_costs": {
+        "political": 2
+      }
+    }
+  },
+  {
+    "id": "retaliatory_tariffs",
+    "type": "world_event",
+    "display_name": "報復関税",
+    "tags": [
+      "tariff",
+      "protectionism"
+    ],
+    "effects": {
+      "world": {
+        "trade_openness": -1,
+        "world_demand": -1,
+        "protectionism": 1
+      }
+    }
+  }
 ]

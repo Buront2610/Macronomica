@@ -5,9 +5,11 @@ var tracks: Dictionary = {}
 var event_deck: Array = []
 var event_discard: Array = []
 var current_event: Dictionary = {}
+var active_crises: Array = []
 
 func _init(starting_tracks: Dictionary = {}) -> void:
 	tracks = starting_tracks.duplicate(true)
+	active_crises = []
 
 func apply_effects(effects: Dictionary) -> void:
 	for key in effects.keys():
