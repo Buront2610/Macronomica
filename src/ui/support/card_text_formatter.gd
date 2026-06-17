@@ -10,16 +10,16 @@ static func hand_card_text(card: Dictionary) -> String:
 
 static func planned_text(country, revealed: bool, phase: String, is_finished: bool) -> String:
 	if country.selected_policy.is_empty():
-		return "[center][b]政策案なし[/b]\n手札から政策カードを伏せます[/center]"
+		return "[center][b]政策案なし[/b]\n政策メニューから1枚を伏せます[/center]"
 	if revealed or phase == "simultaneous_reveal" or phase == "resolution" or is_finished:
 		return "[center][b]%s[/b]\n%s[/center]" % [country.selected_policy.get("display_name", ""), tag_line(country.selected_policy)]
-	return "[center][b]伏せ札[/b]\n政策案は同時公開まで非公開\nワーカー: %s[/center]" % UiCatalogScript.worker_name(country.assigned_worker)
+	return "[center][b]伏せ札[/b]\n政策案は同時公開まで非公開\nワーカー: %s[/center]" % worker_names(country)
 
 static func card_detail(country, card: Dictionary) -> String:
 	if card.is_empty():
-		return "[color=#999999]政策カードを選択してください。[/color]"
+		return "[color=#999999]政策メニューから選択してください。[/color]"
 	if card.get("type", "") != "policy":
-		return "[b]%s[/b]\n状態カード。国家デッキに混ざる能力や呪いです。" % card.get("display_name", "")
+		return "[b]%s[/b]\n状態カード。国家デッキに残る能力や呪いです。" % card.get("display_name", "")
 	var pressure := "国内圧力に合致" if PolicyRecommenderScript.pressure_matches(country, card) else "国内圧力と不一致"
 	return "[b]%s[/b]  [color=#9aa0a4]%s[/color]\n%s\n\nコスト: %s\n効果: %s\nデッキ変質: %s" % [
 		card.get("display_name", ""),
@@ -46,9 +46,15 @@ static func format_costs(costs: Dictionary) -> String:
 
 static func format_effects(effects: Dictionary) -> String:
 	var parts := []
-	for scope in ["country", "world"]:
+	var scope_labels := {
+		"country": "",
+		"donor": "供与 ",
+		"recipient": "受入 ",
+		"world": "世界 "
+	}
+	for scope in ["country", "donor", "recipient", "world"]:
 		for key in effects.get(scope, {}).keys():
-			parts.append("%s %+d" % [UiCatalogScript.track_name(key), int(effects[scope][key])])
+			parts.append("%s%s %+d" % [scope_labels[scope], UiCatalogScript.track_name(key), int(effects[scope][key])])
 	return " / ".join(parts) if not parts.is_empty() else "なし"
 
 static func format_mutations(mutations: Dictionary) -> String:
@@ -66,3 +72,9 @@ static func first_policy(cards: Array) -> Dictionary:
 		if card.get("type", "") == "policy":
 			return card
 	return {}
+
+static func worker_names(country) -> String:
+	var names := []
+	for worker in country.assigned_worker_list():
+		names.append(UiCatalogScript.worker_name(String(worker)))
+	return " / ".join(names) if not names.is_empty() else "未配置"

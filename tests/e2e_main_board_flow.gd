@@ -25,16 +25,16 @@ func _run() -> void:
 
 	for country_index in range(ui.game.countries.size()):
 		_assert(ui.selected_country_index == country_index, "policy planning focuses country %d automatically" % country_index)
-		var policy_index := _first_policy_index(ui.game.countries[country_index].hand)
+		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
 		_assert(policy_index >= 0, "country %d has a playable policy card" % country_index)
 		var card_node: Control = ui.hand_nodes[policy_index]
-		_assert(_control_min_size(card_node, Vector2(96, 112)), "hand card remains readable: %s" % card_node.name)
+		_assert(_control_min_size(card_node, Vector2(54, 88)), "policy menu card remains readable: %s" % card_node.name)
 		var click := InputEventMouseButton.new()
 		click.button_index = MOUSE_BUTTON_LEFT
 		click.pressed = true
 		card_node._gui_input(click)
 		await process_frame
-		_assert(not ui.game.countries[country_index].selected_policy.is_empty(), "country %d can submit a policy through the hand" % country_index)
+		_assert(not ui.game.countries[country_index].selected_policy.is_empty(), "country %d can submit a policy through the policy menu" % country_index)
 
 	_assert(ui.game.current_phase() == "worker_assignment", "E2E auto-reaches worker assignment after all policies")
 	_assert(ui.selected_country_index == 0, "worker assignment returns focus to country 0")
@@ -44,8 +44,14 @@ func _run() -> void:
 		_assert(ui.selected_country_index == country_index, "worker assignment focuses country %d automatically" % country_index)
 		ui._on_worker_assigned(country_index, workers[country_index % workers.size()], ui.worker_nodes[workers[country_index % workers.size()]].position)
 		await process_frame
-		_assert(ui.game.countries[country_index].assigned_worker == workers[country_index % workers.size()], "country %d can place a worker stamp" % country_index)
+		_assert(ui.game.countries[country_index].assigned_worker_list().has(workers[country_index % workers.size()]), "country %d can place a worker stamp" % country_index)
+		if country_index == 0:
+			ui._on_worker_assigned(country_index, "diplomat", ui.worker_nodes["diplomat"].position)
+			await process_frame
+			_assert(ui.game.countries[country_index].assigned_worker_list().size() >= 2, "country %d can place multiple worker stamps" % country_index)
 		_assert(_control_min_size(ui.country_stamp_slots[country_index], Vector2(42, 42)), "stamp slot remains readable for country %d" % country_index)
+		ui._on_advance_pressed()
+		await process_frame
 
 	_assert(ui.game.current_phase() == "simultaneous_reveal", "E2E auto-reaches simultaneous reveal after all worker stamps")
 	for country_index in range(ui.game.countries.size()):

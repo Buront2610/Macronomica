@@ -1,0 +1,56 @@
+name: Godot CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Validate data
+        run: python tools/validate_data.py
+
+      - name: Install Godot
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_VERSION="4.6.3"
+          GODOT_ZIP="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          curl -L "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/${GODOT_ZIP}" -o godot.zip
+          unzip -q godot.zip -d godot-bin
+          mv "godot-bin/Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
+          chmod +x godot
+
+      - name: Run Godot scene smoke test
+        run: ./godot --headless --path . --scene "res://scenes/main/main.tscn" --quit-after 3
+
+      - name: Run Godot test scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          tests=(
+            "res://tests/smoke_game_flow.gd"
+            "res://tests/smoke_domain_rules.gd"
+            "res://tests/smoke_policy_recommender.gd"
+            "res://tests/smoke_project_settings.gd"
+            "res://tests/smoke_board_surface_contract.gd"
+            "res://tests/smoke_board_runtime_contract.gd"
+            "res://tests/smoke_board_interaction.gd"
+            "res://tests/e2e_entry_flow.gd"
+            "res://tests/e2e_main_board_flow.gd"
+            "res://tests/e2e_resolution_outcome.gd"
+            "res://tests/e2e_final_score_overlay.gd"
+            "res://tests/smoke_ui_components.gd"
+          )
+          for test_script in "${tests[@]}"; do
+            ./godot --headless --path . --script "${test_script}"
+          done

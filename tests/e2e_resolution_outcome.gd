@@ -13,7 +13,7 @@ func _run() -> void:
 	game.advance_phase()
 	game.turn_limit = 1
 	for country_index in range(game.countries.size()):
-		var policy_index := _first_policy_index(game.countries[country_index].hand)
+		var policy_index := _first_policy_index(game.countries[country_index].policy_menu)
 		_assert(policy_index >= 0, "country %d has a policy card" % country_index)
 		game.select_policy(country_index, policy_index)
 	game.advance_phase()
@@ -24,7 +24,7 @@ func _run() -> void:
 	var before_world: Dictionary = game.world.tracks.duplicate(true)
 	var outcome: Dictionary = game.preview_resolution_outcome()
 	_assert(outcome.get("items", []).size() == 4, "resolution outcome covers all countries")
-	game.revealed_policies = true
+	game.reveal_policies()
 	game.resolve_turn()
 	var expected_country_diffs := _expected_country_diffs(outcome, game.countries.size())
 	for country_index in range(game.countries.size()):

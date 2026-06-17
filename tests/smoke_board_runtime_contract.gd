@@ -20,6 +20,7 @@ func _run() -> void:
 	get_root().add_child(ui)
 	await process_frame
 	await process_frame
+	ui.game.world.active_crises = [{"display_name": "試験持続危機", "turns": 2, "clear_text": "協調4"}]
 	ui._refresh_board(false)
 	await process_frame
 
@@ -29,14 +30,24 @@ func _run() -> void:
 	_assert(ui.country_seats.size() == 4, "runtime board shows four country seats without scroll")
 	_assert(ui.worker_nodes.size() == 5, "runtime board shows worker tokens as board pieces")
 	_assert(ui.phase_pips.size() == ui.GameStateScript.PHASES.size(), "runtime board shows phase pips as board markers")
-	_assert(ui.hand_nodes.size() == ui.game.countries[ui.selected_country_index].hand.size(), "runtime board deals selected hand as board cards")
+	_assert(ui.hand_nodes.size() == ui.game.countries[ui.selected_country_index].policy_menu.size(), "runtime board shows selected policy menu as board cards")
 	_assert(ui.policy_slot != null, "runtime board has a physical policy slot")
 	for key in ui.WORLD_TRACKS:
 		_assert(ui.board_layer.get_node_or_null("WorldTrack_%s" % key) != null, "runtime board shows world track: %s" % key)
+	var crisis_hint: Label = ui.board_layer.get_node_or_null("WorldPanel/WorldPanelHint")
+	_assert(crisis_hint != null and crisis_hint.text.contains("解除"), "world board shows persistent crisis counter and clear condition")
 	_assert(ui.score_panel != null and not ui.score_panel.text.is_empty(), "runtime board shows scores")
 	_assert(ui.log_panel != null and not ui.log_panel.text.is_empty(), "runtime board shows resolution log")
 	_assert(ui.country_detail_label != null and ui.country_detail_label.text.contains("リスク"), "runtime board shows selected country risk summary")
-	_assert(not ui.country_detail_label.text.contains("GDP"), "runtime board detail avoids always-on numeric dashboards")
+	_assert(ui.country_detail_label.text.contains("次札"), "runtime board detail shows next deck forecast")
+	_assert(ui.country_detail_label.text.contains("条件"), "runtime board detail shows welfare checklist")
+	_assert(ui.board_layer.get_node_or_null("CollapseWarning") != null, "runtime board has collapse warning banner")
+	for key in ui.COST_KEYS:
+		_assert(ui.policy_slot.get_node_or_null("CostSocket_%s" % key) != null, "policy slot has cost socket: %s" % key)
+	for seat in ui.country_seats:
+		for label_name in ["NextDeckLabel", "PipelineLabel", "ElectionLabel", "WelfareLabel"]:
+			var label: Label = seat.get_node_or_null(label_name)
+			_assert(label != null and not label.text.is_empty(), "country seat has populated %s: %s" % [label_name, seat.name])
 
 	var viewport := ui.get_viewport_rect()
 	for seat in ui.country_seats:

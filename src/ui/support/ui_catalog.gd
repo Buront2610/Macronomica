@@ -34,6 +34,8 @@ static func track_token(key: String) -> String:
 		"political_capital": "bureaucrat_seal",
 		"exchange_rate": "currency_arrows",
 		"current_account": "trade_port",
+		"expected_inflation": "expected_inflation_forecast",
+		"influence": "international_influence_globe",
 		"world_demand": "world_demand_globe",
 		"world_interest_rate": "interest_rate_coin",
 		"trade_openness": "trade_gate",
@@ -88,6 +90,8 @@ static func track_name(key: String) -> String:
 		"political_capital": "政治資本",
 		"exchange_rate": "為替",
 		"current_account": "経常収支",
+		"expected_inflation": "期待インフレ",
+		"influence": "国際影響力",
 		"world_demand": "世界需要",
 		"world_interest_rate": "世界金利",
 		"trade_openness": "貿易開放度",
@@ -107,7 +111,9 @@ static func short_track_name(key: String) -> String:
 		"financial_stress": "金融",
 		"political_capital": "政治",
 		"exchange_rate": "為替",
-		"current_account": "経常"
+		"current_account": "経常",
+		"expected_inflation": "期待",
+		"influence": "影響"
 	}
 	return names.get(key, key)
 
@@ -125,7 +131,7 @@ static func worker_tip(worker: String) -> String:
 		"central_bank_staff": "信認コストを1下げます。",
 		"diplomat": "国際コストを1下げます。",
 		"auditor": "汚職・レント系カードを抑えます。",
-		"lobbyist": "政治コストを1下げますが、利権カードを追加します。"
+		"lobbyist": "政治コストを2下げますが、利権カードを追加します。"
 	}
 	return tips.get(worker, "")
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bv2lvckcqmbd5"
-path="res://.godot/imported/board_table_background.png-6144e05d988ab9e4bd4abb37d620b241.ctex"
+uid="uid://dghr5s0tsy8cx"
+path="res://.godot/imported/expected_inflation_forecast.png-144c2aaf8f54ec5456d191b5c08b4c3a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/board_table_background.png"
-dest_files=["res://.godot/imported/board_table_background.png-6144e05d988ab9e4bd4abb37d620b241.ctex"]
+source_file="res://assets/ui/tokens/small/expected_inflation_forecast.png"
+dest_files=["res://.godot/imported/expected_inflation_forecast.png-144c2aaf8f54ec5456d191b5c08b4c3a.ctex"]
 
 [params]
 

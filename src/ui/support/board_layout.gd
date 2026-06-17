@@ -16,9 +16,11 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 
 	var country_size := Vector2(clampf(center_w * 0.255, 246.0, 286.0), clampf(viewport_size.y * 0.172, 118.0, 136.0))
 	var country_gap := 10.0
-	var hand_card_size := Vector2(104.0, 126.0)
-	var hand_step := Vector2(112.0, 0.0)
-	var hand_count_w := hand_card_size.x + hand_step.x * 4.0
+	var policy_menu_count := 18.0
+	var hand_card_w := clampf((center_w - 40.0) / policy_menu_count - 5.0, 54.0, 72.0)
+	var hand_card_size := Vector2(hand_card_w, 92.0)
+	var hand_step := Vector2((center_w - hand_card_size.x) / (policy_menu_count - 1.0), 0.0)
+	var hand_count_w := hand_card_size.x + hand_step.x * (policy_menu_count - 1.0)
 	var hand_x := clampf(center_x - hand_count_w * 0.5, center_left, center_right - hand_count_w)
 	var hand_panel_pos := Vector2(hand_x - 20.0, bottom_y - 14.0)
 	var hand_panel_size := Vector2(hand_count_w + 40.0, hand_card_size.y + 30.0)

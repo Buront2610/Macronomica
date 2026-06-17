@@ -15,13 +15,15 @@ if ($godot) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_policy_recommender.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & $godot.Source --headless --path $repo --script "res://tests/smoke_ui_layout.gd"
+    & $godot.Source --headless --path $repo --script "res://tests/smoke_project_settings.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_board_surface_contract.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_board_runtime_contract.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_board_interaction.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $godot.Source --headless --path $repo --script "res://tests/smoke_ui_visual_states.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/e2e_entry_flow.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -45,13 +47,15 @@ if (Test-Path $wingetGodot) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_policy_recommender.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & $wingetGodot --headless --path $repo --script "res://tests/smoke_ui_layout.gd"
+    & $wingetGodot --headless --path $repo --script "res://tests/smoke_project_settings.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_board_surface_contract.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_board_runtime_contract.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_board_interaction.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $wingetGodot --headless --path $repo --script "res://tests/smoke_ui_visual_states.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/e2e_entry_flow.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

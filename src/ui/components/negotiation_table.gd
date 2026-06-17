@@ -22,6 +22,7 @@ var token_empty_color := Color.DIM_GRAY
 var token_edge_color := Color.SADDLE_BROWN
 var token_assets
 var active_country_index := 0
+var revealed_policies := false
 
 func setup(next_mode: String, colors: Dictionary, next_token_assets = null) -> void:
 	mode = next_mode
@@ -34,8 +35,9 @@ func setup(next_mode: String, colors: Dictionary, next_token_assets = null) -> v
 	token_assets = next_token_assets
 	add_theme_constant_override("separation", 10)
 
-func refresh(countries: Array, selected_country_index: int = 0) -> void:
+func refresh(countries: Array, selected_country_index: int = 0, next_revealed_policies: bool = false) -> void:
 	active_country_index = selected_country_index
+	revealed_policies = next_revealed_policies
 	for child in get_children():
 		child.queue_free()
 	var table := PanelContainer.new()
@@ -123,19 +125,35 @@ func _worker_slot(country, accent: Color) -> Control:
 	slot.add_theme_stylebox_override("panel", _stylebox(Color(0.035, 0.034, 0.029, 0.94), token_edge_color, 5))
 	if token_assets == null:
 		var label := Label.new()
-		label.text = "W"
+		label.text = str(country.assigned_worker_list().size())
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.add_theme_color_override("font_color", accent)
 		slot.add_child(label)
 		return slot
+	var assigned_workers: Array = country.assigned_worker_list()
+	if assigned_workers.is_empty():
+		var empty := Label.new()
+		empty.text = "未"
+		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		empty.add_theme_color_override("font_color", accent)
+		slot.add_child(empty)
+		return slot
 	var icon := TextureRect.new()
-	icon.texture = token_assets.texture(UiCatalogScript.worker_token(String(country.assigned_worker)))
+	icon.texture = token_assets.texture(UiCatalogScript.worker_token(String(assigned_workers[0])))
 	icon.custom_minimum_size = Vector2(24, 24)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.modulate = accent.lightened(0.12)
 	slot.add_child(icon)
+	if assigned_workers.size() > 1:
+		var count := Label.new()
+		count.text = str(assigned_workers.size())
+		count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		count.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		count.add_theme_color_override("font_color", accent.lightened(0.25))
+		slot.add_child(count)
 	return slot
 
 func _agenda_tile(label_text: String, tag: String, icon: String, countries: Array) -> Control:
@@ -173,6 +191,8 @@ func _agenda_tile(label_text: String, tag: String, icon: String, countries: Arra
 	return panel
 
 func _planned_tag_count(tag: String, countries: Array) -> int:
+	if not revealed_policies:
+		return 0
 	var count := 0
 	for country in countries:
 		if not country.selected_policy.is_empty() and PolicyRecommenderScript.has_tag(country.selected_policy, tag):

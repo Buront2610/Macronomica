@@ -75,7 +75,7 @@ func _run() -> void:
 		return
 	await process_frame
 	if OS.get_environment("MACRONOMICA_PREVIEW_ACTION") != "0":
-		var policy_index := _first_policy_index(ui.game.countries[0].hand)
+		var policy_index := _first_policy_index(ui.game.countries[0].policy_menu)
 		if policy_index >= 0:
 			var card_node: Control = ui.hand_nodes[policy_index]
 			ui._on_policy_selected(0, policy_index, card_node.position)
@@ -95,17 +95,17 @@ func _save_preview() -> void:
 	quit(0)
 
 func _prepare_policy_submitted_preview(ui) -> void:
-	var policy_index := _first_policy_index(ui.game.countries[0].hand)
+	var policy_index := _first_policy_index(ui.game.countries[0].policy_menu)
 	if policy_index >= 0:
 		ui.game.select_policy(0, policy_index)
 	ui.selected_country_index = 1
 
 func _prepare_worker_assignment_preview(ui) -> void:
 	for country_index in range(ui.game.countries.size()):
-		var policy_index := _first_policy_index(ui.game.countries[country_index].hand)
+		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
 		if policy_index >= 0:
 			ui.game.select_policy(country_index, policy_index)
-	ui._set_game_phase("worker_assignment")
+	ui.game.move_to_phase("worker_assignment")
 	ui._reset_worker_confirmations()
 	ui.selected_country_index = 0
 
@@ -115,13 +115,15 @@ func _prepare_simultaneous_reveal_preview(ui) -> void:
 	for country_index in range(ui.game.countries.size()):
 		ui.game.assign_worker(country_index, workers[country_index % workers.size()])
 		ui.worker_assignment_confirmed[country_index] = true
-	ui._set_game_phase("simultaneous_reveal")
+	ui.game.move_to_phase("simultaneous_reveal")
 	ui.selected_country_index = 0
 
 func _prepare_resolution_preview(ui) -> void:
 	_prepare_simultaneous_reveal_preview(ui)
-	ui._set_game_phase("resolution")
-	ui.game.revealed_policies = true
+	ui.game.move_to_phase("resolution")
+	var depression := int(OS.get_environment("MACRONOMICA_PREVIEW_DEPRESSION"))
+	if depression > 0:
+		ui.game.world.tracks["depression"] = depression
 	ui.last_resolution_snapshot = ui._capture_resolution_snapshot()
 	ui.resolution_review_active = true
 	ui.resolution_step_index = clampi(int(OS.get_environment("MACRONOMICA_PREVIEW_RESOLUTION_STEP")), 0, 5)

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dbu8s71ej5k31"
-path="res://.godot/imported/uiux_design_01_board_flow.png-fe0e90a6d02b3f952574f3062b07eaf6.ctex"
+uid="uid://s7vtlkehxkyw"
+path="res://.godot/imported/international_influence_globe.png-2a23fc9bbf0d352fe2edd987df7be6ec.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/assets/uiux/uiux_design_01_board_flow.png"
-dest_files=["res://.godot/imported/uiux_design_01_board_flow.png-fe0e90a6d02b3f952574f3062b07eaf6.ctex"]
+source_file="res://assets/ui/tokens/small/international_influence_globe.png"
+dest_files=["res://.godot/imported/international_influence_globe.png-2a23fc9bbf0d352fe2edd987df7be6ec.ctex"]
 
 [params]
 

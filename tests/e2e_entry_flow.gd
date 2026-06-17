@@ -40,8 +40,8 @@ func _run() -> void:
 
 	_assert(not ui.title_overlay.visible and not ui.country_select_overlay.visible, "entry overlays close after country choice")
 	_assert(ui.player_country_index == 2, "entry flow stores the chosen country")
-	_assert(ui.selected_country_index == 2, "chosen country becomes the active board hand")
-	_assert(ui.hand_nodes.size() == ui.game.countries[2].hand.size(), "chosen country hand is visible on the board")
+	_assert(ui.selected_country_index == 2, "chosen country becomes the active board policy menu")
+	_assert(ui.hand_nodes.size() == ui.game.countries[2].policy_menu.size(), "chosen country policy menu is visible on the board")
 
 	if failed:
 		quit(1)

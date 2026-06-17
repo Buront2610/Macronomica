@@ -5,7 +5,6 @@ const PolicyRecommenderScript := preload("res://src/app/policy_recommender.gd")
 const TokenAssetsScript := preload("res://src/ui/support/token_assets.gd")
 const UiCatalogScript := preload("res://src/ui/support/ui_catalog.gd")
 const TrackPresenterScript := preload("res://src/ui/support/track_presenter.gd")
-const ResponsiveLayoutScript := preload("res://src/ui/support/responsive_layout.gd")
 const CardTextFormatterScript := preload("res://src/ui/support/card_text_formatter.gd")
 const BoardLayoutScript := preload("res://src/ui/support/board_layout.gd")
 const BoardPieceScript := preload("res://src/ui/support/board_piece.gd")
@@ -46,6 +45,7 @@ const WORLD_TRACKS := [
 	"global_coordination"
 ]
 const WORKERS := ["bureaucrats", "central_bank_staff", "diplomat", "auditor", "lobbyist"]
+const COST_KEYS := ["fiscal", "political", "administrative", "credibility", "international", "industrial"]
 
 var game
 var token_assets
@@ -59,11 +59,17 @@ var country_stamp_slots: Array = []
 var country_worker_icons: Array = []
 var country_pressure_labels: Array = []
 var country_chip_racks: Array = []
+var country_next_labels: Array = []
+var country_pipeline_labels: Array = []
+var country_election_labels: Array = []
+var country_welfare_labels: Array = []
 var hand_nodes: Array = []
 var hand_coin_nodes: Array = []
 var worker_nodes := {}
 var policy_slot
 var policy_slot_label: Label
+var policy_cost_labels: Array = []
+var collapse_warning
 var log_panel
 var score_panel
 var country_detail_label: Label
@@ -87,6 +93,7 @@ var player_country_index := -1
 var turn_news_panel
 var turn_news_label: Label
 var turn_news_active := false
+var log_highlight_key := ""
 
 func _ready() -> void:
 	token_assets = TokenAssetsScript.new()
@@ -115,6 +122,7 @@ func _build_board() -> void:
 	_build_table_marks()
 	_build_event_card()
 	_build_world_tracks()
+	_build_collapse_warning()
 	_build_agenda_tiles()
 	_build_country_seats()
 	_build_policy_slot()
@@ -204,7 +212,9 @@ func _build_agenda_tiles() -> void:
 	for i in range(AGENDA.size()):
 		var item: Dictionary = AGENDA[i]
 		var tile = _make_piece("Agenda_%s" % item["tag"], start + step * i, board_layout["agenda_size"], Color(0.15, 0.105, 0.055, 0.92), BOARD_LINE, 2, "card")
-		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tile.tooltip_text = "選択中の国が共同宣言を置きます。"
+		tile.pressed = func(tag := String(item["tag"])) -> void:
+			_on_agenda_declared(tag)
 		_add_label_to(tile, "AgendaIcon", String(item["icon"]), Vector2(0, 5), Vector2(tile.size.x, 25), 22, WARN.lightened(0.05))
 		_add_label_to(tile, "AgendaName", String(item["name"]), Vector2(0, 31), Vector2(tile.size.x, 22), 13, TEXT)
 		var pips := Control.new()
@@ -221,6 +231,10 @@ func _build_country_seats() -> void:
 	country_worker_icons.clear()
 	country_pressure_labels.clear()
 	country_chip_racks.clear()
+	country_next_labels.clear()
+	country_pipeline_labels.clear()
+	country_election_labels.clear()
+	country_welfare_labels.clear()
 	var positions: Array = board_layout["country_seat_positions"]
 	var seat_size: Vector2 = board_layout["country_seat_size"]
 	for i in range(game.countries.size()):
@@ -248,10 +262,25 @@ func _build_country_seats() -> void:
 
 		var stamp = _make_child_piece(seat, "StampSlot", Vector2(seat_size.x - 64, 44), Vector2(52, 52), Color(0.020, 0.018, 0.014, 0.68), accent, 1, "circle")
 		stamp.add_child(_make_icon("bureaucrat_seal", Vector2.ZERO, stamp.size, Color.WHITE, "WorkerIcon"))
+		_add_label_to(stamp, "WorkerCount", "", Vector2(29, 30), Vector2(18, 16), 10, WARN.lightened(0.18))
 		var stamp_label := _add_label_to(seat, "StampLabel", "担当印", Vector2(seat_size.x - 72, 98), Vector2(64, 18), 11, MUTED)
 		stamp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		country_stamp_slots.append(stamp)
 		country_worker_icons.append(stamp.get_node("WorkerIcon"))
+
+		var info_y := seat_size.y - 34.0
+		var next_label := _add_label_to(seat, "NextDeckLabel", "", Vector2(14, info_y), Vector2(seat_size.x * 0.34, 15), 9, MUTED, true)
+		next_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var pipeline_label := _add_label_to(seat, "PipelineLabel", "", Vector2(seat_size.x * 0.37, info_y), Vector2(seat_size.x * 0.23, 15), 9, WARN.lightened(0.16), true)
+		pipeline_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var election_label := _add_label_to(seat, "ElectionLabel", "", Vector2(seat_size.x * 0.60, info_y), Vector2(seat_size.x * 0.18, 15), 9, MUTED, true)
+		election_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var welfare_label := _add_label_to(seat, "WelfareLabel", "", Vector2(seat_size.x * 0.78, info_y), Vector2(seat_size.x * 0.18, 15), 9, MUTED, true)
+		welfare_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		country_next_labels.append(next_label)
+		country_pipeline_labels.append(pipeline_label)
+		country_election_labels.append(election_label)
+		country_welfare_labels.append(welfare_label)
 
 		var chips := Control.new()
 		chips.name = "RiskChips"
@@ -267,7 +296,21 @@ func _build_policy_slot() -> void:
 	policy_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var slot_size: Vector2 = board_layout["policy_slot_size"]
 	_add_label_to(policy_slot, "PolicySlotTitle", "同時公開卓", Vector2(0, 8), Vector2(slot_size.x, 22), 15, WARN.lightened(0.18))
-	policy_slot_label = _add_label_to(policy_slot, "PolicySlotLabel", "", Vector2(14, 34), Vector2(slot_size.x - 28, slot_size.y - 42), 13, TEXT, true)
+	policy_slot_label = _add_label_to(policy_slot, "PolicySlotLabel", "", Vector2(14, 30), Vector2(slot_size.x - 28, 28), 13, TEXT, true)
+	policy_cost_labels.clear()
+	var socket_w := (slot_size.x - 28.0) / float(COST_KEYS.size())
+	for i in range(COST_KEYS.size()):
+		var socket = _make_child_piece(policy_slot, "CostSocket_%s" % COST_KEYS[i], Vector2(14 + socket_w * i, slot_size.y - 22), Vector2(socket_w - 4, 15), Color(0.020, 0.018, 0.014, 0.68), BOARD_LINE.darkened(0.30), 1, "plaque")
+		var label := _add_label_to(socket, "CostSocketLabel", "", Vector2(1, 1), socket.size - Vector2(2, 2), 8, MUTED, true)
+		policy_cost_labels.append(label)
+
+func _build_collapse_warning() -> void:
+	var screen := _screen()
+	collapse_warning = _make_piece("CollapseWarning", Vector2(420, 82), Vector2(screen.x - 900.0, 34), Color(0.36, 0.045, 0.025, 0.92), BAD.lightened(0.20), 2, "plaque")
+	collapse_warning.z_index = 18
+	collapse_warning.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add_label_to(collapse_warning, "CollapseWarningText", "", Vector2(14, 6), collapse_warning.size - Vector2(28, 12), 15, TEXT, true)
+	collapse_warning.visible = false
 
 func _build_resolution_flow() -> void:
 	resolution_step_nodes.clear()
@@ -308,7 +351,7 @@ func _build_final_score_overlay() -> void:
 	final_score_panel.z_index = 60
 	final_score_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_add_label_to(final_score_panel, "FinalScoreTitle", "最終評議会", Vector2(0, 18), Vector2(panel_size.x, 34), 28, WARN.lightened(0.20))
-	_add_label_to(final_score_panel, "FinalScoreSubtitle", "8ターン後の順位とレガシー目標", Vector2(0, 54), Vector2(panel_size.x, 22), 14, MUTED)
+	_add_label_to(final_score_panel, "FinalScoreSubtitle", "最終順位とレガシー目標", Vector2(0, 54), Vector2(panel_size.x, 22), 14, MUTED)
 	var card_w := (panel_size.x - 82.0) / 4.0
 	for i in range(4):
 		var card = _make_child_piece(final_score_panel, "FinalScoreCard_%d" % i, Vector2(22 + (card_w + 12) * i, 96), Vector2(card_w, 210), Color(0.090, 0.065, 0.038, 0.92), COUNTRY_ACCENTS[i], 2, "card")
@@ -366,7 +409,7 @@ func _build_title_overlay() -> void:
 	_add_label_to(panel, "TitleOverlayName", "マクロノミカ", Vector2(0, 40), Vector2(panel_size.x, 56), 44, TEXT)
 	_add_label_to(panel, "TitleOverlaySub", "世界経済戦略ボードゲーム", Vector2(0, 104), Vector2(panel_size.x, 28), 18, WARN.lightened(0.16))
 	var memo = _make_child_piece(panel, "TitleMemo", Vector2(46, 156), Vector2(panel_size.x - 92, 104), Color(0.80, 0.69, 0.49, 0.94), BOARD_LINE, 2, "card")
-	_add_label_to(memo, "TitleMemoText", "カード・担当印・世界トラックを卓上で読み、8ターン後のレガシー目標を競います。", Vector2(22, 18), Vector2(memo.size.x - 44, 68), 18, INK, true)
+	_add_label_to(memo, "TitleMemoText", "カード・担当印・世界トラックを卓上で読み、10ターン後のレガシー目標を競います。", Vector2(22, 18), Vector2(memo.size.x - 44, 68), 18, INK, true)
 	var start = _make_entry_button(title_overlay, "TitleStart", "開始", panel_pos + Vector2(panel_size.x * 0.5 - 102, panel_size.y - 112), Vector2(204, 62), _show_country_select)
 	_add_label_to(start, "StartHint", "国家を選ぶ", Vector2(0, 38), Vector2(start.size.x, 18), 11, MUTED)
 	var continue_token = _make_overlay_piece(title_overlay, "TitleContinue", panel_pos + Vector2(panel_size.x * 0.5 - 206, panel_size.y - 42), Vector2(160, 34), Color(0.024, 0.022, 0.020, 0.72), BOARD_LINE.darkened(0.42), 1, "card")
@@ -450,7 +493,7 @@ func _show_turn_news_overlay() -> void:
 	turn_news_active = true
 	turn_news_panel.visible = true
 	if turn_news_label != null:
-		turn_news_label.text = _news_headlines(game.log)
+		turn_news_label.text = _turn_news_text()
 	_bump(turn_news_panel)
 
 func _hide_turn_news_overlay() -> void:
@@ -486,12 +529,14 @@ func _build_status_panels() -> void:
 	var log_pos: Vector2 = board_layout["log_pos"]
 	var log_size: Vector2 = board_layout["log_size"]
 	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.78, 0.66, 0.45, 0.92), BOARD_LINE, 2, "card")
-	log.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	log.tooltip_text = "クリックで最新ニュースに関係する世界トラックを強調"
+	log.pressed = _on_log_panel_pressed
 	_add_label_to(log, "LogTitle", "世界経済新聞", Vector2(0, 8), Vector2(log_size.x, 20), 14, INK)
 	log_panel = Label.new()
 	log_panel.name = "LogComponent"
 	log_panel.position = Vector2(12, 34)
 	log_panel.size = Vector2(log_size.x - 24, log_size.y - 44)
+	log_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	log_panel.add_theme_color_override("default_color", INK)
 	log_panel.add_theme_font_size_override("font_size", 13)
 	log_panel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -502,7 +547,8 @@ func _build_country_detail_panel() -> void:
 	var detail_pos: Vector2 = board_layout["country_detail_pos"]
 	var detail_size: Vector2 = board_layout["country_detail_size"]
 	var panel = _make_piece("CountryDetailPanel", detail_pos, detail_size, Color(0.060, 0.044, 0.028, 0.74), BOARD_LINE, 1, "card")
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.tooltip_text = "クリックで対応任務の対象を切替"
+	panel.pressed = _on_country_detail_pressed
 	_add_label_to(panel, "CountryDetailTitle", "国勢メモ", Vector2(0, 7), Vector2(detail_size.x, 20), 13, WARN.lightened(0.18))
 	country_detail_label = _add_label_to(panel, "CountryDetailLabel", "", Vector2(14, 30), Vector2(detail_size.x - 28, detail_size.y - 34), 13, TEXT, true)
 	country_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -537,8 +583,8 @@ func _rebuild_hand(animate: bool, origin := Vector2.INF) -> void:
 	var source := origin
 	if source == Vector2.INF and selected_country_index < country_seats.size():
 		source = country_seats[selected_country_index].position + Vector2(60, 46)
-	for i in range(country.hand.size()):
-		var card: Dictionary = country.hand[i]
+	for i in range(country.policy_menu.size()):
+		var card: Dictionary = country.policy_menu[i]
 		var card_node = _make_policy_card(card, i, -1, false)
 		var final_pos := hand_origin + hand_step * i
 		card_node.position = final_pos
@@ -601,6 +647,7 @@ func _refresh_board(animate: bool) -> void:
 	_refresh_title()
 	_refresh_phase()
 	_refresh_world()
+	_refresh_collapse_warning()
 	_refresh_agenda()
 	_refresh_country_seats()
 	_refresh_policy_slot(animate)
@@ -616,6 +663,7 @@ func _refresh_title() -> void:
 	var turn := board_layer.get_node_or_null("TurnLabel")
 	if turn != null:
 		turn.text = "ターン %d/%d  %s" % [game.turn, game.turn_limit, game.current_phase_name()]
+	_set_label("AdvanceTokenLabel", _advance_token_text())
 
 func _refresh_phase() -> void:
 	for i in range(phase_pips.size()):
@@ -630,13 +678,15 @@ func _refresh_world() -> void:
 	_set_label("EventTitle", String(event.get("display_name", "")))
 	_set_label("EventMessage", String(event.get("message", "")))
 	_set_label("EventDeck", "山札 %d / 捨札 %d" % [game.world.event_deck.size(), game.world.event_discard.size()])
+	_set_label("WorldPanelHint", _persistent_crisis_summary())
 	for key in WORLD_TRACKS:
 		var tile = board_layer.get_node_or_null("WorldTrack_%s" % key)
 		if tile == null:
 			continue
 		var value := int(game.world.tracks.get(key, 0))
 		var color := TrackPresenterScript.track_color(key, value, _track_colors())
-		tile.set_skin(Color(0.020, 0.019, 0.016, 0.72), color, 1, "card")
+		var highlighted: bool = key == log_highlight_key
+		tile.set_skin(Color(0.045, 0.032, 0.018, 0.86) if highlighted else Color(0.020, 0.019, 0.016, 0.72), WARN if highlighted else color, 3 if highlighted else 1, "card")
 		var rail := tile.get_node("TrackRail")
 		_clear_children(rail)
 		var filled := TrackPresenterScript.marker_count(key, value)
@@ -647,6 +697,17 @@ func _refresh_world() -> void:
 		if icon != null:
 			icon.modulate = color.lightened(0.20)
 
+func _refresh_collapse_warning() -> void:
+	if collapse_warning == null:
+		return
+	var depression := int(game.world.tracks.get("depression", 0))
+	var should_warn := depression >= 8 and not bool(game.global_collapse)
+	collapse_warning.visible = should_warn
+	if should_warn:
+		var label: Label = collapse_warning.get_node_or_null("CollapseWarningText")
+		if label != null:
+			label.text = "世界恐慌警戒: 恐慌 %d/10  協調・需要・金融安定を優先" % depression
+
 func _refresh_agenda() -> void:
 	for item in AGENDA:
 		var tag := String(item["tag"])
@@ -655,8 +716,15 @@ func _refresh_agenda() -> void:
 		_clear_children(pips)
 		var count := 0
 		for country in game.countries:
-			if not country.selected_policy.is_empty() and PolicyRecommenderScript.has_tag(country.selected_policy, tag):
+			if String(country.declared_agenda) == tag:
 				count += 1
+		if game.revealed_policies or game.current_phase() == "resolution" or game.is_finished:
+			count = 0
+			for country in game.countries:
+				if not country.selected_policy.is_empty() and PolicyRecommenderScript.has_tag(country.selected_policy, tag):
+					count += 1
+		var declared_here: bool = String(game.countries[selected_country_index].declared_agenda) == tag
+		tile.set_skin(Color(0.18, 0.13, 0.065, 0.94) if declared_here else Color(0.15, 0.105, 0.055, 0.92), COUNTRY_ACCENTS[selected_country_index] if declared_here else BOARD_LINE, 3 if declared_here else 2, "card")
 		for i in range(4):
 			pips.add_child(_make_pip(Vector2(i * 14, 0), 8, WARN if i < count else TOKEN_EMPTY))
 
@@ -665,17 +733,27 @@ func _refresh_country_seats() -> void:
 		var country = game.countries[i]
 		var accent: Color = COUNTRY_ACCENTS[i]
 		var active: bool = i == selected_country_index
+		var targeted_by_selected := _selected_policy_target_index() == i
 		var seat = country_seats[i]
-		seat.set_skin(Color(0.090, 0.064, 0.034, 0.94) if active else Color(0.060, 0.046, 0.030, 0.86), accent, 3 if active else 2, "card")
+		var border_color: Color = WARN if targeted_by_selected else accent
+		seat.set_skin(Color(0.090, 0.064, 0.034, 0.94) if active else Color(0.060, 0.046, 0.030, 0.86), border_color, 3 if active or targeted_by_selected else 2, "card")
 		country_pressure_labels[i].text = _pressure_summary(country)
 		country_policy_labels[i].text = _policy_slot_summary(country)
+		country_next_labels[i].text = _next_deck_summary(country)
+		country_pipeline_labels[i].text = _pipeline_summary(country)
+		country_election_labels[i].text = _election_short_status(country)
+		country_welfare_labels[i].text = _welfare_check_summary(country)
 		var policy_slot_node = country_policy_slots[i]
 		policy_slot_node.set_skin(Color(0.050, 0.044, 0.032, 0.96) if not country.selected_policy.is_empty() and (game.revealed_policies or game.current_phase() == "resolution") else Color(0.032, 0.038, 0.038, 0.94), accent, 2, "card")
 		var worker_icon: TextureRect = country_worker_icons[i]
 		var has_policy: bool = not country.selected_policy.is_empty()
-		worker_icon.visible = has_policy
-		if has_policy:
-			worker_icon.texture = token_assets.texture(UiCatalogScript.worker_token(country.assigned_worker))
+		var assigned_workers: Array = country.assigned_worker_list()
+		worker_icon.visible = has_policy and not assigned_workers.is_empty()
+		var count_label: Label = country_stamp_slots[i].get_node_or_null("WorkerCount")
+		if count_label != null:
+			count_label.text = str(assigned_workers.size()) if assigned_workers.size() > 1 else ""
+		if has_policy and not assigned_workers.is_empty():
+			worker_icon.texture = token_assets.texture(UiCatalogScript.worker_token(String(assigned_workers[0])))
 			worker_icon.modulate = Color.WHITE
 		_refresh_country_risk_chips(i, country)
 
@@ -684,7 +762,10 @@ func _refresh_policy_slot(animate: bool) -> void:
 	var phase: String = game.current_phase()
 	var country_name := "%s国" % UiCatalogScript.country_emblem(selected_country_index)
 	if phase == "policy_planning":
-		policy_slot_label.text = "%s 伏せ札提出済み\n次の国へ" % country_name if not country.selected_policy.is_empty() else "%sの政策案を伏せる\n手札から1枚選択" % country_name
+		if not country.selected_policy.is_empty() and String(country.selected_policy.get("target", "")) == "country":
+			policy_slot_label.text = "%sの対象国を指名\n%s" % [country_name, _target_effect_preview(country)]
+		else:
+			policy_slot_label.text = "%s 伏せ札提出済み\n次の国へ" % country_name if not country.selected_policy.is_empty() else "%sの政策案を伏せる\n政策メニューから1枚選択" % country_name
 	elif phase == "worker_assignment":
 		policy_slot_label.text = "%sの伏せ札に\n担当印を押す" % country_name
 	elif phase == "simultaneous_reveal":
@@ -693,12 +774,37 @@ func _refresh_policy_slot(animate: bool) -> void:
 		policy_slot_label.text = "%sを確認\n次で進める" % _resolution_step_name(resolution_step_index) if resolution_review_active else "公開済み政策を\n順に解決"
 	else:
 		policy_slot_label.text = CardTextFormatterScript.planned_text(country, game.revealed_policies, phase, game.is_finished).replace("[center]", "").replace("[/center]", "").replace("[b]", "").replace("[/b]", "")
+	_refresh_cost_sockets(country)
 	if animate:
 		_bump(policy_slot)
+
+func _refresh_cost_sockets(country) -> void:
+	var policy: Dictionary = country.selected_policy
+	if policy.is_empty():
+		policy = CardTextFormatterScript.first_policy(country.policy_menu)
+	var costs: Dictionary = policy.get("costs", {}) if not policy.is_empty() else {}
+	var preview: Dictionary = game._preview_policy_cost(country, policy) if not policy.is_empty() else {}
+	var shortages: Dictionary = preview.get("shortages", {}) if preview is Dictionary else {}
+	for i in range(policy_cost_labels.size()):
+		if i >= COST_KEYS.size():
+			continue
+		var key := String(COST_KEYS[i])
+		var required := int(costs.get(key, 0))
+		var shortage := int(shortages.get(key, 0))
+		var label: Label = policy_cost_labels[i]
+		var socket = label.get_parent()
+		var color := GOOD if required == 0 or shortage == 0 else BAD
+		if socket != null and socket.has_method("set_skin"):
+			socket.set_skin(Color(0.020, 0.018, 0.014, 0.76), color.darkened(0.05), 1, "plaque")
+		label.text = "%s%d" % [_cost_short_name(key), required]
+		label.add_theme_color_override("font_color", color.lightened(0.18) if required > 0 else MUTED)
 
 func _refresh_status_panels() -> void:
 	if score_panel != null:
 		var scores: Array = game.get_scores()
+		if not scores.is_empty() and bool(scores[0].get("global_collapse", false)):
+			score_panel.text = "全員敗北  世界恐慌"
+			return
 		var parts := []
 		for score in scores:
 			parts.append("%s %d" % [String(score.get("display_name", "")).substr(0, 2), int(score.get("score", 0))])
@@ -713,18 +819,30 @@ func _refresh_final_score_overlay() -> void:
 	if not game.is_finished:
 		return
 	var scores: Array = game.get_scores()
+	var is_collapse := not scores.is_empty() and bool(scores[0].get("global_collapse", false))
+	var title: Label = final_score_panel.get_node_or_null("FinalScoreTitle")
+	if title != null:
+		title.text = "全員敗北" if is_collapse else "最終評議会"
+	var subtitle: Label = final_score_panel.get_node_or_null("FinalScoreSubtitle")
+	if subtitle != null:
+		subtitle.text = "世界恐慌が臨界点に到達" if is_collapse else "最終順位とレガシー目標"
 	for i in range(final_score_labels.size()):
 		var label: Label = final_score_labels[i]
 		if i >= scores.size():
 			label.text = ""
 			continue
 		var score: Dictionary = scores[i]
-		label.text = "%s\n%d点\nレガシー +%d\n%s" % [
-			String(score.get("display_name", "")).substr(0, 11),
-			int(score.get("score", 0)),
-			int(score.get("legacy_bonus", 0)),
-			String(score.get("legacy_goal", "")).substr(0, 28)
-		]
+		if is_collapse:
+			label.text = "%s\n0点\nレガシー 無効\n勝者なし" % String(score.get("display_name", "")).substr(0, 11)
+		else:
+			label.text = "%s\n%d点\n厚生 %d / 影響 %d\nGDP %s\nレガシー +%d" % [
+				String(score.get("display_name", "")).substr(0, 11),
+				int(score.get("score", 0)),
+				_welfare_total_for_score(score),
+				_influence_for_score(score),
+				_gdp_history_for_score(score),
+				int(score.get("legacy_bonus", 0)),
+			]
 	if final_news_label != null:
 		final_news_label.text = _news_headlines(game.log)
 
@@ -813,12 +931,17 @@ func _refresh_resolution_links() -> void:
 	if not macro.is_empty() and _resolution_stage_visible(5, active_step):
 		var macro_world: Dictionary = macro.get("world_diff", {})
 		var macro_countries: Dictionary = macro.get("country_diffs", {})
+		var macro_path_added := false
 		if not macro_world.is_empty():
 			paths.append(_resolution_path(5, _control_center(board_layer.get_node("WorldPanel")), WARN, "合"))
 			_add_result_chip("MacroWorldResult", _control_center(board_layer.get_node("WorldPanel")) + Vector2(0, 38), _diff_chip_label(macro_world, "合"), WARN)
+			macro_path_added = true
 		for key in macro_countries.keys():
 			var country_index := int(key)
 			if country_index >= 0 and country_index < country_seats.size():
+				if not macro_path_added:
+					paths.append(_resolution_path(5, _control_center(country_seats[country_index]), COUNTRY_ACCENTS[country_index], "合"))
+					macro_path_added = true
 				_add_result_chip("MacroCountryResult_%d" % country_index, _control_center(country_seats[country_index]) + Vector2(0, -36), _diff_chip_label(_as_dict(macro_countries.get(key, {})), "合"), COUNTRY_ACCENTS[country_index])
 	resolution_overlay.set_paths(paths)
 
@@ -888,10 +1011,12 @@ func _track_chip_prefix(key: String, fallback: String) -> String:
 		"global_coordination": "協",
 		"gdp_gap": "GDP",
 		"inflation": "物",
+		"expected_inflation": "期",
 		"unemployment": "失",
 		"debt": "債",
 		"financial_stress": "金",
-		"political_capital": "政"
+		"political_capital": "政",
+		"influence": "影"
 	}
 	return names.get(key, fallback)
 
@@ -900,24 +1025,188 @@ func _signed_delta(delta: int) -> String:
 		return "+%d" % delta
 	return str(delta)
 
+func _next_deck_summary(country) -> String:
+	return "次:%s" % _next_deck_name(country)
+
+func _next_deck_name(country) -> String:
+	if country.deck.is_empty():
+		return "なし"
+	var card: Dictionary = country.deck[0]
+	return UiCatalogScript.short_card_name(card).substr(0, 7)
+
+func _pipeline_summary(country) -> String:
+	var count: int = country.pending_effects.size()
+	if count <= 0:
+		return "待:0"
+	var first: Dictionary = country.pending_effects[0]
+	var label: String = String(first.get("display_name", first.get("policy_id", "政策ラグ")))
+	return "待:%d %s" % [count, label.substr(0, 5)]
+
+func _state_card_summary(country) -> String:
+	if country.hand.is_empty():
+		return "なし"
+	var parts := []
+	for card in country.hand:
+		if String(card.get("type", "")) != "vulnerability":
+			continue
+		parts.append(UiCatalogScript.short_card_name(card).substr(0, 5))
+		if parts.size() >= 2:
+			break
+	return " / ".join(parts) if not parts.is_empty() else "なし"
+
+func _response_target_summary(country) -> String:
+	var candidates := _response_candidate_indices(country)
+	if candidates.is_empty():
+		return "候補なし"
+	var index := int(country.selected_response_index)
+	if index < 0 or not candidates.has(index):
+		index = candidates[0]
+	var card: Dictionary = country.hand[index]
+	var response: Dictionary = card.get("response", {})
+	var extra_costs: Dictionary = response.get("extra_costs", {})
+	var cost_parts := []
+	for key in extra_costs.keys():
+		cost_parts.append("%s%d" % [_cost_short_name(String(key)), int(extra_costs[key])])
+	var cost_text := ""
+	if not cost_parts.is_empty():
+		cost_text = "(%s)" % " ".join(cost_parts)
+	return "%s%s" % [
+		UiCatalogScript.short_card_name(card).substr(0, 6),
+		cost_text
+	]
+
+func _response_candidate_indices(country) -> Array:
+	var result := []
+	var policy: Dictionary = country.selected_policy
+	if policy.is_empty():
+		return result
+	var policy_tags: Array = policy.get("tags", [])
+	for i in range(country.hand.size()):
+		var card: Dictionary = country.hand[i]
+		if String(card.get("type", "")) != "vulnerability":
+			continue
+		var response: Dictionary = card.get("response", {})
+		if response.is_empty():
+			continue
+		for tag in response.get("removed_by_tags", []):
+			if policy_tags.has(tag):
+				result.append(i)
+				break
+	return result
+
+func _election_short_status(country) -> String:
+	if country.is_election_turn(game.turn):
+		return "選:本"
+	if country.is_election_eve(game.turn):
+		return "選:前"
+	var next_turn: int = int(country.election_turn)
+	while next_turn < game.turn:
+		next_turn += int(country.election_period)
+	return "選:%d" % maxi(0, next_turn - game.turn)
+
+func _welfare_check_summary(country) -> String:
+	return "厚:%d/4" % _welfare_conditions(country).size()
+
+func _welfare_condition_marks(country) -> String:
+	var labels := {
+		"gdp": "GDP",
+		"jobs": "雇",
+		"prices": "物",
+		"finance": "金"
+	}
+	var passed: Array = _welfare_conditions(country)
+	var parts: Array = []
+	for key in ["gdp", "jobs", "prices", "finance"]:
+		parts.append("%s%s" % [labels[key], "✓" if passed.has(key) else "×"])
+	return " ".join(parts)
+
+func _worker_summary(country) -> String:
+	var names := []
+	for worker in country.assigned_worker_list():
+		names.append(UiCatalogScript.worker_name(String(worker)).substr(0, 3))
+	return "/".join(names) if not names.is_empty() else "未"
+
+func _welfare_conditions(country) -> Array:
+	var t: Dictionary = country.tracks
+	var passed: Array = []
+	var gdp_gap: int = int(t.get("gdp_gap", 0))
+	if gdp_gap >= 0 and gdp_gap <= 1:
+		passed.append("gdp")
+	if int(t.get("unemployment", 0)) <= 3:
+		passed.append("jobs")
+	if abs(int(t.get("inflation", 0)) - 2) <= 1:
+		passed.append("prices")
+	if int(t.get("financial_stress", 0)) <= 4:
+		passed.append("finance")
+	return passed
+
+func _cost_short_name(key: String) -> String:
+	var names: Dictionary = {
+		"fiscal": "財",
+		"political": "政",
+		"administrative": "行",
+		"credibility": "信",
+		"international": "国",
+		"industrial": "産"
+	}
+	return names.get(key, key.substr(0, 1))
+
+func _turn_news_text() -> String:
+	var lines: Array = [_news_headlines(game.log).replace("\n\n", "\n")]
+	var welfare_parts: Array = []
+	for i in range(game.countries.size()):
+		var country = game.countries[i]
+		welfare_parts.append("%s国 %s 累%d" % [
+			UiCatalogScript.country_emblem(i),
+			_welfare_check_summary(country),
+			int(country.welfare_score)
+		])
+	lines.append("厚生: %s" % " / ".join(welfare_parts))
+	return "\n".join(lines)
+
+func _persistent_crisis_summary() -> String:
+	var crises: Array = game.world.active_crises
+	if crises.is_empty():
+		return "持続危機なし"
+	var parts := []
+	for entry in crises:
+		if not (entry is Dictionary):
+			continue
+		parts.append("%s 残%d / 解除:%s" % [
+			String(entry.get("display_name", "危機")).substr(0, 8),
+			int(entry.get("turns", 0)),
+			String(entry.get("clear_text", "条件")).substr(0, 8)
+		])
+		if parts.size() >= 2:
+			break
+	return "持続: %s" % " / ".join(parts)
+
 func _refresh_country_detail_panel() -> void:
 	if country_detail_label == null:
 		return
 	var country = game.countries[selected_country_index]
 	var pressure := String(country.domestic_pressure.get("display_name", "国内圧力なし"))
-	country_detail_label.text = "%s\n圧力: %s\nリスク: %s\n山札/捨札: %d/%d" % [
+	country_detail_label.text = "%s\n圧力:%s / 選挙:%s\n厚生:%d  条件:%s\n次札:%s / %s\n状態:%s\n対応:%s / 印:%s\nリスク:%s\n山札/捨札:%d/%d" % [
 		country.display_name.substr(0, 12),
 		pressure.substr(0, 14),
+		_election_status(country),
+		int(country.welfare_score),
+		_welfare_condition_marks(country),
+		_next_deck_name(country),
+		_pipeline_summary(country),
+		_state_card_summary(country),
+		_response_target_summary(country),
+		_worker_summary(country),
 		_country_risk_words(country),
 		country.deck.size(),
 		country.discard.size()
 	]
 
 func _refresh_workers() -> void:
-	var assigned: String = game.countries[selected_country_index].assigned_worker
+	var assigned: Array = game.countries[selected_country_index].assigned_worker_list()
 	for worker in worker_nodes.keys():
 		var node = worker_nodes[worker]
-		var selected: bool = worker == assigned
+		var selected: bool = assigned.has(worker)
 		node.set_skin(Color(0, 0, 0, 0.04), COUNTRY_ACCENTS[selected_country_index] if selected else Color(0, 0, 0, 0.10), 3 if selected else 1, "circle")
 
 func _on_advance_pressed() -> void:
@@ -930,7 +1219,12 @@ func _on_advance_pressed() -> void:
 		_refresh_board(true)
 		return
 	if game.current_phase() == "worker_assignment" and not _all_workers_confirmed():
-		selected_country_index = _next_country_without_worker(selected_country_index - 1)
+		_ensure_worker_confirmations()
+		if selected_country_index >= 0 and selected_country_index < worker_assignment_confirmed.size():
+			worker_assignment_confirmed[selected_country_index] = true
+		selected_country_index = _next_country_without_worker(selected_country_index)
+		if selected_country_index < 0:
+			_enter_simultaneous_reveal()
 		_refresh_board(true)
 		return
 	if game.current_phase() == "worker_assignment" and _all_workers_confirmed():
@@ -948,12 +1242,31 @@ func _on_advance_pressed() -> void:
 	_refresh_board(true)
 	_animate_phase_marker(previous_phase, game.phase_index)
 
+func _advance_token_text() -> String:
+	if turn_news_active:
+		return "新聞"
+	if game.current_phase() == "policy_planning":
+		if not _all_policies_submitted():
+			var next_country := _next_country_without_policy(selected_country_index - 1)
+			return "%s国へ" % String.chr(65 + next_country) if next_country >= 0 else "担当へ"
+		return "担当へ"
+	if game.current_phase() == "worker_assignment":
+		if not _all_workers_confirmed():
+			return "印確定"
+		return "公開"
+	if game.current_phase() == "simultaneous_reveal":
+		return "公開"
+	if resolution_review_active or game.current_phase() == "resolution":
+		return "解決"
+	if game.is_finished:
+		return "終了"
+	return "進行"
+
 func _start_resolution_review(previous_phase: int) -> void:
 	last_resolution_snapshot = _capture_resolution_snapshot()
 	resolution_review_active = true
 	resolution_step_index = 0
-	game.revealed_policies = true
-	_set_game_phase("resolution")
+	game.move_to_phase("resolution")
 	game.log.append("全政策が同時公開されました。")
 	_refresh_board(true)
 	_animate_phase_marker(previous_phase, game.phase_index)
@@ -984,16 +1297,48 @@ func _on_recommend_pressed() -> void:
 			var recommendation := PolicyRecommenderScript.recommend_for_country(game, i)
 			if recommendation.is_empty():
 				continue
-			game.select_policy(i, int(recommendation["hand_index"]))
+			game.select_policy(i, int(recommendation["policy_index"]))
 	elif game.can_assign_worker():
 		_ensure_worker_confirmations()
 		for i in range(game.countries.size()):
 			var recommendation := PolicyRecommenderScript.recommend_for_country(game, i)
 			if recommendation.is_empty():
 				continue
-			game.assign_worker(i, String(recommendation["worker"]))
+			game.assign_workers(i, recommendation.get("workers", [String(recommendation["worker"])]))
 			worker_assignment_confirmed[i] = true
 	_refresh_board(true)
+
+func _on_log_panel_pressed() -> void:
+	log_highlight_key = _latest_log_world_track()
+	_refresh_world()
+	if not log_highlight_key.is_empty():
+		var track = board_layer.get_node_or_null("WorldTrack_%s" % log_highlight_key)
+		if track != null:
+			_bump(track)
+
+func _on_agenda_declared(tag: String) -> void:
+	if game.current_phase() != "negotiation":
+		return
+	game.declare_agenda(selected_country_index, tag)
+	game.request_support(selected_country_index, tag)
+	_refresh_board(true)
+
+func _on_country_detail_pressed() -> void:
+	if not (game.can_select_policy() or game.can_assign_worker()):
+		return
+	var country = game.countries[selected_country_index]
+	var candidates := _response_candidate_indices(country)
+	if candidates.is_empty():
+		game.select_response_card(selected_country_index, -1)
+		_refresh_board(false)
+		return
+	var current := int(country.selected_response_index)
+	var next_index: int = int(candidates[0])
+	var current_pos := candidates.find(current)
+	if current_pos >= 0:
+		next_index = int(candidates[(current_pos + 1) % candidates.size()])
+	game.select_response_card(selected_country_index, next_index)
+	_refresh_board(false)
 
 func _on_restart_pressed() -> void:
 	game.new_game()
@@ -1010,6 +1355,15 @@ func _on_restart_pressed() -> void:
 	_apply_entry_state()
 
 func _on_country_selected(country_index: int) -> void:
+	if _is_waiting_for_policy_target(selected_country_index, country_index):
+		var source_index := selected_country_index
+		game.select_policy_target(source_index, country_index)
+		selected_country_index = _next_country_without_policy(source_index)
+		if selected_country_index < 0:
+			_enter_worker_assignment()
+		_refresh_board(true)
+		_bump(country_seats[country_index])
+		return
 	if country_index == selected_country_index:
 		_bump(country_seats[country_index])
 		return
@@ -1024,18 +1378,21 @@ func _on_country_selected(country_index: int) -> void:
 	_rebuild_hand(true, origin)
 	_animate_country_marker(previous, country_index)
 
-func _on_policy_selected(country_index: int, hand_index: int, from_pos: Vector2) -> void:
+func _on_policy_selected(country_index: int, policy_index: int, from_pos: Vector2) -> void:
 	if not game.can_select_policy():
 		return
 	last_resolution_snapshot = {}
 	resolution_review_active = false
 	resolution_step_index = -1
 	worker_assignment_confirmed = []
-	var card: Dictionary = game.countries[country_index].hand[hand_index]
-	game.select_policy(country_index, hand_index)
-	selected_country_index = _next_country_without_policy(country_index)
-	if selected_country_index < 0:
-		_enter_worker_assignment()
+	var card: Dictionary = game.countries[country_index].policy_menu[policy_index]
+	game.select_policy(country_index, policy_index)
+	if String(card.get("target", "")) == "country":
+		selected_country_index = country_index
+	else:
+		selected_country_index = _next_country_without_policy(country_index)
+		if selected_country_index < 0:
+			_enter_worker_assignment()
 	_refresh_board(false)
 	var card_size: Vector2 = board_layout.get("hand_card_size", Vector2(82, 108))
 	var slot: Control = country_policy_slots[country_index]
@@ -1044,12 +1401,9 @@ func _on_policy_selected(country_index: int, hand_index: int, from_pos: Vector2)
 func _on_worker_assigned(country_index: int, worker_id: String, from_pos: Vector2) -> void:
 	if not game.can_assign_worker():
 		return
-	game.assign_worker(country_index, worker_id)
+	game.toggle_worker(country_index, worker_id)
 	_ensure_worker_confirmations()
 	worker_assignment_confirmed[country_index] = true
-	selected_country_index = _next_country_without_worker(country_index)
-	if selected_country_index < 0:
-		_enter_simultaneous_reveal()
 	_refresh_board(false)
 	var stamp: Control = country_stamp_slots[country_index]
 	_animate_token_to_seat(UiCatalogScript.worker_token(worker_id), from_pos, stamp.global_position, COUNTRY_ACCENTS[country_index])
@@ -1060,6 +1414,16 @@ func _next_country_without_policy(after_index: int) -> int:
 		if game.countries[index].selected_policy.is_empty():
 			return index
 	return -1
+
+func _is_waiting_for_policy_target(source_index: int, target_index: int) -> bool:
+	if not game.can_select_policy():
+		return false
+	if source_index < 0 or source_index >= game.countries.size():
+		return false
+	if source_index == target_index:
+		return false
+	var country = game.countries[source_index]
+	return not country.selected_policy.is_empty() and String(country.selected_policy.get("target", "")) == "country"
 
 func _next_country_without_worker(after_index: int) -> int:
 	_ensure_worker_confirmations()
@@ -1085,11 +1449,11 @@ func _all_workers_confirmed() -> bool:
 func _enter_worker_assignment() -> void:
 	_reset_worker_confirmations()
 	selected_country_index = 0
-	_set_game_phase("worker_assignment")
+	game.move_to_phase("worker_assignment")
 
 func _enter_simultaneous_reveal() -> void:
 	selected_country_index = 0
-	_set_game_phase("simultaneous_reveal")
+	game.move_to_phase("simultaneous_reveal")
 
 func _reset_worker_confirmations() -> void:
 	worker_assignment_confirmed.clear()
@@ -1100,11 +1464,6 @@ func _ensure_worker_confirmations() -> void:
 	if worker_assignment_confirmed.size() == game.countries.size():
 		return
 	_reset_worker_confirmations()
-
-func _set_game_phase(phase_key: String) -> void:
-	var index := GameStateScript.PHASES.find(phase_key)
-	if index >= 0:
-		game.phase_index = index
 
 func _add_action_token(node_name: String, text: String, position: Vector2, size: Vector2, action: Callable):
 	var token = _make_piece(node_name, position, size, Color(0.05, 0.038, 0.024, 0.72), BOARD_LINE, 1, "circle")
@@ -1350,6 +1709,48 @@ func _world_short_name(key: String) -> String:
 	}
 	return names.get(key, key)
 
+func _welfare_total_for_score(score: Dictionary) -> int:
+	return int(score.get("welfare_score", 0))
+
+func _influence_for_score(score: Dictionary) -> int:
+	return int(score.get("influence", 0))
+
+func _gdp_history_for_score(score: Dictionary) -> String:
+	var country = _country_for_score(score)
+	if country == null:
+		return "-"
+	var values := []
+	for snapshot in country.track_history:
+		values.append(int(snapshot.get("gdp_gap", 0)))
+	if values.is_empty():
+		values.append(int(country.tracks.get("gdp_gap", 0)))
+	return _sparkline(values)
+
+func _country_for_score(score: Dictionary):
+	var country_id := String(score.get("country_id", ""))
+	for country in game.countries:
+		if country.country_id == country_id:
+			return country
+	return null
+
+func _sparkline(values: Array) -> String:
+	var chars := ["_", "-", "=", "+", "#"]
+	var text := ""
+	for value in values:
+		var index := clampi(int(value) + 2, 0, chars.size() - 1)
+		text += chars[index]
+	return text.substr(maxi(0, text.length() - 10), 10)
+
+func _election_status(country) -> String:
+	if country.is_election_turn(game.turn):
+		return "当"
+	if country.is_election_eve(game.turn):
+		return "前"
+	var next_turn := int(country.election_turn)
+	while next_turn < game.turn:
+		next_turn += int(country.election_period)
+	return "あと%d" % maxi(0, next_turn - game.turn)
+
 func _resolution_items() -> Array:
 	if not last_resolution_snapshot.is_empty():
 		return last_resolution_snapshot.get("items", [])
@@ -1442,6 +1843,26 @@ func _short_news_line(line: String) -> String:
 		return cleaned.substr(0, 41) + "…"
 	return cleaned
 
+func _latest_log_world_track() -> String:
+	var mapping := {
+		"世界需要": "world_demand",
+		"需要": "world_demand",
+		"金利": "world_interest_rate",
+		"貿易": "trade_openness",
+		"輸出": "trade_openness",
+		"金融": "international_financial_instability",
+		"信用": "international_financial_instability",
+		"恐慌": "depression",
+		"保護": "protectionism",
+		"協調": "global_coordination"
+	}
+	for i in range(game.log.size() - 1, -1, -1):
+		var line := String(game.log[i])
+		for key in mapping.keys():
+			if line.contains(String(key)):
+				return String(mapping[key])
+	return ""
+
 func _pressure_summary(country) -> String:
 	var pressure: Dictionary = country.domestic_pressure
 	if pressure.is_empty():
@@ -1457,8 +1878,43 @@ func _policy_slot_summary(country) -> String:
 	if country.selected_policy.is_empty():
 		return "未提出"
 	if game.revealed_policies or resolution_review_active or game.current_phase() == "resolution" or game.is_finished:
-		return UiCatalogScript.short_card_name(country.selected_policy)
+		return "%s%s" % [UiCatalogScript.short_card_name(country.selected_policy), _target_summary(country)]
 	return "伏せ札"
+
+func _target_summary(country) -> String:
+	if String(country.selected_policy.get("target", "")) != "country":
+		return ""
+	var target_index := int(country.selected_target_index)
+	if target_index < 0 or target_index >= game.countries.size():
+		return " →未定"
+	return " →%s国" % UiCatalogScript.country_emblem(target_index)
+
+func _target_effect_preview(country) -> String:
+	var target := _target_summary(country).strip_edges()
+	var effects: Dictionary = country.selected_policy.get("effects", {})
+	var donor := _short_effect_scope(effects.get("donor", {}))
+	var recipient := _short_effect_scope(effects.get("recipient", {}))
+	return "%s 供:%s / 受:%s" % [
+		target if not target.is_empty() else "→未定",
+		donor if not donor.is_empty() else "-",
+		recipient if not recipient.is_empty() else "-"
+	]
+
+func _short_effect_scope(effects: Dictionary) -> String:
+	var parts := []
+	for key in effects.keys():
+		parts.append("%s%s" % [_track_chip_prefix(String(key), String(key).substr(0, 1)), _signed_delta(int(effects[key]))])
+		if parts.size() >= 2:
+			break
+	return " ".join(parts)
+
+func _selected_policy_target_index() -> int:
+	if selected_country_index < 0 or selected_country_index >= game.countries.size():
+		return -1
+	var country = game.countries[selected_country_index]
+	if String(country.selected_policy.get("target", "")) != "country":
+		return -1
+	return int(country.selected_target_index)
 
 func _short_tag_list(tags: Array, limit: int) -> String:
 	var names := {
@@ -1534,9 +1990,3 @@ func _track_colors() -> Dictionary:
 		"bad": BAD,
 		"blue": BLUE
 	}
-
-func layout_mode_for_window_width(width: int) -> String:
-	return ResponsiveLayoutScript.mode_for_width(width)
-
-func is_short_window_height(height: int) -> bool:
-	return ResponsiveLayoutScript.is_short_height(height)
