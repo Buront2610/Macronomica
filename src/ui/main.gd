@@ -719,13 +719,14 @@ func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
 	var phase: String = game.current_phase()
 	var show_menu: bool = phase == "policy_planning"
 	var show_tray: bool = show_menu or phase == "worker_assignment"
+	var country = game.countries[selected_country_index]
 	var menu_panel = board_layer.get_node_or_null("PolicyMenuPanel")
 	if menu_panel != null:
 		menu_panel.visible = show_tray
 		var title: Label = menu_panel.get_node_or_null("PolicyMenuTitle")
 		if title != null:
 			var country_label := "%s国" % UiCatalogScript.country_emblem(selected_country_index)
-			title.text = "%sの政策メニュー（1枚クリック）" % country_label if show_menu else "%sの担当ワーカー（選んで印確定）" % country_label
+			title.text = "%sの政策メニュー  下のカードを1枚クリック" % country_label if show_menu else "%sの担当ワーカー（選んで印確定）" % country_label
 			title.add_theme_font_size_override("font_size", 12 if show_menu else 15)
 			title.add_theme_color_override("font_color", WARN.lightened(0.18) if show_menu else COUNTRY_ACCENTS[selected_country_index].lightened(0.30))
 		var legend: Label = menu_panel.get_node_or_null("PolicyMenuLegend")
@@ -735,10 +736,9 @@ func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
 	for i in range(20):
 		var slot = board_layer.get_node_or_null("PolicyMenuSlot_%d" % i)
 		if slot != null:
-			slot.visible = show_menu
+			slot.visible = show_menu and i < country.policy_menu.size()
 	if not show_menu:
 		return
-	var country = game.countries[selected_country_index]
 	var source := origin
 	if source == Vector2.INF and selected_country_index < country_seats.size():
 		source = country_seats[selected_country_index].position + Vector2(60, 46)
@@ -935,6 +935,7 @@ func _refresh_board(animate: bool) -> void:
 	_refresh_domestic_state_panel()
 	_refresh_policy_preview_panel()
 	_rebuild_policy_menu(animate)
+	_refresh_context_visibility()
 
 func _refresh_title() -> void:
 	var turn := board_layer.get_node_or_null("TurnLabel")
@@ -961,6 +962,10 @@ func _refresh_phase() -> void:
 			label.add_theme_color_override("font_color", TEXT if active else MUTED)
 
 func _refresh_world() -> void:
+	var world_visible: bool = game.current_phase() != "policy_planning"
+	var world_panel: Control = board_layer.get_node_or_null("WorldPanel")
+	if world_panel != null:
+		world_panel.visible = world_visible
 	var event: Dictionary = game.world.current_event
 	_set_label("EventTitle", String(event.get("display_name", "")))
 	_set_label("EventMessage", String(event.get("message", "")))
@@ -970,6 +975,7 @@ func _refresh_world() -> void:
 		var tile = board_layer.get_node_or_null("WorldTrack_%s" % key)
 		if tile == null:
 			continue
+		tile.visible = world_visible
 		var value := int(game.world.tracks.get(key, 0))
 		var color := TrackPresenterScript.track_color(key, value, _track_colors())
 		var highlighted: bool = key == log_highlight_key
@@ -996,9 +1002,13 @@ func _refresh_collapse_warning() -> void:
 			label.text = "世界恐慌警戒: 恐慌 %d/10  協調・需要・金融安定を優先" % depression
 
 func _refresh_agenda() -> void:
+	var panel: Control = board_layer.get_node_or_null("NegotiationPanel")
+	if panel != null:
+		panel.visible = game.current_phase() == "negotiation"
 	for item in AGENDA:
 		var tag := String(item["tag"])
 		var tile := board_layer.get_node("Agenda_%s" % tag)
+		tile.visible = game.current_phase() == "negotiation"
 		var pips := tile.get_node("AgendaPips")
 		_clear_children(pips)
 		var count := 0
@@ -1017,12 +1027,17 @@ func _refresh_agenda() -> void:
 
 func _refresh_country_seats() -> void:
 	var phase: String = game.current_phase()
+	var target_mode := false
+	if phase == "policy_planning" and selected_country_index >= 0 and selected_country_index < game.countries.size():
+		var selected_country = game.countries[selected_country_index]
+		target_mode = not selected_country.selected_policy.is_empty() and String(selected_country.selected_policy.get("target", "")) == "country"
 	for i in range(country_seats.size()):
 		var country = game.countries[i]
 		var accent: Color = COUNTRY_ACCENTS[i]
 		var active: bool = i == selected_country_index
 		var targeted_by_selected := _selected_policy_target_index() == i
 		var seat = country_seats[i]
+		seat.visible = phase != "policy_planning" or active or target_mode
 		var border_color: Color = WARN if targeted_by_selected and phase == "policy_planning" else accent
 		var fill := Color(0.090, 0.064, 0.034, 0.94) if active else Color(0.060, 0.046, 0.030, 0.86)
 		var border_width := 3 if active or (targeted_by_selected and phase == "policy_planning") else 2
@@ -1056,7 +1071,7 @@ func _refresh_domestic_state_panel() -> void:
 	var panel: Control = board_layer.get_node_or_null("DomesticStatePanel")
 	if panel == null:
 		return
-	panel.visible = game.current_phase() != "negotiation" or entry_state == "hidden"
+	panel.visible = game.current_phase() == "policy_planning" or game.current_phase() == "worker_assignment"
 	if selected_country_index < 0 or selected_country_index >= game.countries.size():
 		return
 	var country = game.countries[selected_country_index]
@@ -1137,6 +1152,8 @@ func _refresh_policy_slot(animate: bool) -> void:
 	var country = game.countries[selected_country_index]
 	var phase: String = game.current_phase()
 	var country_name := "%s国" % UiCatalogScript.country_emblem(selected_country_index)
+	var waiting_for_target: bool = not country.selected_policy.is_empty() and String(country.selected_policy.get("target", "")) == "country"
+	policy_slot.visible = phase != "policy_planning" or waiting_for_target
 	var title: Label = policy_slot.get_node_or_null("PolicySlotTitle")
 	if phase == "policy_planning":
 		if title != null:
@@ -1252,6 +1269,9 @@ func _refresh_final_score_overlay() -> void:
 func _refresh_resolution_flow() -> void:
 	if resolution_step_nodes.is_empty():
 		return
+	var panel: Control = board_layer.get_node_or_null("ResolutionFlow")
+	if panel != null:
+		panel.visible = game.current_phase() == "resolution" or resolution_review_active
 	var items: Array = _resolution_items()
 	var has_items := not items.is_empty()
 	var satisfied := 0
@@ -1289,6 +1309,47 @@ func _set_resolution_step(index: int, text: String, accent: Color) -> void:
 	var label: Label = resolution_step_labels[index]
 	label.text = text
 	label.add_theme_color_override("font_color", accent.lightened(0.30) if reached else MUTED)
+
+func _refresh_context_visibility() -> void:
+	var phase: String = game.current_phase()
+	var planning_focus := phase == "policy_planning"
+	var world_visible := not planning_focus
+	var world_panel: Control = board_layer.get_node_or_null("WorldPanel")
+	if world_panel != null:
+		world_panel.visible = world_visible
+	for key in WORLD_TRACKS:
+		var world_tile: Control = board_layer.get_node_or_null("WorldTrack_%s" % key)
+		if world_tile != null:
+			world_tile.visible = world_visible
+	for node_name in ["EventCard", "ScorePanel", "LogPanel", "CountryDetailPanel"]:
+		var sidebar_node: Control = board_layer.get_node_or_null(node_name)
+		if sidebar_node != null:
+			sidebar_node.visible = not planning_focus
+	var negotiation_panel: Control = board_layer.get_node_or_null("NegotiationPanel")
+	if negotiation_panel != null:
+		negotiation_panel.visible = phase == "negotiation"
+	for item in AGENDA:
+		var agenda_tile: Control = board_layer.get_node_or_null("Agenda_%s" % String(item["tag"]))
+		if agenda_tile != null:
+			agenda_tile.visible = phase == "negotiation"
+	var resolution_panel: Control = board_layer.get_node_or_null("ResolutionFlow")
+	if resolution_panel != null:
+		resolution_panel.visible = phase == "resolution" or resolution_review_active
+	var domestic_panel: Control = board_layer.get_node_or_null("DomesticStatePanel")
+	if domestic_panel != null:
+		domestic_panel.visible = phase == "policy_planning" or phase == "worker_assignment"
+	if policy_slot != null and selected_country_index >= 0 and selected_country_index < game.countries.size():
+		var country = game.countries[selected_country_index]
+		var waiting_for_target: bool = not country.selected_policy.is_empty() and String(country.selected_policy.get("target", "")) == "country"
+		policy_slot.visible = phase != "policy_planning" or waiting_for_target
+	if planning_focus:
+		var target_mode := false
+		if selected_country_index >= 0 and selected_country_index < game.countries.size():
+			var selected_country = game.countries[selected_country_index]
+			target_mode = not selected_country.selected_policy.is_empty() and String(selected_country.selected_policy.get("target", "")) == "country"
+		for i in range(country_seats.size()):
+			var seat: Control = country_seats[i]
+			seat.visible = i == selected_country_index or target_mode
 
 func _refresh_resolution_links() -> void:
 	if resolution_overlay == null or resolution_marker_layer == null:
