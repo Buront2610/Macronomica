@@ -12,11 +12,12 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var center_right := board_right
 	var center_w := center_right - center_left
 	var center_x := center_left + center_w * 0.5
-	var menu_columns := 8.0
+	var menu_columns := 6.0
+	var menu_rows := 3.0
 	var hand_gap := 8.0
-	var hand_card_w := clampf((center_w - 96.0 - hand_gap * (menu_columns - 1.0)) / menu_columns, 96.0, 112.0)
-	var hand_card_size := Vector2(hand_card_w, 92.0)
-	var hand_panel_size := Vector2(hand_card_size.x * menu_columns + hand_gap * (menu_columns - 1.0) + 40.0, hand_card_size.y * 2.0 + hand_gap + 40.0)
+	var hand_card_w := clampf((center_w - 96.0 - hand_gap * (menu_columns - 1.0)) / menu_columns, 136.0, 156.0)
+	var hand_card_size := Vector2(hand_card_w, 124.0)
+	var hand_panel_size := Vector2(hand_card_size.x * menu_columns + hand_gap * (menu_columns - 1.0) + 40.0, hand_card_size.y * menu_rows + hand_gap * (menu_rows - 1.0) + 40.0)
 	var hand_panel_x := clampf(center_x - hand_panel_size.x * 0.5, center_left, center_right - hand_panel_size.x)
 	var hand_panel_pos := Vector2(hand_panel_x, viewport_size.y - hand_panel_size.y - 18.0)
 	var policy_preview_size := Vector2(hand_panel_size.x, 124.0)
@@ -48,7 +49,9 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var worker_y := policy_slot_pos.y + 18.0
 
 	var action_size := Vector2(48.0, 48.0)
-	var command_origin := Vector2(center_right - 292.0, 27.0)
+	var utility_command_pos := Vector2(center_right - 162.0, 39.0)
+	var recommend_command_pos := Vector2(center_right - 96.0, 45.0)
+	var advance_command_pos := Vector2(center_right - 126.0, viewport_size.y - 138.0)
 	var event_pos := Vector2(info_x, header_h + 12.0)
 	var event_size := Vector2(info_w, 142.0)
 	var seat_y := world_pos.y + world_size.y + 10.0
@@ -75,7 +78,9 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"phase_pip_start": Vector2(center_x - 190.0, 40.0),
 		"phase_pip_step": Vector2(62.0, 0.0),
 		"phase_pip_size": Vector2(48.0, 18.0),
-		"command_origin": command_origin,
+		"utility_command_pos": utility_command_pos,
+		"recommend_command_pos": recommend_command_pos,
+		"advance_command_pos": advance_command_pos,
 		"action_size": action_size,
 		"event_pos": event_pos,
 		"event_size": event_size,

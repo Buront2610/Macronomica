@@ -257,11 +257,10 @@ func _build_table_marks() -> void:
 		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_add_label("PhaseLabel_%d" % i, _phase_short_name(String(GameStateScript.PHASES[i])), phase_start + phase_step * i + Vector2(-8, 18), Vector2(58, 16), 10, MUTED)
 		phase_pips.append(pip)
-	var command_origin: Vector2 = board_layout["command_origin"]
-	_add_action_token("RestartToken", "↺", command_origin + Vector2(12, 12), Vector2(48, 48), _on_restart_pressed)
-	var recommend = _add_action_token("RecommendToken", "助", command_origin + Vector2(82, 18), Vector2(36, 36), _on_recommend_pressed)
+	_add_action_token("RestartToken", "↺", board_layout["utility_command_pos"], Vector2(48, 48), _on_restart_pressed)
+	var recommend = _add_action_token("RecommendToken", "助", board_layout["recommend_command_pos"], Vector2(36, 36), _on_recommend_pressed)
 	recommend.tooltip_text = "推奨（テスト補助）"
-	_add_action_token("AdvanceToken", "次", command_origin + Vector2(150, 0), Vector2(68, 68), _on_advance_pressed)
+	_add_action_token("AdvanceToken", "次", board_layout["advance_command_pos"], Vector2(108, 108), _on_advance_pressed)
 
 func _build_event_card() -> void:
 	var card = _make_piece("EventCard", board_layout["event_pos"], board_layout["event_size"], Color(0.13, 0.085, 0.040, 0.94), WARN, 2, "card")
@@ -811,14 +810,14 @@ func _make_policy_card(card: Dictionary, policy_menu_index: int, display_country
 			_set_policy_preview(policy_menu_index)
 	)
 	if include_coin:
-		var icon_size := minf(44.0, card_size.y * 0.48)
+		var icon_size := minf(60.0, card_size.y * 0.54)
 		card_node.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2((card_size.x - icon_size) * 0.5, 8), Vector2(icon_size, icon_size), Color.WHITE, "CardCoin"))
-	var label_y := 56.0 if include_coin else 5.0
-	var label := _add_label_to(card_node, "CardName", _ellipsize(UiCatalogScript.short_card_name(card), 9), Vector2(8, label_y), Vector2(card_size.x - 16, 20), 13, INK if card.get("type", "") == "policy" else TEXT, false)
+	var label_y := 72.0 if include_coin else 5.0
+	var label := _add_label_to(card_node, "CardName", _ellipsize(UiCatalogScript.short_card_name(card), 11), Vector2(8, label_y), Vector2(card_size.x - 16, 21), 14, INK if card.get("type", "") == "policy" else TEXT, false)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var cost_text := _policy_menu_footer(country, card)
-	var cost_label := _add_label_to(card_node, "CardCost", _ellipsize(cost_text, 11), Vector2(8, card_size.y - 19), Vector2(card_size.x - 16, 15), 10, INK.darkened(0.06) if available else INK.lightened(0.25), false)
+	var cost_label := _add_label_to(card_node, "CardCost", _ellipsize(cost_text, 13), Vector2(8, card_size.y - 21), Vector2(card_size.x - 16, 16), 11, INK.darkened(0.06) if available else INK.lightened(0.25), false)
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
@@ -1846,7 +1845,7 @@ func _advance_token_text() -> String:
 		return "担当へ"
 	if game.current_phase() == "worker_assignment":
 		if not _all_workers_confirmed():
-			return "印確定"
+			return "確定"
 		return "公開"
 	if game.current_phase() == "simultaneous_reveal":
 		return "公開"
@@ -2102,7 +2101,11 @@ func _ensure_worker_confirmations() -> void:
 func _add_action_token(node_name: String, text: String, position: Vector2, size: Vector2, action: Callable):
 	var token = _make_piece(node_name, position, size, Color(0.05, 0.038, 0.024, 0.72), BOARD_LINE, 1, "circle")
 	token.pressed = action
-	var font_size := 20 if size.x >= 44.0 else 16
+	var font_size := 16
+	if size.x >= 96.0:
+		font_size = 34
+	elif size.x >= 44.0:
+		font_size = 20
 	_add_label_to(token, "%sLabel" % node_name, text, Vector2.ZERO, size, font_size, TEXT)
 	return token
 

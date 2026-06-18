@@ -31,7 +31,7 @@ func _run() -> void:
 		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
 		_assert(policy_index >= 0, "country %d has a playable policy card" % country_index)
 		var card_node: Control = ui.policy_menu_nodes[policy_index]
-		_assert(_control_min_size(card_node, Vector2(96, 88)), "policy menu card is a large planning tile: %s" % card_node.name)
+		_assert(_control_min_size(card_node, Vector2(136, 108)), "policy menu card is a large planning tile: %s" % card_node.name)
 		_assert(_policy_card_icon_is_large(card_node), "policy menu card uses a large readable icon: %s" % card_node.name)
 		var click := InputEventMouseButton.new()
 		click.button_index = MOUSE_BUTTON_LEFT
@@ -100,6 +100,7 @@ func _run() -> void:
 
 	var log_panel: Label = ui.log_panel
 	_assert(log_panel != null and log_panel.text.contains("・"), "newspaper shows summarized headlines")
+	_assert(_control_min_size(ui.board_layer.get_node("AdvanceToken"), Vector2(104, 104)), "advance token is a large primary action")
 	_assert(_control_min_size(ui.board_layer.get_node("ResolutionFlow"), Vector2(520, 48)), "resolution flow has enough physical size")
 
 	if failed:
@@ -122,7 +123,7 @@ func _policy_card_icon_is_large(card_node: Control) -> bool:
 	if icon == null:
 		push_error("Policy card has no CardCoin icon: %s" % card_node.name)
 		return false
-	return icon.size.x >= 40.0 and icon.size.y >= 40.0
+	return icon.size.x >= 56.0 and icon.size.y >= 56.0
 
 func _major_icons_are_visible_and_inside(ui) -> bool:
 	for icon in _collect_texture_rects(ui):
