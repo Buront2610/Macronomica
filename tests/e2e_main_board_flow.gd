@@ -25,13 +25,13 @@ func _run() -> void:
 
 	for country_index in range(ui.game.countries.size()):
 		_assert(ui.selected_country_index == country_index, "policy planning focuses country %d automatically" % country_index)
-		_assert(ui.planning_country_panel != null and ui.planning_country_panel.visible, "policy planning shows the active country frame")
-		var emblem: Label = ui.planning_country_panel.get_node_or_null("PlanningCountryEmblem")
-		_assert(emblem != null and emblem.text.contains("%s国" % String.chr(65 + country_index)), "active country frame switches to country %d" % country_index)
+		var menu_title: Label = ui.board_layer.get_node_or_null("PolicyMenuPanel/PolicyMenuTitle")
+		_assert(menu_title != null and menu_title.text.contains("%s国" % String.chr(65 + country_index)), "large policy shelf title switches to country %d" % country_index)
+		_assert(ui.planning_country_panel == null or not ui.planning_country_panel.visible, "small active country frame is removed from focused planning")
 		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
 		_assert(policy_index >= 0, "country %d has a playable policy card" % country_index)
 		var card_node: Control = ui.policy_menu_nodes[policy_index]
-		_assert(_control_min_size(card_node, Vector2(136, 108)), "policy menu card is a large planning tile: %s" % card_node.name)
+		_assert(_control_min_size(card_node, Vector2(220, 158)), "policy card is a large planning tile: %s" % card_node.name)
 		_assert(_policy_card_icon_is_large(card_node), "policy menu card uses a large readable icon: %s" % card_node.name)
 		var click := InputEventMouseButton.new()
 		click.button_index = MOUSE_BUTTON_LEFT

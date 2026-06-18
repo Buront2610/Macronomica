@@ -3,8 +3,8 @@ class_name BoardLayout
 
 static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var margin := 18.0
-	var header_h := 74.0
-	var info_w := clampf(viewport_size.x * 0.20, 240.0, 300.0)
+	var header_h := 78.0
+	var info_w := clampf(viewport_size.x * 0.22, 300.0, 360.0)
 	var board_left := margin
 	var info_x := viewport_size.x - info_w - margin
 	var board_right := info_x - 18.0
@@ -12,56 +12,61 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var center_right := board_right
 	var center_w := center_right - center_left
 	var center_x := center_left + center_w * 0.5
-	var menu_columns := 6.0
-	var menu_rows := 3.0
-	var hand_gap := 8.0
-	var hand_card_w := clampf((center_w - 96.0 - hand_gap * (menu_columns - 1.0)) / menu_columns, 136.0, 156.0)
-	var hand_card_size := Vector2(hand_card_w, 124.0)
-	var hand_panel_size := Vector2(hand_card_size.x * menu_columns + hand_gap * (menu_columns - 1.0) + 40.0, hand_card_size.y * menu_rows + hand_gap * (menu_rows - 1.0) + 40.0)
-	var hand_panel_x := clampf(center_x - hand_panel_size.x * 0.5, center_left, center_right - hand_panel_size.x)
+	var focus_right := viewport_size.x - margin
+	var focus_w := focus_right - center_left
+	var focus_x := center_left + focus_w * 0.5
+	var menu_columns := 4.0
+	var menu_rows := 4.0
+	var hand_gap := 12.0
+	var hand_card_w := roundf(clampf((focus_w - 128.0 - hand_gap * (menu_columns - 1.0)) / menu_columns, 220.0, 286.0))
+	var hand_card_h := roundf(clampf(viewport_size.y * 0.155, 158.0, 170.0))
+	var hand_card_size := Vector2(hand_card_w, hand_card_h)
+	var hand_panel_size := Vector2(hand_card_size.x * menu_columns + hand_gap * (menu_columns - 1.0) + 64.0, hand_card_size.y * menu_rows + hand_gap * (menu_rows - 1.0) + 76.0)
+	var hand_panel_x := clampf(focus_x - hand_panel_size.x * 0.5, center_left, focus_right - hand_panel_size.x)
 	var hand_panel_pos := Vector2(hand_panel_x, viewport_size.y - hand_panel_size.y - 18.0)
-	var policy_preview_size := Vector2(hand_panel_size.x, 124.0)
-	var policy_preview_pos := Vector2(hand_panel_x, hand_panel_pos.y - policy_preview_size.y - 12.0)
+	var policy_preview_size := Vector2(hand_panel_size.x, clampf(viewport_size.y * 0.17, 172.0, 190.0))
+	var policy_preview_pos := Vector2(hand_panel_x, hand_panel_pos.y - policy_preview_size.y - 14.0)
 	var bottom_y := hand_panel_pos.y - 18.0
 
-	var country_size := Vector2(clampf(center_w * 0.265, 252.0, 280.0), clampf(viewport_size.y * 0.182, 128.0, 142.0))
+	var country_size := Vector2(clampf(center_w * 0.29, 280.0, 330.0), clampf(viewport_size.y * 0.20, 144.0, 170.0))
 	var country_gap := 10.0
 	var hand_step := Vector2(hand_card_size.x + hand_gap, hand_card_size.y + hand_gap)
-	var hand_origin := hand_panel_pos + Vector2(20.0, 20.0)
+	var hand_origin := hand_panel_pos + Vector2(32.0, 50.0)
 
-	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.255, 178.0, 196.0))
+	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.27, 198.0, 230.0))
 	var world_pos := Vector2(center_left, header_h + 6.0)
-	var planning_country_size := Vector2(clampf(center_w * 0.62, 560.0, 700.0), 86.0)
-	var planning_country_pos := Vector2(center_x - planning_country_size.x * 0.5, world_pos.y + 12.0)
+	var planning_country_size := Vector2(clampf(focus_w * 0.72, 760.0, 1040.0), 132.0)
+	var planning_country_pos := Vector2(focus_x - planning_country_size.x * 0.5, world_pos.y + 12.0)
 	var between_countries_w := maxf(360.0, center_w - country_size.x * 2.0 - 54.0)
 	var negotiation_size := Vector2(minf(510.0, between_countries_w), 78.0)
 	var negotiation_pos := Vector2(center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 10.0)
-	var policy_slot_size := Vector2(380.0, 100.0)
+	var policy_slot_size := Vector2(440.0, 118.0)
 	var policy_slot_pos := Vector2(center_x - policy_slot_size.x * 0.5, negotiation_pos.y + negotiation_size.y + 8.0)
-	var resolution_flow_size := Vector2(minf(560.0, between_countries_w), 70.0)
+	var resolution_flow_size := Vector2(minf(640.0, between_countries_w), 82.0)
 	var resolution_flow_pos := Vector2(center_x - resolution_flow_size.x * 0.5, policy_slot_pos.y + policy_slot_size.y + 8.0)
 	var world_track_gap := 8.0
 	var world_track_w := (world_size.x - 76.0 - world_track_gap * 6.0) / 7.0
 
-	var worker_size := Vector2(60.0, 60.0)
-	var worker_total_w := worker_size.x * 5.0 + 12.0 * 4.0
-	var worker_x := clampf(policy_slot_pos.x + policy_slot_size.x + 28.0, center_left, center_right - worker_total_w)
-	var worker_y := policy_slot_pos.y + 18.0
+	var worker_size := Vector2(306.0, 154.0)
+	var worker_columns := 3.0
+	var worker_total_w := worker_size.x * worker_columns + 18.0 * (worker_columns - 1.0)
+	var worker_x := clampf(hand_panel_x + hand_panel_size.x * 0.5 - worker_total_w * 0.5, center_left, focus_right - worker_total_w)
+	var worker_y := hand_panel_pos.y + hand_panel_size.y * 0.34
 
-	var action_size := Vector2(48.0, 48.0)
-	var utility_command_pos := Vector2(center_right - 162.0, 39.0)
-	var recommend_command_pos := Vector2(center_right - 96.0, 45.0)
-	var advance_command_pos := Vector2(center_right - 126.0, viewport_size.y - 138.0)
+	var action_size := Vector2(54.0, 54.0)
+	var utility_command_pos := Vector2(focus_right - 172.0, 36.0)
+	var recommend_command_pos := Vector2(focus_right - 100.0, 39.0)
+	var advance_command_pos := Vector2(focus_right - 126.0, viewport_size.y - 138.0)
 	var event_pos := Vector2(info_x, header_h + 12.0)
-	var event_size := Vector2(info_w, 142.0)
+	var event_size := Vector2(info_w, 164.0)
 	var seat_y := world_pos.y + world_size.y + 10.0
 	var left_x := center_left + 12.0
 	var right_x := center_right - country_size.x - 12.0
-	var state_panel_size := Vector2(clampf(center_w * 0.50, 580.0, 720.0), 144.0)
+	var state_panel_size := Vector2(clampf(focus_w * 0.56, 760.0, 980.0), 166.0)
 	var state_panel_y := seat_y + country_size.y * 2.0 + country_gap + 12.0
 	var state_panel_pos := Vector2(center_x - state_panel_size.x * 0.5, minf(state_panel_y, policy_preview_pos.y - state_panel_size.y - 12.0))
 	var right_log_y := event_pos.y + event_size.y + 12.0
-	var detail_h := clampf(viewport_size.y * 0.18, 126.0, 148.0)
+	var detail_h := clampf(viewport_size.y * 0.19, 152.0, 190.0)
 	var log_h := maxf(82.0, bottom_y - right_log_y - detail_h - 16.0)
 
 	return {
@@ -71,10 +76,10 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"hand_panel_size": hand_panel_size,
 		"policy_preview_pos": policy_preview_pos,
 		"policy_preview_size": policy_preview_size,
-		"title_pos": Vector2(30.0, 31.0),
-		"title_size": Vector2(220.0, 44.0),
-		"turn_pos": Vector2(240.0, 39.0),
-		"turn_size": Vector2(330.0, 28.0),
+		"title_pos": Vector2(30.0, 28.0),
+		"title_size": Vector2(240.0, 48.0),
+		"turn_pos": Vector2(264.0, 38.0),
+		"turn_size": Vector2(360.0, 32.0),
 		"phase_pip_start": Vector2(center_x - 190.0, 40.0),
 		"phase_pip_step": Vector2(62.0, 0.0),
 		"phase_pip_size": Vector2(48.0, 18.0),
@@ -105,20 +110,21 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"country_seat_size": country_size,
 		"domestic_state_panel_pos": state_panel_pos,
 		"domestic_state_panel_size": state_panel_size,
-		"domestic_state_card_size": Vector2((state_panel_size.x - 104.0) * 0.5, 68.0),
+		"domestic_state_card_size": Vector2((state_panel_size.x - 112.0) * 0.5, 82.0),
 		"policy_slot_pos": policy_slot_pos,
 		"policy_slot_size": policy_slot_size,
 		"resolution_flow_pos": resolution_flow_pos,
 		"resolution_flow_size": resolution_flow_size,
-		"score_pos": Vector2(info_x, 65.0),
-		"score_size": Vector2(info_w, 20.0),
+		"score_pos": Vector2(info_x, 52.0),
+		"score_size": Vector2(info_w, 26.0),
 		"log_pos": Vector2(info_x, right_log_y),
 		"log_size": Vector2(info_w, log_h),
 		"country_detail_pos": Vector2(info_x, right_log_y + log_h + 8.0),
 		"country_detail_size": Vector2(info_w, detail_h),
 		"worker_origin": Vector2(worker_x, worker_y),
-		"worker_step": Vector2(68.0, 0.0),
+		"worker_step": Vector2(worker_size.x + 18.0, worker_size.y + 18.0),
 		"worker_size": worker_size,
+		"worker_columns": int(worker_columns),
 		"hand_origin": hand_origin,
 		"hand_step": hand_step,
 		"hand_card_size": hand_card_size,

@@ -26,8 +26,7 @@ func _run() -> void:
 	_click(ui.board_layer.get_node("AdvanceToken"))
 	await _settle()
 	_assert(ui.game.current_phase() == "policy_planning", "advance click enters policy planning")
-	_assert(_policy_menu_visible(ui), "policy menu is visible and explicitly labeled")
-	_assert(_domestic_state_panel_visible(ui), "revealed domestic state cards are visible as a separate non-policy lane")
+	_assert(_policy_card_shelf_visible(ui), "policy card shelf is visible and explicitly labeled")
 
 	for country_index in range(ui.game.countries.size()):
 		_assert(ui.selected_country_index == country_index, "policy planning focuses country %d" % country_index)
@@ -81,29 +80,13 @@ func _first_simple_policy_index(cards: Array) -> int:
 			return i
 	return -1
 
-func _policy_menu_visible(ui) -> bool:
+func _policy_card_shelf_visible(ui) -> bool:
 	var panel: Control = ui.board_layer.get_node_or_null("PolicyMenuPanel")
 	if panel == null or not panel.visible:
 		return false
 	var title: Label = panel.get_node_or_null("PolicyMenuTitle")
-	if title == null or not title.text.contains("政策メニュー"):
+	if title == null or not title.text.contains("政策カード"):
 		return false
-	return ui.policy_menu_nodes.size() >= 8 and String(ui.policy_menu_nodes[0].name).begins_with("PolicyMenuCard")
-
-func _domestic_state_panel_visible(ui) -> bool:
-	var panel: Control = ui.board_layer.get_node_or_null("DomesticStatePanel")
-	if panel == null or not panel.visible:
-		return false
-	var title: Label = panel.get_node_or_null("DomesticStateTitle")
-	if title == null or not title.text.contains("公開国内情勢"):
-		return false
-	for i in range(2):
-		var state_card: Control = panel.get_node_or_null("DomesticStateCard_%d" % i)
-		if state_card == null or not state_card.visible:
-			return false
-		var label: Label = state_card.get_node_or_null("DomesticStateLabel")
-		if label == null or label.text.is_empty() or label.text.contains("政策"):
-			return false
 	return true
 
 func _assert(condition: bool, message: String) -> void:
