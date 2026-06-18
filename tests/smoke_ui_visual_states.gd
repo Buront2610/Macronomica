@@ -46,7 +46,28 @@ func _check_state(viewport_size: Vector2i, state: String) -> void:
 	_assert(ui.board_layer != null, "%s %s has board layer" % [state, viewport_size])
 	_assert(ui.country_seats.size() == 4, "%s %s keeps four country seats" % [state, viewport_size])
 	if state == "default":
-		_assert(ui.policy_menu_nodes.size() == ui.game.countries[ui.selected_country_index].policy_menu.size(), "%s %s shows the selected policy menu" % [state, viewport_size])
+		var page_size := int(ui.board_layout.get("hand_columns", 4)) * int(ui.board_layout.get("hand_rows", 4))
+		var menu_size: int = ui.game.countries[ui.selected_country_index].policy_menu.size()
+		_assert(ui.policy_menu_nodes.size() == mini(page_size, menu_size), "%s %s shows one readable page of the selected policy menu" % [state, viewport_size])
+		var next_page: Control = ui.board_layer.get_node_or_null("PolicyPageNext")
+		_assert(next_page != null and next_page.visible == (menu_size > page_size), "%s %s shows paging only when the policy menu exceeds the frame" % [state, viewport_size])
+		if menu_size <= page_size and menu_size > 0:
+			var template: Dictionary = ui.game.countries[ui.selected_country_index].policy_menu[0]
+			while ui.game.countries[ui.selected_country_index].policy_menu.size() <= page_size + 2:
+				var extra: Dictionary = template.duplicate(true)
+				extra["id"] = "paging_test_%d" % ui.game.countries[ui.selected_country_index].policy_menu.size()
+				extra["display_name"] = "ページ確認政策%d" % ui.game.countries[ui.selected_country_index].policy_menu.size()
+				ui.game.countries[ui.selected_country_index].policy_menu.append(extra)
+			ui._refresh_board(false)
+			await process_frame
+			_assert(ui.policy_menu_nodes.size() == page_size, "%s %s caps an oversized policy menu to one page" % [state, viewport_size])
+			next_page = ui.board_layer.get_node_or_null("PolicyPageNext")
+			_assert(next_page != null and next_page.visible, "%s %s exposes the next-page control for oversized policy menus" % [state, viewport_size])
+			ui._on_policy_page_next()
+			await process_frame
+			_assert(ui.policy_menu_page == 1, "%s %s can move to the second policy page" % [state, viewport_size])
+			for card in ui.policy_menu_nodes:
+				_assert(_inside_viewport(card, viewport), "%s %s keeps paged policy card inside viewport: %s" % [state, viewport_size, card.name])
 	else:
 		_assert(ui.policy_menu_nodes.is_empty(), "%s %s hides policy menu outside policy planning" % [state, viewport_size])
 	for node_name in ["WorldPanel", "EventCard", "PolicySlot", "ResolutionFlow", "DomesticStatePanel", "PolicyPreviewPanel", "ScorePanel", "LogPanel", "CountryDetailPanel"]:

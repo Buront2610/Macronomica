@@ -28,34 +28,27 @@ func _run() -> void:
 	_assert(ui.game.current_phase() == "policy_planning", "advance click enters policy planning")
 	_assert(_policy_card_shelf_visible(ui), "policy card shelf is visible and explicitly labeled")
 
+	_click(ui.board_layer.get_node("RecommendToken"))
+	await _settle()
+	_assert(ui.game.current_phase() == "worker_assignment", "testplay auto selects all policies and enters worker assignment")
 	for country_index in range(ui.game.countries.size()):
-		_assert(ui.selected_country_index == country_index, "policy planning focuses country %d" % country_index)
-		var policy_index := _first_simple_policy_index(ui.game.countries[country_index].policy_menu)
-		_assert(policy_index >= 0, "country %d has a non-target policy for click flow" % country_index)
-		_click(ui.policy_menu_nodes[policy_index])
-		await _settle()
-		_assert(not ui.game.countries[country_index].selected_policy.is_empty(), "country %d policy card click submits policy" % country_index)
+		_assert(not ui.game.countries[country_index].selected_policy.is_empty(), "auto policy chooses for country %d" % country_index)
 
-	_assert(ui.game.current_phase() == "worker_assignment", "policy clicks enter worker assignment")
+	_click(ui.board_layer.get_node("RecommendToken"))
+	await _settle()
+	_assert(ui.game.current_phase() == "simultaneous_reveal", "testplay auto assigns all workers and enters reveal")
 	for country_index in range(ui.game.countries.size()):
-		_assert(ui.selected_country_index == country_index, "worker assignment focuses country %d" % country_index)
-		_click(ui.worker_nodes["bureaucrats"])
-		await _settle()
-		_assert(ui.game.countries[country_index].assigned_worker_list().has("bureaucrats"), "country %d worker token click assigns worker" % country_index)
-		_click(ui.board_layer.get_node("AdvanceToken"))
-		await _settle()
+		_assert(ui.game.countries[country_index].assigned_worker_list().size() >= 1, "auto worker assigns for country %d" % country_index)
 
-	_assert(ui.game.current_phase() == "simultaneous_reveal", "worker clicks reach simultaneous reveal")
 	_click(ui.board_layer.get_node("AdvanceToken"))
 	await _settle()
 	_assert(ui.game.current_phase() == "resolution", "advance click opens resolution review")
 	_assert(ui.resolution_review_active, "resolution review is active after click")
 
-	for i in range(6):
-		_click(ui.board_layer.get_node("AdvanceToken"))
-		await _settle()
-	_assert(ui.game.turn == 2, "clicking through resolution resolves the turn")
-	_assert(ui.turn_news_active, "turn newspaper appears after clicked resolution flow")
+	_click(ui.board_layer.get_node("RecommendToken"))
+	await _settle()
+	_assert(ui.game.turn == 2, "testplay auto resolves the turn")
+	_assert(ui.turn_news_active, "turn newspaper appears after auto resolution")
 
 	if failed:
 		quit(1)

@@ -113,8 +113,6 @@ func _run() -> void:
 	ui2._on_recommend_pressed()
 	await process_frame
 	_assert(ui2._all_workers_confirmed(), "recommend helper confirms all worker assignments in UI state")
-	ui2._on_advance_pressed()
-	await process_frame
 	_assert(ui2.game.current_phase() == "simultaneous_reveal", "recommended worker assignments can advance to simultaneous reveal")
 
 	print("Smoke board interaction passed.")

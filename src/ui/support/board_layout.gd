@@ -42,7 +42,7 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var negotiation_pos := Vector2(center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 10.0)
 	var policy_slot_size := Vector2(440.0, 118.0)
 	var policy_slot_pos := Vector2(center_x - policy_slot_size.x * 0.5, negotiation_pos.y + negotiation_size.y + 8.0)
-	var resolution_flow_size := Vector2(minf(640.0, between_countries_w), 82.0)
+	var resolution_flow_size := Vector2(clampf(center_w * 0.58, 560.0, 820.0), 118.0)
 	var resolution_flow_pos := Vector2(center_x - resolution_flow_size.x * 0.5, policy_slot_pos.y + policy_slot_size.y + 8.0)
 	var world_track_gap := 8.0
 	var world_track_w := (world_size.x - 76.0 - world_track_gap * 6.0) / 7.0
@@ -55,8 +55,12 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 
 	var action_size := Vector2(54.0, 54.0)
 	var utility_command_pos := Vector2(focus_right - 172.0, 36.0)
-	var recommend_command_pos := Vector2(focus_right - 100.0, 39.0)
+	var recommend_command_size := Vector2(156.0, 74.0)
+	var recommend_command_pos := Vector2(focus_right - 310.0, viewport_size.y - 122.0)
 	var advance_command_pos := Vector2(focus_right - 126.0, viewport_size.y - 138.0)
+	var policy_page_button_size := Vector2(118.0, 42.0)
+	var policy_page_prev_pos := hand_panel_pos + Vector2(hand_panel_size.x - 284.0, 8.0)
+	var policy_page_next_pos := hand_panel_pos + Vector2(hand_panel_size.x - 152.0, 8.0)
 	var event_pos := Vector2(info_x, header_h + 12.0)
 	var event_size := Vector2(info_w, 164.0)
 	var seat_y := world_pos.y + world_size.y + 10.0
@@ -85,8 +89,12 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"phase_pip_size": Vector2(48.0, 18.0),
 		"utility_command_pos": utility_command_pos,
 		"recommend_command_pos": recommend_command_pos,
+		"recommend_command_size": recommend_command_size,
 		"advance_command_pos": advance_command_pos,
 		"action_size": action_size,
+		"policy_page_prev_pos": policy_page_prev_pos,
+		"policy_page_next_pos": policy_page_next_pos,
+		"policy_page_button_size": policy_page_button_size,
 		"event_pos": event_pos,
 		"event_size": event_size,
 		"world_panel_pos": world_pos,
@@ -128,5 +136,6 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"hand_origin": hand_origin,
 		"hand_step": hand_step,
 		"hand_card_size": hand_card_size,
-		"hand_columns": int(menu_columns)
+		"hand_columns": int(menu_columns),
+		"hand_rows": int(menu_rows)
 	}

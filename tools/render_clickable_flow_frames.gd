@@ -34,30 +34,25 @@ func _run() -> void:
 	await _settle()
 	await _save_frame("03_policy_menu")
 
-	for country_index in range(ui.game.countries.size()):
-		var policy_index := _first_simple_policy_index(ui.game.countries[country_index].policy_menu)
-		if policy_index >= 0:
-			_click(ui.policy_menu_nodes[policy_index])
-			await _settle()
-			await _save_frame("04_policy_%d" % country_index)
+	var next_page: Control = ui.board_layer.get_node_or_null("PolicyPageNext")
+	if next_page != null and next_page.visible:
+		_click(next_page)
+		await _settle()
+		await _save_frame("04_policy_menu_page_2")
+		_click(ui.board_layer.get_node("PolicyPagePrev"))
+		await _settle()
 
+	_click(ui.board_layer.get_node("RecommendToken"))
+	await _settle()
 	await _save_frame("08_worker_assignment")
-	for country_index in range(ui.game.countries.size()):
-		_click(ui.worker_nodes["bureaucrats"])
-		await _settle()
-		_click(ui.board_layer.get_node("AdvanceToken"))
-		await _settle()
-		await _save_frame("09_worker_%d" % country_index)
 
+	_click(ui.board_layer.get_node("RecommendToken"))
+	await _settle()
 	await _save_frame("13_reveal_wait")
 	_click(ui.board_layer.get_node("AdvanceToken"))
 	await _settle()
 	await _save_frame("14_resolution_pressure")
-	for step in range(1, 6):
-		_click(ui.board_layer.get_node("AdvanceToken"))
-		await _settle()
-		await _save_frame("15_resolution_%d" % step)
-	_click(ui.board_layer.get_node("AdvanceToken"))
+	_click(ui.board_layer.get_node("RecommendToken"))
 	await _settle()
 	await _save_frame("21_turn_news")
 	print("Clickable flow frames saved: %s" % out_dir)

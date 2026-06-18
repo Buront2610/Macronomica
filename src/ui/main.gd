@@ -82,6 +82,7 @@ var policy_focus_title: Label
 var policy_focus_source: Label
 var policy_focus_cost: Label
 var policy_preview_index := 0
+var policy_menu_page := 0
 var worker_nodes := {}
 var policy_slot
 var policy_slot_label: Label
@@ -245,6 +246,8 @@ func _build_surfaces() -> void:
 	menu_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	var menu_legend := _add_label_to(menu_panel, "PolicyMenuLegend", "出所: 共通 / 構造 / 協調 / 固有 / 危機", Vector2(730, 14), Vector2(menu_panel.size.x - 758, 22), 14, MUTED, false)
 	menu_legend.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_add_action_token("PolicyPagePrev", "前へ", board_layout["policy_page_prev_pos"], board_layout["policy_page_button_size"], _on_policy_page_prev)
+	_add_action_token("PolicyPageNext", "次へ", board_layout["policy_page_next_pos"], board_layout["policy_page_button_size"], _on_policy_page_next)
 
 func _build_table_marks() -> void:
 	_add_label("Title", "マクロノミカ", board_layout["title_pos"], board_layout["title_size"], 39, TEXT)
@@ -258,8 +261,8 @@ func _build_table_marks() -> void:
 		_add_label("PhaseLabel_%d" % i, _phase_short_name(String(GameStateScript.PHASES[i])), phase_start + phase_step * i + Vector2(-10, 20), Vector2(62, 18), 12, MUTED)
 		phase_pips.append(pip)
 	_add_action_token("RestartToken", "↺", board_layout["utility_command_pos"], board_layout["action_size"], _on_restart_pressed)
-	var recommend = _add_action_token("RecommendToken", "助", board_layout["recommend_command_pos"], board_layout["action_size"], _on_recommend_pressed)
-	recommend.tooltip_text = "推奨（テスト補助）"
+	var recommend = _add_action_token("RecommendToken", "自動", board_layout["recommend_command_pos"], board_layout["recommend_command_size"], _on_recommend_pressed)
+	recommend.tooltip_text = "テストプレイ補助"
 	_add_action_token("AdvanceToken", "次", board_layout["advance_command_pos"], Vector2(108, 108), _on_advance_pressed)
 
 func _build_event_card() -> void:
@@ -433,15 +436,18 @@ func _build_resolution_flow() -> void:
 	resolution_step_labels.clear()
 	var flow_pos: Vector2 = board_layout["resolution_flow_pos"]
 	var flow_size: Vector2 = board_layout["resolution_flow_size"]
-	var panel = _make_piece("ResolutionFlow", flow_pos, flow_size, Color(0.055, 0.040, 0.026, 0.68), BOARD_LINE, 1, "plaque")
+	var panel = _make_piece("ResolutionFlow", flow_pos, flow_size, Color(0.055, 0.040, 0.026, 0.88), BOARD_LINE, 2, "plaque")
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_add_label_to(panel, "ResolutionFlowTitle", "解決処理", Vector2(10, 6), Vector2(68, 18), 12, WARN.lightened(0.18))
+	var title := _add_label_to(panel, "ResolutionFlowTitle", "解決レビュー", Vector2(18, 8), Vector2(180, 24), 18, WARN.lightened(0.18))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var hint := _add_label_to(panel, "ResolutionFlowHint", "次=1段階ずつ読む / 自動=このターンを一括解決", Vector2(210, 10), Vector2(flow_size.x - 232, 22), 14, MUTED, false)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var names := ["圧力", "コスト", "国内", "世界", "デッキ", "合成"]
-	var step_w := (flow_size.x - 94.0) / float(names.size())
+	var step_w := (flow_size.x - 38.0) / float(names.size())
 	for i in range(names.size()):
-		var step = _make_child_piece(panel, "ResolutionStep_%d" % i, Vector2(82 + step_w * i, 8), Vector2(step_w - 8, 48), Color(0.030, 0.026, 0.020, 0.76), BOARD_LINE.darkened(0.18), 1, "card")
-		_add_label_to(step, "StepName", names[i], Vector2(0, 4), Vector2(step.size.x, 16), 11, MUTED)
-		var label := _add_label_to(step, "StepValue", "-", Vector2(4, 22), Vector2(step.size.x - 8, 20), 12, TEXT, true)
+		var step = _make_child_piece(panel, "ResolutionStep_%d" % i, Vector2(18 + step_w * i, 42), Vector2(step_w - 8, 58), Color(0.030, 0.026, 0.020, 0.84), BOARD_LINE.darkened(0.18), 1, "card")
+		_add_label_to(step, "StepName", names[i], Vector2(0, 6), Vector2(step.size.x, 18), 13, MUTED)
+		var label := _add_label_to(step, "StepValue", "-", Vector2(4, 29), Vector2(step.size.x - 8, 22), 14, TEXT, true)
 		resolution_step_nodes.append(step)
 		resolution_step_labels.append(label)
 
@@ -627,7 +633,7 @@ func _select_start_country(country_index: int) -> void:
 
 func _build_policy_menu_slots() -> void:
 	var card_size: Vector2 = board_layout["hand_card_size"]
-	for i in range(20):
+	for i in range(_policy_menu_page_size()):
 		var slot = _make_piece("PolicyMenuSlot_%d" % i, _policy_menu_position(i), card_size, Color(0.018, 0.015, 0.012, 0.42), Color(0.32, 0.24, 0.14, 0.42), 1, "card")
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -750,6 +756,11 @@ func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
 	var show_menu: bool = phase == "policy_planning"
 	var show_tray: bool = show_menu or phase == "worker_assignment"
 	var country = game.countries[selected_country_index]
+	policy_menu_page = _clamped_policy_menu_page(country)
+	var page_size := _policy_menu_page_size()
+	var page_count := _policy_menu_page_count(country)
+	var page_start := policy_menu_page * page_size
+	var page_end = mini(country.policy_menu.size(), page_start + page_size)
 	var menu_panel = board_layer.get_node_or_null("PolicyMenuPanel")
 	if menu_panel != null:
 		menu_panel.visible = show_tray
@@ -761,28 +772,54 @@ func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
 			title.add_theme_color_override("font_color", WARN.lightened(0.18) if show_menu else COUNTRY_ACCENTS[selected_country_index].lightened(0.30))
 		var legend: Label = menu_panel.get_node_or_null("PolicyMenuLegend")
 		if legend != null:
-			legend.text = "カーソルで詳細確認 / クリックで伏せる" if show_menu else "官僚/中銀/外交/監査/ロビイスト = 政策の通し方"
+			legend.text = "候補 %d-%d/%d / カーソルで詳細 / クリックで伏せる" % [page_start + 1, page_end, country.policy_menu.size()] if show_menu else "官僚/中銀/外交/監査/ロビイスト = 政策の通し方"
 			legend.add_theme_font_size_override("font_size", 14 if show_menu else 15)
-	for i in range(20):
+	_refresh_policy_page_controls(show_menu, page_count)
+	for i in range(page_size):
 		var slot = board_layer.get_node_or_null("PolicyMenuSlot_%d" % i)
 		if slot != null:
-			slot.visible = show_menu and i < country.policy_menu.size()
+			slot.visible = show_menu and (page_start + i) < country.policy_menu.size()
 	if not show_menu:
 		return
 	var source := origin
 	if source == Vector2.INF and selected_country_index < country_seats.size():
 		source = country_seats[selected_country_index].position + Vector2(60, 46)
-	for i in range(country.policy_menu.size()):
-		var card: Dictionary = country.policy_menu[i]
-		var card_node = _make_policy_card(card, i, -1, true)
-		var final_pos := _policy_menu_position(i)
+	for policy_index in range(page_start, page_end):
+		var display_index := policy_index - page_start
+		var card: Dictionary = country.policy_menu[policy_index]
+		var card_node = _make_policy_card(card, policy_index, -1, true)
+		var final_pos := _policy_menu_position(display_index)
 		card_node.position = final_pos
 		card_node.rotation_degrees = 0.0
 		card_node.z_index = 12
 		board_layer.add_child(card_node)
 		policy_menu_nodes.append(card_node)
 		if animate:
-			_animate_policy_menu_deal(card_node, source, final_pos, 0.025 * i)
+			_animate_policy_menu_deal(card_node, source, final_pos, 0.025 * display_index)
+
+func _policy_menu_page_size() -> int:
+	return maxi(1, int(board_layout.get("hand_columns", 4)) * int(board_layout.get("hand_rows", 4)))
+
+func _policy_menu_page_count(country) -> int:
+	if country == null or country.policy_menu.is_empty():
+		return 1
+	return ceili(float(country.policy_menu.size()) / float(_policy_menu_page_size()))
+
+func _clamped_policy_menu_page(country) -> int:
+	return clampi(policy_menu_page, 0, _policy_menu_page_count(country) - 1)
+
+func _refresh_policy_page_controls(show_menu: bool, page_count: int) -> void:
+	var show_controls := show_menu and page_count > 1
+	var prev = board_layer.get_node_or_null("PolicyPagePrev")
+	var next = board_layer.get_node_or_null("PolicyPageNext")
+	if prev != null:
+		prev.visible = show_controls
+		prev.modulate.a = 0.42 if policy_menu_page <= 0 else 1.0
+		prev.tooltip_text = "前の政策候補ページへ"
+	if next != null:
+		next.visible = show_controls
+		next.modulate.a = 0.42 if policy_menu_page >= page_count - 1 else 1.0
+		next.tooltip_text = "次の政策候補ページへ"
 
 func _policy_menu_position(index: int) -> Vector2:
 	var origin: Vector2 = board_layout["hand_origin"]
@@ -981,6 +1018,7 @@ func _refresh_title() -> void:
 	var recommend = board_layer.get_node_or_null("RecommendToken")
 	if recommend != null:
 		recommend.tooltip_text = _recommend_token_tip()
+		_set_label("RecommendTokenLabel", _recommend_token_text())
 	var restart = board_layer.get_node_or_null("RestartToken")
 	if restart != null:
 		restart.tooltip_text = "現在のゲームを破棄してタイトルに戻ります。"
@@ -1412,6 +1450,8 @@ func _refresh_context_visibility() -> void:
 		var country = game.countries[selected_country_index]
 		var waiting_for_target: bool = not country.selected_policy.is_empty() and String(country.selected_policy.get("target", "")) == "country"
 		policy_slot.visible = (phase != "policy_planning" and phase != "worker_assignment") or waiting_for_target
+		if phase == "resolution" or resolution_review_active:
+			policy_slot.visible = false
 	if planning_focus:
 		var target_mode := false
 		if selected_country_index >= 0 and selected_country_index < game.countries.size():
@@ -1887,16 +1927,27 @@ func _advance_token_tip() -> String:
 	if game.current_phase() == "simultaneous_reveal":
 		return "4国の伏せ札を公開し、解決レビューを始めます。"
 	if resolution_review_active or game.current_phase() == "resolution":
-		return "解決レビューを1段階進めます。最後まで進むとターンを解決します。"
+		return "解決レビューを1段階ずつ読みます。一括で進める場合は「自動」を使います。"
 	if game.is_finished:
 		return "ゲームは終了しています。"
 	return "次のフェーズへ進みます。"
 
+func _recommend_token_text() -> String:
+	if game.can_select_policy():
+		return "全員\n政策"
+	if game.can_assign_worker():
+		return "全員\n配置"
+	if resolution_review_active or game.current_phase() == "resolution":
+		return "一括\n解決"
+	return "補助"
+
 func _recommend_token_tip() -> String:
 	if game.can_select_policy():
-		return "各国の国内圧力・不足・効果を見て、政策案を自動選択します。"
+		return "テストプレイ用: 各国の政策を自動選択し、ワーカー配置へ進みます。"
 	if game.can_assign_worker():
-		return "選択済み政策に合わせて、担当ワーカーを自動配置します。"
+		return "テストプレイ用: 選択済み政策に合わせて全員のワーカーを自動配置し、同時公開へ進みます。"
+	if resolution_review_active or game.current_phase() == "resolution":
+		return "解決レビューを飛ばして、このターンを一括解決します。"
 	return "現在のフェーズでは推奨操作はありません。"
 
 func _start_resolution_review(previous_phase: int) -> void:
@@ -1923,18 +1974,34 @@ func _advance_resolution_review() -> void:
 	if not game.is_finished:
 		_show_turn_news_overlay()
 
+func _resolve_review_now() -> void:
+	if not resolution_review_active and game.current_phase() != "resolution":
+		return
+	resolution_review_active = false
+	resolution_step_index = -1
+	game.resolve_turn()
+	last_resolution_snapshot = {}
+	_refresh_board(true)
+	if not game.is_finished:
+		_show_turn_news_overlay()
+
 func _on_recommend_pressed() -> void:
+	_hide_turn_news_overlay()
+	if resolution_review_active or game.current_phase() == "resolution":
+		_resolve_review_now()
+		return
 	last_resolution_snapshot = {}
 	resolution_review_active = false
 	resolution_step_index = -1
 	worker_assignment_confirmed = []
-	_hide_turn_news_overlay()
 	if game.can_select_policy():
 		for i in range(game.countries.size()):
 			var recommendation := PolicyRecommenderScript.recommend_for_country(game, i)
 			if recommendation.is_empty():
 				continue
 			game.select_policy(i, int(recommendation["policy_index"]))
+		if _all_policies_submitted():
+			_enter_worker_assignment()
 	elif game.can_assign_worker():
 		_ensure_worker_confirmations()
 		for i in range(game.countries.size()):
@@ -1943,6 +2010,8 @@ func _on_recommend_pressed() -> void:
 				continue
 			game.assign_workers(i, recommendation.get("workers", [String(recommendation["worker"])]))
 			worker_assignment_confirmed[i] = true
+		if _all_workers_confirmed():
+			_enter_simultaneous_reveal()
 	_refresh_board(true)
 
 func _on_log_panel_pressed() -> void:
@@ -2009,6 +2078,7 @@ func _on_country_selected(country_index: int) -> void:
 	last_selected_country_index = previous
 	selected_country_index = country_index
 	policy_preview_index = 0
+	policy_menu_page = 0
 	var origin = country_seats[country_index].position + Vector2(60, 46)
 	_refresh_title()
 	_refresh_country_seats()
@@ -2031,6 +2101,7 @@ func _on_policy_selected(country_index: int, policy_index: int, from_pos: Vector
 	else:
 		selected_country_index = _next_country_without_policy(country_index)
 		policy_preview_index = 0
+		policy_menu_page = 0
 		if selected_country_index < 0:
 			_enter_worker_assignment()
 	_refresh_board(false)
@@ -2054,6 +2125,25 @@ func _next_country_without_policy(after_index: int) -> int:
 		if game.countries[index].selected_policy.is_empty():
 			return index
 	return -1
+
+func _on_policy_page_prev() -> void:
+	if game.current_phase() != "policy_planning":
+		return
+	var country = game.countries[selected_country_index]
+	policy_menu_page = maxi(0, _clamped_policy_menu_page(country) - 1)
+	policy_preview_index = mini(policy_preview_index, policy_menu_page * _policy_menu_page_size())
+	_rebuild_policy_menu(false)
+	_refresh_policy_preview_panel()
+
+func _on_policy_page_next() -> void:
+	if game.current_phase() != "policy_planning":
+		return
+	var country = game.countries[selected_country_index]
+	var page_count := _policy_menu_page_count(country)
+	policy_menu_page = mini(page_count - 1, _clamped_policy_menu_page(country) + 1)
+	policy_preview_index = mini(country.policy_menu.size() - 1, policy_menu_page * _policy_menu_page_size())
+	_rebuild_policy_menu(false)
+	_refresh_policy_preview_panel()
 
 func _is_waiting_for_policy_target(source_index: int, target_index: int) -> bool:
 	if not game.can_select_policy():
@@ -2121,11 +2211,12 @@ func _ensure_worker_confirmations() -> void:
 	_reset_worker_confirmations()
 
 func _add_action_token(node_name: String, text: String, position: Vector2, size: Vector2, action: Callable):
-	var token = _make_piece(node_name, position, size, Color(0.05, 0.038, 0.024, 0.72), BOARD_LINE, 1, "circle")
+	var shape := "circle" if absf(size.x - size.y) < 1.0 else "card"
+	var token = _make_piece(node_name, position, size, Color(0.05, 0.038, 0.024, 0.86), BOARD_LINE, 1, shape)
 	token.pressed = action
-	var font_size := 16
+	var font_size := 18
 	if size.x >= 96.0:
-		font_size = 34
+		font_size = 28 if shape == "circle" else 23
 	elif size.x >= 44.0:
 		font_size = 20
 	_add_label_to(token, "%sLabel" % node_name, text, Vector2.ZERO, size, font_size, TEXT)
