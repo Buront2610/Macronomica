@@ -681,14 +681,18 @@ func _build_worker_tokens() -> void:
 	var token_size: Vector2 = board_layout["worker_size"]
 	for i in range(WORKERS.size()):
 		var worker: String = WORKERS[i]
-		var token = _make_piece("Worker_%s" % worker, start + step * i, token_size, Color(0, 0, 0, 0.04), BOARD_LINE, 1, "circle")
-		token.tooltip_text = UiCatalogScript.worker_name(worker)
+		var token = _make_piece("Worker_%s" % worker, start + step * i, token_size, Color(0.045, 0.034, 0.024, 0.94), BOARD_LINE, 1, "card")
+		token.visible = false
+		token.tooltip_text = "%s: %s" % [UiCatalogScript.worker_name(worker), UiCatalogScript.worker_tip(worker)]
 		token.pressed = func(worker_id := worker) -> void:
 			if game.can_assign_worker():
 				_on_worker_assigned(selected_country_index, worker_id, token.position)
-		token.add_child(_make_icon(UiCatalogScript.worker_token(worker), Vector2(5, 5), token_size - Vector2(10, 10), Color.WHITE))
-		var worker_label := _add_label_to(token, "WorkerLabel", _worker_short_label(worker), Vector2(4, token_size.y - 17), Vector2(token_size.x - 8, 13), 9, TEXT, false)
-		worker_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		token.add_child(_make_icon(UiCatalogScript.worker_token(worker), Vector2(10, 12), Vector2(40, 40), Color.WHITE, "WorkerIcon"))
+		var name_label := _add_label_to(token, "WorkerName", UiCatalogScript.worker_name(worker), Vector2(56, 8), Vector2(84, 20), 13, TEXT, false)
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var role_label := _add_label_to(token, "WorkerRole", _worker_role_label(worker), Vector2(56, 31), Vector2(84, 22), 10, MUTED, true)
+		role_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		role_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 		worker_nodes[worker] = token
 
 func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
@@ -1596,10 +1600,10 @@ func _refresh_workers() -> void:
 	var show_workers: bool = game.current_phase() == "worker_assignment"
 	var tray_pos: Vector2 = board_layout["hand_panel_pos"]
 	var tray_size: Vector2 = board_layout["hand_panel_size"]
-	var token_gap := 20.0
-	var token_size: Vector2 = board_layout["worker_size"]
+	var token_gap := 12.0
+	var token_size := Vector2(clampf((tray_size.x - 64.0 - token_gap * (WORKERS.size() - 1)) / WORKERS.size(), 126.0, 152.0), 68.0)
 	var total_width := token_size.x * WORKERS.size() + token_gap * (WORKERS.size() - 1)
-	var token_y := tray_pos.y + (tray_size.y - token_size.y) * 0.5
+	var token_y := tray_pos.y + (tray_size.y - token_size.y) * 0.5 + 2.0
 	var token_x := tray_pos.x + (tray_size.x - total_width) * 0.5
 	for i in range(WORKERS.size()):
 		var worker: String = WORKERS[i]
@@ -1607,10 +1611,23 @@ func _refresh_workers() -> void:
 		node.visible = show_workers
 		if not show_workers:
 			continue
+		node.size = _snap_vec(token_size)
 		node.position = _snap_vec(Vector2(token_x + (token_size.x + token_gap) * i, token_y))
 		node.home_position = node.position
 		var selected: bool = assigned.has(worker)
-		node.set_skin(Color(0, 0, 0, 0.04), COUNTRY_ACCENTS[selected_country_index] if selected else Color(0, 0, 0, 0.10), 3 if selected else 1, "circle")
+		node.set_skin(Color(0.090, 0.064, 0.034, 0.97) if selected else Color(0.045, 0.034, 0.024, 0.94), COUNTRY_ACCENTS[selected_country_index] if selected else BOARD_LINE.darkened(0.12), 3 if selected else 2, "card")
+		var icon: TextureRect = node.get_node_or_null("WorkerIcon")
+		if icon != null:
+			icon.position = _snap_vec(Vector2(10, 14))
+			icon.size = _snap_vec(Vector2(40, 40))
+		var name_label: Label = node.get_node_or_null("WorkerName")
+		if name_label != null:
+			name_label.position = _snap_vec(Vector2(58, 9))
+			name_label.size = _snap_vec(Vector2(token_size.x - 68.0, 20))
+		var role_label: Label = node.get_node_or_null("WorkerRole")
+		if role_label != null:
+			role_label.position = _snap_vec(Vector2(58, 31))
+			role_label.size = _snap_vec(Vector2(token_size.x - 68.0, 28))
 
 func _on_advance_pressed() -> void:
 	if turn_news_active:
@@ -2409,6 +2426,16 @@ func _worker_short_label(worker: String) -> String:
 		"lobbyist": "ロビ"
 	}
 	return names.get(worker, worker.substr(0, 2))
+
+func _worker_role_label(worker: String) -> String:
+	var labels := {
+		"bureaucrats": "行政 -1",
+		"central_bank_staff": "信認 -1",
+		"diplomat": "国際 -1",
+		"auditor": "汚職抑制",
+		"lobbyist": "政治 -2"
+	}
+	return labels.get(worker, UiCatalogScript.worker_tip(worker).substr(0, 8))
 
 func _country_risk_words(country) -> String:
 	var risks := []
