@@ -19,7 +19,7 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var hand_panel_size := Vector2(hand_card_size.x * menu_columns + hand_gap * (menu_columns - 1.0) + 40.0, hand_card_size.y * 2.0 + hand_gap + 40.0)
 	var hand_panel_x := clampf(center_x - hand_panel_size.x * 0.5, center_left, center_right - hand_panel_size.x)
 	var hand_panel_pos := Vector2(hand_panel_x, viewport_size.y - hand_panel_size.y - 18.0)
-	var policy_preview_size := Vector2(hand_panel_size.x, 92.0)
+	var policy_preview_size := Vector2(hand_panel_size.x, 124.0)
 	var policy_preview_pos := Vector2(hand_panel_x, hand_panel_pos.y - policy_preview_size.y - 12.0)
 	var bottom_y := hand_panel_pos.y - 18.0
 

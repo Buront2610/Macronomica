@@ -70,6 +70,11 @@ var domestic_state_cards: Array = []
 var domestic_state_deck_label: Label
 var policy_preview_panel: Control
 var policy_preview_label: Label
+var policy_focus_card: Control
+var policy_focus_icon: TextureRect
+var policy_focus_title: Label
+var policy_focus_source: Label
+var policy_focus_cost: Label
 var policy_preview_index := 0
 var worker_nodes := {}
 var policy_slot
@@ -632,8 +637,20 @@ func _build_policy_preview_panel() -> void:
 	var panel_size: Vector2 = board_layout["policy_preview_size"]
 	policy_preview_panel = _make_piece("PolicyPreviewPanel", panel_pos, panel_size, Color(0.060, 0.044, 0.026, 0.95), BOARD_LINE, 2, "plaque")
 	policy_preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_add_label_to(policy_preview_panel, "PolicyPreviewTitle", "政策候補プレビュー", Vector2(14, 6), Vector2(150, 18), 12, WARN.lightened(0.16), false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	policy_preview_label = _add_label_to(policy_preview_panel, "PolicyPreviewLabel", "", Vector2(18, 26), Vector2(panel_size.x - 36, panel_size.y - 32), 12, TEXT, true)
+	policy_preview_panel.z_index = 24
+	_add_label_to(policy_preview_panel, "PolicyPreviewTitle", "フォーカス中の政策", Vector2(14, 7), Vector2(170, 18), 13, WARN.lightened(0.16), false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	policy_focus_card = _make_child_piece(policy_preview_panel, "PolicyFocusCard", Vector2(14, 30), Vector2(150, 82), CARD_FACE, BOARD_LINE, 2, "card")
+	policy_focus_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	policy_focus_icon = _make_icon("reform_wrench", Vector2(12, 10), Vector2(38, 38), Color.WHITE, "PolicyFocusIcon")
+	policy_focus_card.add_child(policy_focus_icon)
+	policy_focus_title = _add_label_to(policy_focus_card, "PolicyFocusTitle", "", Vector2(56, 9), Vector2(82, 34), 14, INK, true)
+	policy_focus_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	policy_focus_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	policy_focus_source = _add_label_to(policy_focus_card, "PolicyFocusSource", "", Vector2(12, 52), Vector2(126, 14), 10, INK.darkened(0.05), false)
+	policy_focus_source.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	policy_focus_cost = _add_label_to(policy_focus_card, "PolicyFocusCost", "", Vector2(12, 67), Vector2(126, 12), 9, INK.darkened(0.05), false)
+	policy_focus_cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	policy_preview_label = _add_label_to(policy_preview_panel, "PolicyPreviewLabel", "", Vector2(180, 30), Vector2(panel_size.x - 196, panel_size.y - 40), 13, TEXT, true)
 	policy_preview_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	policy_preview_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
@@ -1102,11 +1119,30 @@ func _refresh_policy_preview_panel() -> void:
 		return
 	policy_preview_index = clampi(policy_preview_index, 0, country.policy_menu.size() - 1)
 	var policy: Dictionary = country.policy_menu[policy_preview_index]
+	_refresh_policy_focus_card(country, policy)
 	policy_preview_label.text = _policy_preview_text(country, policy, policy_preview_index)
 
 func _set_policy_preview(index: int) -> void:
 	policy_preview_index = index
 	_refresh_policy_preview_panel()
+
+func _refresh_policy_focus_card(country, policy: Dictionary) -> void:
+	if policy_focus_card == null:
+		return
+	var selected: bool = not country.selected_policy.is_empty() and String(country.selected_policy.get("id", "")) == String(policy.get("id", ""))
+	var available: bool = country.is_policy_available(policy)
+	var border: Color = COUNTRY_ACCENTS[selected_country_index].lightened(0.18) if selected else _policy_source_color(policy).lightened(0.18)
+	var fill: Color = CARD_FACE if available else CARD_FACE.darkened(0.20)
+	policy_focus_card.set_skin(fill, border, 3 if selected else 2, "card")
+	policy_focus_card.tooltip_text = _plain_card_detail(country, policy)
+	if policy_focus_icon != null:
+		policy_focus_icon.texture = token_assets.texture(UiCatalogScript.card_token(policy))
+	if policy_focus_title != null:
+		policy_focus_title.text = _ellipsize(UiCatalogScript.short_card_name(policy), 10)
+	if policy_focus_source != null:
+		policy_focus_source.text = "%s / %s" % [_policy_source_label(policy), "選択中" if selected else "候補"]
+	if policy_focus_cost != null:
+		policy_focus_cost.text = _ellipsize(_policy_menu_footer(country, policy), 16)
 
 func _refresh_policy_slot(animate: bool) -> void:
 	var country = game.countries[selected_country_index]
