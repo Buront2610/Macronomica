@@ -25,10 +25,14 @@ func _run() -> void:
 
 	for country_index in range(ui.game.countries.size()):
 		_assert(ui.selected_country_index == country_index, "policy planning focuses country %d automatically" % country_index)
+		_assert(ui.planning_country_panel != null and ui.planning_country_panel.visible, "policy planning shows the active country frame")
+		var emblem: Label = ui.planning_country_panel.get_node_or_null("PlanningCountryEmblem")
+		_assert(emblem != null and emblem.text.contains("%s国" % String.chr(65 + country_index)), "active country frame switches to country %d" % country_index)
 		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
 		_assert(policy_index >= 0, "country %d has a playable policy card" % country_index)
 		var card_node: Control = ui.policy_menu_nodes[policy_index]
-		_assert(_control_min_size(card_node, Vector2(82, 52)), "policy menu card remains tappable: %s" % card_node.name)
+		_assert(_control_min_size(card_node, Vector2(96, 88)), "policy menu card is a large planning tile: %s" % card_node.name)
+		_assert(_policy_card_icon_is_large(card_node), "policy menu card uses a large readable icon: %s" % card_node.name)
 		var click := InputEventMouseButton.new()
 		click.button_index = MOUSE_BUTTON_LEFT
 		click.pressed = false
@@ -112,6 +116,13 @@ func _first_policy_index(hand: Array) -> int:
 
 func _control_min_size(control: Control, minimum: Vector2) -> bool:
 	return control.size.x >= minimum.x and control.size.y >= minimum.y
+
+func _policy_card_icon_is_large(card_node: Control) -> bool:
+	var icon: TextureRect = card_node.get_node_or_null("CardCoin")
+	if icon == null:
+		push_error("Policy card has no CardCoin icon: %s" % card_node.name)
+		return false
+	return icon.size.x >= 40.0 and icon.size.y >= 40.0
 
 func _major_icons_are_visible_and_inside(ui) -> bool:
 	for icon in _collect_texture_rects(ui):
