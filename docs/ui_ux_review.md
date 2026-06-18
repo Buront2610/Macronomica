@@ -9,20 +9,17 @@ The first screen should feel like a board game table, not an economic spreadshee
 - MDA: mechanics are policy cards, workers, and macro tracks; dynamics are negotiation, simultaneous reveal, and spillover; the target aesthetic is tense public-choice bargaining rather than spreadsheet optimization.
 - Schell-style lenses: the first screen emphasizes action, goals, dynamic state, and expected value. The player should understand "what can I do now, what state is changing, and what tradeoff am I making?"
 - Visibility of system status: the active phase is shown in the header and phase rail, so the player knows what kind of decision is expected.
-- Meaningful choice above the fold: at 1280x720, the first country mat shows hand cards, domestic pressure, policy slot, workers, and national tokens without horizontal clipping.
-- Progressive disclosure: detailed world state and logs live in tabs. The main policy table stays focused on the next player action.
+- Meaningful choice above the fold: at 1280x720, the board shows the persistent policy menu, revealed domestic state cards, domestic pressure, policy slot, workers, and national tokens without horizontal clipping.
+- Progressive disclosure: detailed world state and logs live in the right rail. The main policy table stays focused on the next player action.
 - Feedback loop: selected policy and worker are represented as board pieces, then resolution produces log entries and track movement.
-- Cognitive load budget: hand cards use short labels on the board. Longer card descriptions remain in tooltips and revealed slots.
-- Touch target clarity: phase buttons, hand cards, and worker tokens have stable minimum sizes so resizing does not shift the layout unpredictably.
+- Cognitive load budget: policy menu cards use short labels on the board. Longer card descriptions remain in tooltips, policy previews, and revealed slots.
+- Touch target clarity: phase buttons, policy menu cards, and worker tokens have stable minimum sizes so resizing does not shift the layout unpredictably.
 
 ## Responsive Layout
 
-- `compact`: used below 1680px. It stacks the play table into tabs and shows one country mat per row.
-- `mid`: used from 1440px to 1679px. It keeps the tabbed surface but can show two country mats per row.
-- `wide`: used from 1680px upward. It can show broader parallel board areas.
-- `short`: used at 760px height or less. It moves the negotiation table out of the policy tab so the first country mat is not cut off.
-
-The current development screen is 1280x800, so the compact layout is the baseline for MVP usability.
+- The project uses Godot `canvas_items` + `expand` at a 1920x1080 board coordinate space.
+- UI therefore does not rely on unreachable compact/mid/wide branches. Readability is protected by larger board elements, label-fit audits, and generated 1280x720 preview frames.
+- The current verification target is the clickable flow GIF rendered from the actual board state.
 
 ## Visual Direction
 
@@ -33,7 +30,7 @@ The current development screen is 1280x800, so the compact layout is the baselin
 
 ## Next UX Candidates
 
-- Add a selected-card detail panel beside the hand for richer policy previews.
+- Add a selected-card detail panel beside the policy menu for richer policy previews.
 - Animate token movement during resolution.
 - Add stronger color semantics for crisis, stability, and international spillover.
 - Add local multiplayer prompts that name whose policy choice is expected.

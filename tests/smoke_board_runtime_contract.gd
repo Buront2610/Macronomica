@@ -30,8 +30,10 @@ func _run() -> void:
 	_assert(ui.country_seats.size() == 4, "runtime board shows four country seats without scroll")
 	_assert(ui.worker_nodes.size() == 5, "runtime board shows worker tokens as board pieces")
 	_assert(ui.phase_pips.size() == ui.GameStateScript.PHASES.size(), "runtime board shows phase pips as board markers")
-	_assert(ui.hand_nodes.is_empty(), "runtime board hides policy menu outside policy planning")
+	_assert(ui.policy_menu_nodes.is_empty(), "runtime board hides policy menu outside policy planning")
 	_assert(ui.policy_slot != null, "runtime board has a physical policy slot")
+	var domestic_state_panel: Control = ui.board_layer.get_node_or_null("DomesticStatePanel")
+	_assert(domestic_state_panel != null, "runtime board has a revealed domestic state lane")
 	for key in ui.WORLD_TRACKS:
 		_assert(ui.board_layer.get_node_or_null("WorldTrack_%s" % key) != null, "runtime board shows world track: %s" % key)
 	var crisis_hint: Label = ui.board_layer.get_node_or_null("WorldPanel/WorldPanelHint")
@@ -52,16 +54,18 @@ func _run() -> void:
 	var viewport := ui.get_viewport_rect()
 	for seat in ui.country_seats:
 		_assert(_inside_viewport(seat, viewport), "country seat remains inside the board viewport: %s" % seat.name)
-	for card in ui.hand_nodes:
-		_assert(_inside_viewport(card, viewport), "hand card remains inside the board viewport: %s" % card.name)
-		_assert(not _controls_overlap(card, ui.board_layer.get_node("EventCard")), "hand card does not overlap event card: %s" % card.name)
-		_assert(not _controls_overlap(card, ui.policy_slot), "hand card does not overlap policy slot: %s" % card.name)
+	for card in ui.policy_menu_nodes:
+		_assert(_inside_viewport(card, viewport), "policy menu card remains inside the board viewport: %s" % card.name)
+		_assert(not _controls_overlap(card, ui.board_layer.get_node("EventCard")), "policy menu card does not overlap event card: %s" % card.name)
+		_assert(not _controls_overlap(card, ui.policy_slot), "policy menu card does not overlap policy slot: %s" % card.name)
+		if domestic_state_panel != null:
+			_assert(not _controls_overlap(card, domestic_state_panel), "policy menu card does not overlap domestic state lane: %s" % card.name)
 		for seat in ui.country_seats:
-			_assert(not _controls_overlap(card, seat), "hand card does not overlap country seat: %s / %s" % [card.name, seat.name])
+			_assert(not _controls_overlap(card, seat), "policy menu card does not overlap country seat: %s / %s" % [card.name, seat.name])
 	for key in ui.WORLD_TRACKS:
 		var track: Control = ui.board_layer.get_node("WorldTrack_%s" % key)
-		for card in ui.hand_nodes:
-			_assert(not _controls_overlap(track, card), "world track does not overlap hand card: %s / %s" % [track.name, card.name])
+		for card in ui.policy_menu_nodes:
+			_assert(not _controls_overlap(track, card), "world track does not overlap policy menu card: %s / %s" % [track.name, card.name])
 	for worker in ui.worker_nodes.keys():
 		_assert(_inside_viewport(ui.worker_nodes[worker], viewport), "worker token remains inside the board viewport: %s" % worker)
 	for pip in ui.phase_pips:
@@ -89,8 +93,8 @@ func _run() -> void:
 		_assert(not _controls_overlap(panel, ui.board_layer.get_node("EventCard")), "status panel does not overlap event card: %s" % panel.name)
 		for seat in ui.country_seats:
 			_assert(not _controls_overlap(panel, seat), "status panel does not overlap country seat: %s / %s" % [panel.name, seat.name])
-		for card in ui.hand_nodes:
-			_assert(not _controls_overlap(panel, card), "status panel does not overlap hand card: %s / %s" % [panel.name, card.name])
+		for card in ui.policy_menu_nodes:
+			_assert(not _controls_overlap(panel, card), "status panel does not overlap policy menu card: %s / %s" % [panel.name, card.name])
 		for key in ui.WORLD_TRACKS:
 			var track: Control = ui.board_layer.get_node("WorldTrack_%s" % key)
 			_assert(not _controls_overlap(panel, track), "status panel does not overlap world track: %s / %s" % [panel.name, track.name])

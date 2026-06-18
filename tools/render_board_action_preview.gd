@@ -86,7 +86,7 @@ func _run() -> void:
 	if OS.get_environment("MACRONOMICA_PREVIEW_ACTION") != "0":
 		var policy_index := _first_policy_index(ui.game.countries[0].policy_menu)
 		if policy_index >= 0:
-			var card_node: Control = ui.hand_nodes[policy_index]
+			var card_node: Control = ui.policy_menu_nodes[policy_index]
 			ui._on_policy_selected(0, policy_index, card_node.position)
 		for i in range(3):
 			await process_frame

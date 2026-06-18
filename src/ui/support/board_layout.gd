@@ -12,7 +12,7 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var center_right := board_right
 	var center_w := center_right - center_left
 	var center_x := center_left + center_w * 0.5
-	var menu_columns := 10.0
+	var menu_columns := 9.0
 	var hand_gap := 8.0
 	var hand_card_w := clampf((center_w - 96.0 - hand_gap * (menu_columns - 1.0)) / menu_columns, 82.0, 108.0)
 	var hand_card_size := Vector2(hand_card_w, 54.0)
@@ -50,6 +50,9 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var seat_y := world_pos.y + world_size.y + 10.0
 	var left_x := center_left + 12.0
 	var right_x := center_right - country_size.x - 12.0
+	var state_panel_size := Vector2(clampf(center_w * 0.48, 560.0, 700.0), 126.0)
+	var state_panel_y := seat_y + country_size.y * 2.0 + country_gap + 12.0
+	var state_panel_pos := Vector2(center_x - state_panel_size.x * 0.5, minf(state_panel_y, hand_panel_pos.y - state_panel_size.y - 18.0))
 	var right_log_y := event_pos.y + event_size.y + 12.0
 	var detail_h := clampf(viewport_size.y * 0.18, 126.0, 148.0)
 	var log_h := maxf(82.0, bottom_y - right_log_y - detail_h - 16.0)
@@ -87,6 +90,9 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 			Vector2(right_x, seat_y + country_size.y + country_gap)
 		],
 		"country_seat_size": country_size,
+		"domestic_state_panel_pos": state_panel_pos,
+		"domestic_state_panel_size": state_panel_size,
+		"domestic_state_card_size": Vector2((state_panel_size.x - 104.0) * 0.5, 68.0),
 		"policy_slot_pos": policy_slot_pos,
 		"policy_slot_size": policy_slot_size,
 		"resolution_flow_pos": resolution_flow_pos,

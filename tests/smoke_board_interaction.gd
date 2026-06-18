@@ -36,8 +36,8 @@ func _run() -> void:
 
 	var policy_index := _first_policy_index(ui.game.countries[0].policy_menu)
 	_assert(policy_index >= 0, "country has a playable policy card")
-	var card_node: Control = ui.hand_nodes[policy_index]
-	_assert(_descendants_ignore_mouse(card_node), "hand card children do not steal card clicks")
+	var card_node: Control = ui.policy_menu_nodes[policy_index]
+	_assert(_descendants_ignore_mouse(card_node), "policy menu card children do not steal card clicks")
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = false
@@ -89,7 +89,7 @@ func _run() -> void:
 	_assert(ui.selected_country_index == 2, "country seat can select another player policy menu")
 	_assert(ui.board_layer.get_node_or_null("CountryFocusGhost") != null, "country selection creates a moving focus marker")
 	_assert(_first_board_trail(ui) != null, "country selection creates a board trail")
-	_assert(ui.hand_nodes.is_empty(), "worker assignment hides the policy menu to keep the board operable")
+	_assert(ui.policy_menu_nodes.is_empty(), "worker assignment hides the policy menu to keep the board operable")
 
 	var previous_phase: int = ui.game.phase_index
 	ui._on_advance_pressed()

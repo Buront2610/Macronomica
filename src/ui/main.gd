@@ -64,8 +64,9 @@ var country_next_labels: Array = []
 var country_pipeline_labels: Array = []
 var country_election_labels: Array = []
 var country_welfare_labels: Array = []
-var hand_nodes: Array = []
-var hand_coin_nodes: Array = []
+var policy_menu_nodes: Array = []
+var domestic_state_labels: Array = []
+var domestic_state_cards: Array = []
 var worker_nodes := {}
 var policy_slot
 var policy_slot_label: Label
@@ -196,7 +197,8 @@ func _build_board() -> void:
 	_build_country_seats()
 	_build_policy_slot()
 	_build_resolution_flow()
-	_build_hand_slots()
+	_build_domestic_state_panel()
+	_build_policy_menu_slots()
 	_build_worker_tokens()
 	_build_status_panels()
 	_build_country_detail_panel()
@@ -220,9 +222,9 @@ func _add_background() -> void:
 func _build_surfaces() -> void:
 	var play = _make_piece("PlaySurface", board_layout["play_surface_pos"], board_layout["play_surface_size"], Color(0.030, 0.037, 0.034, 0.16), Color(0.62, 0.45, 0.22, 0.28), 1, "plaque")
 	play.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var hand = _make_piece("HandPanel", board_layout["hand_panel_pos"], board_layout["hand_panel_size"], Color(0.070, 0.050, 0.030, 0.94), BOARD_LINE, 2, "plaque")
-	hand.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var menu_title := _add_label_to(hand, "PolicyMenuTitle", "政策メニュー（常設・デッキではない）", Vector2(16, 4), Vector2(260, 16), 12, WARN.lightened(0.18), false)
+	var menu_panel = _make_piece("PolicyMenuPanel", board_layout["hand_panel_pos"], board_layout["hand_panel_size"], Color(0.070, 0.050, 0.030, 0.94), BOARD_LINE, 2, "plaque")
+	menu_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var menu_title := _add_label_to(menu_panel, "PolicyMenuTitle", "常設政策メニュー（ドローしない）", Vector2(16, 4), Vector2(300, 16), 12, WARN.lightened(0.18), false)
 	menu_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 
 func _build_table_marks() -> void:
@@ -325,8 +327,8 @@ func _build_country_seats() -> void:
 		pressure_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		country_pressure_labels.append(pressure_label)
 
-		var state_card = _make_child_piece(seat, "StateHandCard", Vector2(seat_size.x * 0.47, 36), Vector2(seat_size.x * 0.29, 54), Color(0.16, 0.13, 0.10, 0.96), BAD.darkened(0.08), 2, "card")
-		var state_label := _add_label_to(state_card, "StateHandLabel", "", Vector2(7, 5), state_card.size - Vector2(14, 10), 11, TEXT, true)
+		var state_card = _make_child_piece(seat, "StateSummaryCard", Vector2(seat_size.x * 0.47, 36), Vector2(seat_size.x * 0.29, 54), Color(0.16, 0.13, 0.10, 0.96), BAD.darkened(0.08), 2, "card")
+		var state_label := _add_label_to(state_card, "StateSummaryLabel", "", Vector2(7, 5), state_card.size - Vector2(14, 10), 11, TEXT, true)
 		state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		state_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 		country_state_labels.append(state_label)
@@ -586,11 +588,35 @@ func _select_start_country(country_index: int) -> void:
 	if country_index >= 0 and country_index < country_seats.size():
 		_bump(country_seats[country_index])
 
-func _build_hand_slots() -> void:
+func _build_policy_menu_slots() -> void:
 	var card_size: Vector2 = board_layout["hand_card_size"]
 	for i in range(20):
-		var slot = _make_piece("HandSlot_%d" % i, _policy_menu_position(i), card_size, Color(0.025, 0.020, 0.016, 0.72), BOARD_LINE.darkened(0.10), 1, "card")
+		var slot = _make_piece("PolicyMenuSlot_%d" % i, _policy_menu_position(i), card_size, Color(0.025, 0.020, 0.016, 0.72), BOARD_LINE.darkened(0.10), 1, "card")
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+func _build_domestic_state_panel() -> void:
+	domestic_state_cards.clear()
+	domestic_state_labels.clear()
+	var panel_pos: Vector2 = board_layout["domestic_state_panel_pos"]
+	var panel_size: Vector2 = board_layout["domestic_state_panel_size"]
+	var panel = _make_piece("DomesticStatePanel", panel_pos, panel_size, Color(0.045, 0.036, 0.028, 0.94), BAD.darkened(0.10), 2, "plaque")
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var title := _add_label_to(panel, "DomesticStateTitle", "公開国内情勢（状態デッキから2枚）", Vector2(0, 8), Vector2(panel_size.x, 20), 14, WARN.lightened(0.16), false)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var hint := _add_label_to(panel, "DomesticStateHint", "これは政策カードではない。今ターン発火する脆弱性・レガシー。", Vector2(18, panel_size.y - 24), Vector2(panel_size.x - 36, 17), 11, MUTED, false)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var card_size: Vector2 = board_layout["domestic_state_card_size"]
+	var first_x := 34.0
+	var gap := 18.0
+	for i in range(2):
+		var card = _make_child_piece(panel, "DomesticStateCard_%d" % i, Vector2(first_x + (card_size.x + gap) * i, 34), card_size, Color(0.17, 0.13, 0.10, 0.97), BAD.darkened(0.04), 2, "card")
+		var icon = _make_icon("reform_wrench", Vector2(8, 12), Vector2(38, 38), Color.WHITE, "DomesticStateIcon")
+		card.add_child(icon)
+		var label := _add_label_to(card, "DomesticStateLabel", "", Vector2(52, 8), Vector2(card_size.x - 60, card_size.y - 16), 12, TEXT, true)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		domestic_state_cards.append(card)
+		domestic_state_labels.append(label)
 
 func _build_status_panels() -> void:
 	var score_pos: Vector2 = board_layout["score_pos"]
@@ -644,24 +670,21 @@ func _build_worker_tokens() -> void:
 		token.add_child(_make_icon(UiCatalogScript.worker_token(worker), Vector2(5, 5), token_size - Vector2(10, 10), Color.WHITE))
 		worker_nodes[worker] = token
 
-func _rebuild_hand(animate: bool, origin := Vector2.INF) -> void:
-	for node in hand_nodes:
+func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
+	for node in policy_menu_nodes:
 		node.queue_free()
-	hand_nodes.clear()
-	for node in hand_coin_nodes:
-		node.queue_free()
-	hand_coin_nodes.clear()
+	policy_menu_nodes.clear()
 	var phase: String = game.current_phase()
 	var show_menu: bool = phase == "policy_planning"
 	var show_tray: bool = show_menu or phase == "worker_assignment"
-	var hand_panel = board_layer.get_node_or_null("HandPanel")
-	if hand_panel != null:
-		hand_panel.visible = show_tray
-		var title: Label = hand_panel.get_node_or_null("PolicyMenuTitle")
+	var menu_panel = board_layer.get_node_or_null("PolicyMenuPanel")
+	if menu_panel != null:
+		menu_panel.visible = show_tray
+		var title: Label = menu_panel.get_node_or_null("PolicyMenuTitle")
 		if title != null:
-			title.text = "政策メニュー（常設・デッキではない）" if show_menu else "担当ワーカー"
+			title.text = "常設政策メニュー（ドローしない）" if show_menu else "担当ワーカー"
 	for i in range(20):
-		var slot = board_layer.get_node_or_null("HandSlot_%d" % i)
+		var slot = board_layer.get_node_or_null("PolicyMenuSlot_%d" % i)
 		if slot != null:
 			slot.visible = show_menu
 	if not show_menu:
@@ -678,9 +701,9 @@ func _rebuild_hand(animate: bool, origin := Vector2.INF) -> void:
 		card_node.rotation_degrees = 0.0
 		card_node.z_index = 12
 		board_layer.add_child(card_node)
-		hand_nodes.append(card_node)
+		policy_menu_nodes.append(card_node)
 		if animate:
-			_animate_hand_deal(card_node, source, final_pos, 0.025 * i)
+			_animate_policy_menu_deal(card_node, source, final_pos, 0.025 * i)
 
 func _policy_menu_position(index: int) -> Vector2:
 	var origin: Vector2 = board_layout["hand_origin"]
@@ -690,7 +713,7 @@ func _policy_menu_position(index: int) -> Vector2:
 	var row := floori(float(index) / float(columns))
 	return origin + Vector2(step.x * col, step.y * row)
 
-func _make_policy_card(card: Dictionary, hand_index: int, display_country_index := -1, include_coin := true):
+func _make_policy_card(card: Dictionary, policy_menu_index: int, display_country_index := -1, include_coin := true):
 	var country_index := selected_country_index if display_country_index < 0 else display_country_index
 	var country = game.countries[country_index]
 	var selected: bool = not country.selected_policy.is_empty() and country.selected_policy.get("id", "") == card.get("id", "")
@@ -698,13 +721,13 @@ func _make_policy_card(card: Dictionary, hand_index: int, display_country_index 
 	var border: Color = COUNTRY_ACCENTS[country_index] if selected else BOARD_LINE
 	var card_size: Vector2 = board_layout.get("hand_card_size", Vector2(82, 108))
 	var card_node = BoardPieceScript.new()
-	card_node.name = "PolicyMenuCard_%d" % hand_index
+	card_node.name = "PolicyMenuCard_%d" % policy_menu_index
 	card_node.size = card_size
 	card_node.set_skin(face, border, 3 if selected else 2, "card")
 	card_node.tooltip_text = _plain_card_detail(country, card)
 	card_node.pressed = func() -> void:
 		if card.get("type", "") == "policy" and game.can_select_policy():
-			_on_policy_selected(selected_country_index, hand_index, card_node.position)
+			_on_policy_selected(selected_country_index, policy_menu_index, card_node.position)
 	if include_coin:
 		var coin_size := minf(card_size.y - 20.0, 32.0)
 		var coin_layer := Control.new()
@@ -728,19 +751,6 @@ func _plain_card_detail(country, card: Dictionary) -> String:
 	text = text.replace("[color=#9aa0a4]", "").replace("[color=#999999]", "").replace("[/color]", "")
 	return text
 
-func _make_hand_card_coin(card: Dictionary, card_position: Vector2, card_size: Vector2) -> TextureRect:
-	var coin_size := minf(card_size.x * 0.75, 78.0)
-	var coin := _make_icon(
-		UiCatalogScript.card_token(card),
-		card_position + Vector2((card_size.x - coin_size) * 0.5, 6),
-		Vector2(coin_size, coin_size),
-		Color.WHITE,
-		"HandCardCoin",
-		true
-	)
-	coin.z_index = 13
-	return coin
-
 func _refresh_board(animate: bool) -> void:
 	if board_layer == null:
 		return
@@ -757,7 +767,8 @@ func _refresh_board(animate: bool) -> void:
 	_refresh_resolution_flow()
 	_refresh_resolution_links()
 	_refresh_final_score_overlay()
-	_rebuild_hand(animate)
+	_refresh_domestic_state_panel()
+	_rebuild_policy_menu(animate)
 
 func _refresh_title() -> void:
 	var turn := board_layer.get_node_or_null("TurnLabel")
@@ -840,7 +851,7 @@ func _refresh_country_seats() -> void:
 		country_pressure_labels[i].text = _pressure_summary(country)
 		country_state_labels[i].text = _state_hand_card_text(country)
 		country_policy_labels[i].text = _policy_slot_summary(country)
-		country_next_labels[i].text = "手:%s" % _state_card_summary(country)
+		country_next_labels[i].text = "情:%s" % _state_card_summary(country)
 		country_pipeline_labels[i].text = _pipeline_summary(country)
 		country_election_labels[i].text = _election_short_status(country)
 		country_welfare_labels[i].text = _welfare_check_summary(country)
@@ -857,6 +868,42 @@ func _refresh_country_seats() -> void:
 			worker_icon.texture = token_assets.texture(UiCatalogScript.worker_token(String(assigned_workers[0])))
 			worker_icon.modulate = Color.WHITE
 		_refresh_country_risk_chips(i, country)
+
+func _refresh_domestic_state_panel() -> void:
+	var panel: Control = board_layer.get_node_or_null("DomesticStatePanel")
+	if panel == null:
+		return
+	panel.visible = game.current_phase() != "negotiation" or entry_state == "hidden"
+	if selected_country_index < 0 or selected_country_index >= game.countries.size():
+		return
+	var country = game.countries[selected_country_index]
+	var title: Label = panel.get_node_or_null("DomesticStateTitle")
+	if title != null:
+		title.text = "%s国の公開国内情勢（状態デッキ）" % UiCatalogScript.country_emblem(selected_country_index)
+	var visible_states := []
+	for card in country.hand:
+		if _is_state_card(card):
+			visible_states.append(card)
+	for i in range(domestic_state_cards.size()):
+		var card_node: Control = domestic_state_cards[i]
+		var label: Label = domestic_state_labels[i]
+		var has_card := i < visible_states.size()
+		card_node.visible = true
+		if has_card:
+			var card: Dictionary = visible_states[i]
+			var border := BAD.darkened(0.04) if String(card.get("type", "")) == "vulnerability" else WARN.darkened(0.05)
+			if card_node.has_method("set_skin"):
+				card_node.set_skin(Color(0.17, 0.13, 0.10, 0.97), border, 2, "card")
+			var icon: TextureRect = card_node.get_node_or_null("DomesticStateIcon")
+			if icon != null:
+				icon.texture = token_assets.texture(UiCatalogScript.card_token(card))
+			label.text = _domestic_state_card_text(card)
+			card_node.tooltip_text = _plain_card_detail(country, card)
+		else:
+			if card_node.has_method("set_skin"):
+				card_node.set_skin(Color(0.055, 0.046, 0.038, 0.80), BOARD_LINE.darkened(0.18), 1, "card")
+			label.text = "公開なし\n状態デッキ待ち"
+			card_node.tooltip_text = "この枠は状態デッキから公開される国内情勢カードです。政策カードではありません。"
 
 func _refresh_policy_slot(animate: bool) -> void:
 	var country = game.countries[selected_country_index]
@@ -1169,7 +1216,7 @@ func _state_card_summary(country) -> String:
 
 func _state_hand_card_text(country) -> String:
 	if country.hand.is_empty():
-		return "状態手札\nなし"
+		return "公開情勢\nなし"
 	var parts := []
 	for card in country.hand:
 		if not _is_state_card(card):
@@ -1177,7 +1224,21 @@ func _state_hand_card_text(country) -> String:
 		parts.append(UiCatalogScript.short_card_name(card).substr(0, 6))
 		if parts.size() >= 2:
 			break
-	return "状態手札\n%s" % (" / ".join(parts) if not parts.is_empty() else "なし")
+	return "公開情勢\n%s" % (" / ".join(parts) if not parts.is_empty() else "なし")
+
+func _domestic_state_card_text(card: Dictionary) -> String:
+	var kind := "脆弱性" if String(card.get("type", "")) == "vulnerability" else "レガシー"
+	var title := UiCatalogScript.short_card_name(card).substr(0, 9)
+	var response: Dictionary = card.get("response", {})
+	var response_text := "対応なし"
+	if not response.is_empty():
+		var tags := []
+		for tag in response.get("removed_by_tags", []):
+			tags.append(_short_tag_list([tag], 1))
+			if tags.size() >= 2:
+				break
+		response_text = "対応:%s" % ("・".join(tags) if not tags.is_empty() else "可")
+	return "%s\n%s\n%s" % [title, kind, response_text]
 
 func _is_state_card(card: Dictionary) -> bool:
 	var type := String(card.get("type", ""))
@@ -1315,7 +1376,7 @@ func _refresh_country_detail_panel() -> void:
 		return
 	var country = game.countries[selected_country_index]
 	var pressure := String(country.domestic_pressure.get("display_name", "国内圧力なし"))
-	country_detail_label.text = "%s\n圧:%s  選:%s  厚:%d\n状態:%s\n次札:%s  条件:%s\nリスク:%s  山/捨:%d/%d" % [
+	country_detail_label.text = "%s\n圧:%s  選:%s  厚:%d\n公開:%s\n次札:%s  条件:%s\nリスク:%s  山/捨:%d/%d" % [
 		country.display_name.substr(0, 9),
 		pressure.substr(0, 8),
 		_election_status(country),
@@ -1517,7 +1578,7 @@ func _on_country_selected(country_index: int) -> void:
 	_refresh_country_seats()
 	_refresh_policy_slot(true)
 	_refresh_workers()
-	_rebuild_hand(true, origin)
+	_rebuild_policy_menu(true, origin)
 	_animate_country_marker(previous, country_index)
 
 func _on_policy_selected(country_index: int, policy_index: int, from_pos: Vector2) -> void:
@@ -1802,7 +1863,7 @@ func _animate_trail(from_pos: Vector2, to_pos: Vector2, color: Color, duration: 
 	tween.tween_property(trail, "modulate:a", 0.0, 0.12)
 	tween.tween_callback(trail.queue_free)
 
-func _animate_hand_deal(node: Control, source: Vector2, final_pos: Vector2, delay: float) -> void:
+func _animate_policy_menu_deal(node: Control, source: Vector2, final_pos: Vector2, delay: float) -> void:
 	node.position = source
 	node.scale = Vector2(0.72, 0.72)
 	node.modulate.a = 0.0

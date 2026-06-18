@@ -37,7 +37,7 @@ func _run() -> void:
 	for country_index in range(ui.game.countries.size()):
 		var policy_index := _first_simple_policy_index(ui.game.countries[country_index].policy_menu)
 		if policy_index >= 0:
-			_click(ui.hand_nodes[policy_index])
+			_click(ui.policy_menu_nodes[policy_index])
 			await _settle()
 			await _save_frame("04_policy_%d" % country_index)
 

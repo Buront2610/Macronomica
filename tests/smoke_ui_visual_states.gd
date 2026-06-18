@@ -46,10 +46,10 @@ func _check_state(viewport_size: Vector2i, state: String) -> void:
 	_assert(ui.board_layer != null, "%s %s has board layer" % [state, viewport_size])
 	_assert(ui.country_seats.size() == 4, "%s %s keeps four country seats" % [state, viewport_size])
 	if state == "default":
-		_assert(ui.hand_nodes.size() == ui.game.countries[ui.selected_country_index].policy_menu.size(), "%s %s shows the selected policy menu" % [state, viewport_size])
+		_assert(ui.policy_menu_nodes.size() == ui.game.countries[ui.selected_country_index].policy_menu.size(), "%s %s shows the selected policy menu" % [state, viewport_size])
 	else:
-		_assert(ui.hand_nodes.is_empty(), "%s %s hides policy menu outside policy planning" % [state, viewport_size])
-	for node_name in ["WorldPanel", "EventCard", "PolicySlot", "ResolutionFlow", "ScorePanel", "LogPanel", "CountryDetailPanel"]:
+		_assert(ui.policy_menu_nodes.is_empty(), "%s %s hides policy menu outside policy planning" % [state, viewport_size])
+	for node_name in ["WorldPanel", "EventCard", "PolicySlot", "ResolutionFlow", "DomesticStatePanel", "ScorePanel", "LogPanel", "CountryDetailPanel"]:
 		var node: Control = ui.board_layer.get_node_or_null(node_name)
 		_assert(node != null, "%s %s has %s" % [state, viewport_size, node_name])
 		if node != null:
@@ -63,8 +63,8 @@ func _check_state(viewport_size: Vector2i, state: String) -> void:
 		for label_name in ["NextDeckLabel", "PipelineLabel", "ElectionLabel", "WelfareLabel"]:
 			var info_label: Label = seat.get_node_or_null(label_name)
 			_assert(info_label != null and not info_label.text.is_empty(), "%s %s keeps %s populated on %s" % [state, viewport_size, label_name, seat.name])
-	for card in ui.hand_nodes:
-		_assert(_inside_viewport(card, viewport), "%s %s keeps hand card inside viewport: %s" % [state, viewport_size, card.name])
+	for card in ui.policy_menu_nodes:
+		_assert(_inside_viewport(card, viewport), "%s %s keeps policy menu card inside viewport: %s" % [state, viewport_size, card.name])
 	for token_name in ["RestartToken", "RecommendToken", "AdvanceToken"]:
 		var token: Control = ui.board_layer.get_node_or_null(token_name)
 		_assert(token != null and _inside_viewport(token, viewport), "%s %s keeps action token inside viewport: %s" % [state, viewport_size, token_name])

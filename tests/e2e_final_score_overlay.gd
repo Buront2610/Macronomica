@@ -24,7 +24,7 @@ func _run() -> void:
 	for country_index in range(ui.game.countries.size()):
 		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
 		_assert(policy_index >= 0, "country %d has a policy card" % country_index)
-		var card: Control = ui.hand_nodes[policy_index]
+		var card: Control = ui.policy_menu_nodes[policy_index]
 		ui._on_policy_selected(country_index, policy_index, card.position)
 		await process_frame
 

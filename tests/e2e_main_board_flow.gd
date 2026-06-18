@@ -27,7 +27,7 @@ func _run() -> void:
 		_assert(ui.selected_country_index == country_index, "policy planning focuses country %d automatically" % country_index)
 		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
 		_assert(policy_index >= 0, "country %d has a playable policy card" % country_index)
-		var card_node: Control = ui.hand_nodes[policy_index]
+		var card_node: Control = ui.policy_menu_nodes[policy_index]
 		_assert(_control_min_size(card_node, Vector2(82, 52)), "policy menu card remains tappable: %s" % card_node.name)
 		var click := InputEventMouseButton.new()
 		click.button_index = MOUSE_BUTTON_LEFT

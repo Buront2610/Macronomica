@@ -41,7 +41,7 @@ func _run() -> void:
 	_assert(not ui.title_overlay.visible and not ui.country_select_overlay.visible, "entry overlays close after country choice")
 	_assert(ui.player_country_index == 2, "entry flow stores the chosen country")
 	_assert(ui.selected_country_index == 2, "chosen country becomes the active board country")
-	_assert(ui.hand_nodes.is_empty(), "entry starts at negotiation without crowding the board with policy menu")
+	_assert(ui.policy_menu_nodes.is_empty(), "entry starts at negotiation without crowding the board with policy menu")
 
 	if failed:
 		quit(1)
