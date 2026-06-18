@@ -22,7 +22,7 @@ func _run() -> void:
 	await process_frame
 
 	for country_index in range(ui.game.countries.size()):
-		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
+		var policy_index := _first_policy_index(ui.game.policy_options(country_index))
 		_assert(policy_index >= 0, "country %d has a policy card" % country_index)
 		var card: Control = ui.policy_menu_nodes[policy_index]
 		ui._on_policy_selected(country_index, policy_index, card.position)
@@ -64,7 +64,7 @@ func _run() -> void:
 
 func _first_policy_index(hand: Array) -> int:
 	for i in range(hand.size()):
-		if hand[i].get("type", "") == "policy":
+		if hand[i].get("type", "") == "policy" and String(hand[i].get("target", "")) != "country":
 			return i
 	return -1
 

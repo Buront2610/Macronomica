@@ -2,6 +2,10 @@ $ErrorActionPreference = "Stop"
 
 $repo = Resolve-Path (Join-Path $PSScriptRoot "..")
 $godot = Get-Command godot_console -ErrorAction SilentlyContinue
+$wingetGodot = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64_console.exe"
+if (-not $godot -and (Test-Path $wingetGodot)) {
+    $godot = [pscustomobject]@{ Source = $wingetGodot }
+}
 if (-not $godot) {
     $godot = Get-Command godot -ErrorAction SilentlyContinue
 }
@@ -41,7 +45,6 @@ if ($godot) {
     exit $LASTEXITCODE
 }
 
-$wingetGodot = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64_console.exe"
 if (Test-Path $wingetGodot) {
     & $wingetGodot --headless --path $repo --scene "res://scenes/main/main.tscn" --quit-after 3
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

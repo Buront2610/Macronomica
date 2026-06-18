@@ -108,7 +108,8 @@
 - `duration`: 解除されない場合の継続ターン数
 - `effects`: 継続中の各ターンに適用する世界イベント型の効果
 - `effects.tagged_countries[].add_state_cards`: 該当タグ国の状態デッキ山札トップへ状態カードを追加
-- `effects.tagged_countries[].add_policy_menu`: 該当タグ国の政策メニューへ危機政策を追加（既にある場合は重複しない）
+- `effects.tagged_countries[].add_policy_menu`: 該当タグ国の政策カタログへ危機政策を追加（既にある場合は重複しない）。
+  追加された政策は以後の `active_agenda` に議題化されうる。キー名は既存データ互換のため維持する。
 - `clear_when.world_min`: 指定トラックが値以上なら解除
 - `clear_when.world_max`: 指定トラックが値以下なら解除
 - `clear_text`: UIに表示する解除条件

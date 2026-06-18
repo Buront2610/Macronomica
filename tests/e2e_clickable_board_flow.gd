@@ -26,7 +26,7 @@ func _run() -> void:
 	_click(ui.board_layer.get_node("AdvanceToken"))
 	await _settle()
 	_assert(ui.game.current_phase() == "policy_planning", "advance click enters policy planning")
-	_assert(_policy_card_shelf_visible(ui), "policy card shelf is visible and explicitly labeled")
+	_assert(_policy_agenda_shelf_visible(ui), "policy agenda shelf is visible and explicitly labeled")
 
 	_click(ui.board_layer.get_node("RecommendToken"))
 	await _settle()
@@ -73,12 +73,12 @@ func _first_simple_policy_index(cards: Array) -> int:
 			return i
 	return -1
 
-func _policy_card_shelf_visible(ui) -> bool:
+func _policy_agenda_shelf_visible(ui) -> bool:
 	var panel: Control = ui.board_layer.get_node_or_null("PolicyMenuPanel")
 	if panel == null or not panel.visible:
 		return false
 	var title: Label = panel.get_node_or_null("PolicyMenuTitle")
-	if title == null or not title.text.contains("政策カード"):
+	if title == null or not title.text.contains("政策議題"):
 		return false
 	return true
 

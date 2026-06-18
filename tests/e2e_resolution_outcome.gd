@@ -13,7 +13,7 @@ func _run() -> void:
 	game.advance_phase()
 	game.turn_limit = 1
 	for country_index in range(game.countries.size()):
-		var policy_index := _first_policy_index(game.countries[country_index].policy_menu)
+		var policy_index := _first_policy_index(game.policy_options(country_index))
 		_assert(policy_index >= 0, "country %d has a policy card" % country_index)
 		game.select_policy(country_index, policy_index)
 	game.advance_phase()

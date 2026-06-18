@@ -34,7 +34,7 @@ func _run() -> void:
 	ui._refresh_board(false)
 	await process_frame
 
-	var policy_index := _first_policy_index(ui.game.countries[0].policy_menu)
+	var policy_index := _first_policy_index(ui.game.policy_options(0))
 	_assert(policy_index >= 0, "country has a playable policy card")
 	var card_node: Control = ui.policy_menu_nodes[policy_index]
 	_assert(_descendants_ignore_mouse(card_node), "policy menu card children do not steal card clicks")
@@ -49,10 +49,8 @@ func _run() -> void:
 		ui._on_country_selected(1)
 		await process_frame
 		_assert(ui.game.countries[0].selected_target_index == 1, "targeted policy can choose a target country from the board")
-	_assert(ui.board_layer.get_node_or_null("PolicyGhost") != null, "policy placement creates a moving card ghost")
-	var policy_trail = _first_board_trail(ui)
-	_assert(policy_trail != null, "policy placement creates a board trail")
-	_assert(_colors_close(policy_trail.color, ui.COUNTRY_ACCENTS[0]), "policy placement trail keeps the submitting country color")
+	_assert(ui.board_layer.get_node_or_null("PolicyGhost") == null, "policy placement avoids a full-size moving card ghost")
+	_assert(_first_board_trail(ui) == null, "policy placement avoids noisy board trails")
 	_assert(ui.country_policy_labels[0].text.contains("伏せ札"), "submitted country policy slot hides selected card before reveal")
 	_assert(not ui.country_policy_labels[0].text.contains(String(ui.game.countries[0].selected_policy.get("display_name", ""))), "submitted country policy slot does not leak the selected policy name before reveal")
 	var hidden_policy: Dictionary = ui.game.countries[0].selected_policy.duplicate(true)
@@ -106,7 +104,7 @@ func _run() -> void:
 	ui2._hide_entry_overlays()
 	ui2.game.advance_phase()
 	for country_index in range(ui2.game.countries.size()):
-		var plan_index := _first_policy_index(ui2.game.countries[country_index].policy_menu)
+		var plan_index := _first_policy_index(ui2.game.policy_options(country_index))
 		_assert(plan_index >= 0, "policy exists for recommendation worker setup country %d" % country_index)
 		ui2.game.select_policy(country_index, plan_index)
 	ui2._enter_worker_assignment()

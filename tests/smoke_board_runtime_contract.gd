@@ -49,7 +49,9 @@ func _run() -> void:
 	for seat in ui.country_seats:
 		for label_name in ["NextDeckLabel", "PipelineLabel", "ElectionLabel", "WelfareLabel"]:
 			var label: Label = seat.get_node_or_null(label_name)
-			_assert(label != null and not label.text.is_empty(), "country seat has populated %s: %s" % [label_name, seat.name])
+			_assert(label != null, "country seat has %s node: %s" % [label_name, seat.name])
+			if label.visible:
+				_assert(not label.text.is_empty(), "visible country seat label is populated %s: %s" % [label_name, seat.name])
 
 	var viewport := ui.get_viewport_rect()
 	for seat in ui.country_seats:

@@ -11,6 +11,9 @@ var modules: Array = []
 var tags: Array = []
 var cost_modifiers: Dictionary = {}
 var policy_menu: Array = []
+var policy_catalog_deck: Array = []
+var policy_catalog_discard: Array = []
+var active_agenda: Array = []
 var policy_cooldowns: Dictionary = {}
 var tracks: Dictionary = {}
 var deck: Array = []
@@ -68,7 +71,46 @@ func setup(preset: Dictionary, module_defs: Dictionary, built_deck: Array, built
 		for cost_key in module.get("cost_modifiers", {}).keys():
 			cost_modifiers[cost_key] = int(cost_modifiers.get(cost_key, 0)) + int(module["cost_modifiers"][cost_key])
 	policy_menu = built_policy_menu.duplicate(true)
+	policy_catalog_deck = []
+	policy_catalog_discard = []
+	active_agenda = []
+	for policy in policy_menu:
+		if not _is_basic_policy(policy):
+			policy_catalog_deck.append(policy.duplicate(true))
+	if policy_catalog_deck.is_empty():
+		policy_catalog_deck = policy_menu.duplicate(true)
 	policy_cooldowns = {}
+
+func draw_catalog_cards(count: int, rng) -> Array:
+	var result: Array = []
+	for _i in range(count):
+		if policy_catalog_deck.is_empty():
+			policy_catalog_deck = rng.shuffle(policy_catalog_discard)
+			policy_catalog_discard = []
+		if policy_catalog_deck.is_empty():
+			return result
+		result.append(policy_catalog_deck.pop_front())
+	return result
+
+func discard_active_agenda() -> void:
+	for policy in active_agenda:
+		if _is_basic_policy(policy):
+			continue
+		_append_policy_unique(policy_catalog_discard, policy)
+	active_agenda = []
+
+func _append_policy_unique(target: Array, policy: Dictionary) -> void:
+	var policy_id := String(policy.get("id", ""))
+	for existing in target:
+		if String(existing.get("id", "")) == policy_id:
+			return
+	target.append(policy.duplicate(true))
+
+func _is_basic_policy(policy: Dictionary) -> bool:
+	var policy_id := String(policy.get("id", ""))
+	if ["fiscal_stimulus", "austerity", "policy_rate_hike", "rate_cut_and_qe", "social_safety_net"].has(policy_id):
+		return true
+	return String(policy.get("catalog_type", "")) == "basic"
 
 func draw_cards(count: int, rng) -> void:
 	for _i in range(count):
@@ -154,9 +196,13 @@ func has_assigned_worker(worker_id: String) -> bool:
 	return assigned_worker_list().has(worker_id)
 
 func is_policy_available(policy: Dictionary) -> bool:
+	if _is_basic_policy(policy):
+		return true
 	return int(policy_cooldowns.get(String(policy.get("id", "")), 0)) <= 0
 
 func put_policy_on_cooldown(policy: Dictionary, turns := 1) -> void:
+	if _is_basic_policy(policy):
+		return
 	var policy_id := String(policy.get("id", ""))
 	if policy_id.is_empty():
 		return

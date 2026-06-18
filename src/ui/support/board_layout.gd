@@ -28,12 +28,12 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var policy_preview_pos := Vector2(hand_panel_x, hand_panel_pos.y - policy_preview_size.y - 14.0)
 	var bottom_y := hand_panel_pos.y - 18.0
 
-	var country_size := Vector2(clampf(center_w * 0.29, 280.0, 330.0), clampf(viewport_size.y * 0.20, 144.0, 170.0))
-	var country_gap := 10.0
+	var country_size := Vector2(clampf(center_w * 0.38, 392.0, 460.0), clampf(viewport_size.y * 0.26, 192.0, 214.0))
+	var country_gap := 14.0
 	var hand_step := Vector2(hand_card_size.x + hand_gap, hand_card_size.y + hand_gap)
 	var hand_origin := hand_panel_pos + Vector2(32.0, 50.0)
 
-	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.27, 198.0, 230.0))
+	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.34, 244.0, 292.0))
 	var world_pos := Vector2(center_left, header_h + 6.0)
 	var planning_country_size := Vector2(clampf(focus_w * 0.72, 760.0, 1040.0), 132.0)
 	var planning_country_pos := Vector2(focus_x - planning_country_size.x * 0.5, world_pos.y + 12.0)
@@ -42,10 +42,12 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var negotiation_pos := Vector2(center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 10.0)
 	var policy_slot_size := Vector2(440.0, 118.0)
 	var policy_slot_pos := Vector2(center_x - policy_slot_size.x * 0.5, negotiation_pos.y + negotiation_size.y + 8.0)
-	var resolution_flow_size := Vector2(clampf(center_w * 0.58, 560.0, 820.0), 118.0)
+	var resolution_flow_size := Vector2(clampf(between_countries_w, 500.0, 560.0), 118.0)
 	var resolution_flow_pos := Vector2(center_x - resolution_flow_size.x * 0.5, policy_slot_pos.y + policy_slot_size.y + 8.0)
-	var world_track_gap := 8.0
-	var world_track_w := (world_size.x - 76.0 - world_track_gap * 6.0) / 7.0
+	var world_track_gap := 10.0
+	var world_track_columns := 4.0
+	var world_track_w := (world_size.x - 76.0 - world_track_gap * (world_track_columns - 1.0)) / world_track_columns
+	var world_track_h := (world_size.y - 86.0 - world_track_gap) * 0.5
 
 	var worker_size := Vector2(306.0, 154.0)
 	var worker_columns := 3.0
@@ -102,8 +104,8 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"planning_country_pos": planning_country_pos,
 		"planning_country_size": planning_country_size,
 		"world_tracks_origin": world_pos + Vector2(38.0, 54.0),
-		"world_track_step": Vector2(world_track_w + world_track_gap, 0.0),
-		"world_track_size": Vector2(world_track_w, world_size.y - 74.0),
+		"world_track_step": Vector2(world_track_w + world_track_gap, world_track_h + world_track_gap),
+		"world_track_size": Vector2(world_track_w, world_track_h),
 		"agenda_origin": negotiation_pos + Vector2(18.0, 14.0),
 		"agenda_step": Vector2((negotiation_size.x - 34.0) / 4.0, 0.0),
 		"agenda_size": Vector2(112.0, 60.0),

@@ -42,7 +42,7 @@ func _audit_state(state: String) -> void:
 
 func _prepare_worker_assignment(ui) -> void:
 	for country_index in range(ui.game.countries.size()):
-		var policy_index := _first_simple_policy_index(ui.game.countries[country_index].policy_menu)
+		var policy_index := _first_simple_policy_index(ui.game.policy_options(country_index))
 		if policy_index >= 0:
 			ui.game.select_policy(country_index, policy_index)
 	ui.game.move_to_phase("worker_assignment")

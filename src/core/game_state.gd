@@ -39,6 +39,16 @@ const REQUIRED_COUNTRY_TRACKS := [
 	"expected_inflation",
 	"influence"
 ]
+const BASIC_POLICY_IDS := [
+	"fiscal_stimulus",
+	"austerity",
+	"policy_rate_hike",
+	"rate_cut_and_qe",
+	"social_safety_net"
+]
+const ACTIVE_AGENDA_BASIC_COUNT := 3
+const ACTIVE_AGENDA_CATALOG_COUNT := 4
+const ACTIVE_AGENDA_MAX := 7
 
 var turn := 1
 var turn_limit := 10
@@ -84,6 +94,7 @@ func new_game(seed_override := -1) -> void:
 		var policy_menu: Array = DeckBuilderScript.build_policy_menu(preset, module_defs, policy_index)
 		var country = CountryStateScript.new()
 		country.setup(preset, module_defs, deck, policy_menu)
+		country.policy_catalog_deck = rng.shuffle(country.policy_catalog_deck)
 		countries.append(country)
 	log = ["新しいゲームを開始しました。"]
 	_start_turn()
@@ -95,10 +106,11 @@ func select_policy(country_index: int, policy_menu_index: int) -> void:
 	if not _require(_valid_country_index(country_index), "select_policy country index is valid"):
 		return
 	var country = countries[country_index]
-	if policy_menu_index < 0 or policy_menu_index >= country.policy_menu.size():
-		_require(false, "select_policy menu index is valid")
+	var options := policy_options(country_index)
+	if policy_menu_index < 0 or policy_menu_index >= options.size():
+		_require(false, "select_policy agenda index is valid")
 		return
-	var policy: Dictionary = country.policy_menu[policy_menu_index]
+	var policy: Dictionary = options[policy_menu_index]
 	if not country.is_policy_available(policy):
 		_require(false, "select_policy policy is not on cooldown")
 		return
@@ -110,7 +122,10 @@ func select_policy(country_index: int, policy_menu_index: int) -> void:
 func policy_options(country_index: int) -> Array:
 	if not _valid_country_index(country_index):
 		return []
-	return countries[country_index].policy_menu
+	var country = countries[country_index]
+	if country.active_agenda.is_empty() and current_phase() == "policy_planning":
+		_build_active_agendas()
+	return country.active_agenda
 
 func select_policy_target(country_index: int, target_index: int) -> void:
 	if current_phase() != "policy_planning" or is_finished:
@@ -256,6 +271,8 @@ func advance_phase() -> void:
 		_assert_invariants("advance_phase simultaneous_reveal")
 		return
 	phase_index = mini(phase_index + 1, PHASES.size() - 1)
+	if current_phase() == "policy_planning":
+		_refresh_active_agendas_after_negotiation()
 	log.append("フェーズ: %s" % current_phase_name())
 	_assert_invariants("advance_phase")
 
@@ -414,6 +431,7 @@ func _start_turn() -> void:
 	log.append_array(WorldResolverScript.apply_start_of_turn_cards(countries, world))
 	for country in countries:
 		country.draw_pressure(domestic_pressures, rng)
+	_build_active_agendas()
 	log.append_array(_resolve_pending_effects())
 	for country in countries:
 		country.clamp_tracks()
@@ -424,9 +442,143 @@ func _start_turn() -> void:
 	log.append("フェーズ: %s" % current_phase_name())
 	_assert_invariants("_start_turn")
 
+func _build_active_agendas() -> void:
+	for country in countries:
+		country.active_agenda = []
+		var basics := _ranked_basic_policies(country)
+		for policy in basics:
+			_append_agenda_unique(country.active_agenda, policy)
+			if _basic_count(country.active_agenda) >= ACTIVE_AGENDA_BASIC_COUNT:
+				break
+		for policy in country.draw_catalog_cards(ACTIVE_AGENDA_CATALOG_COUNT, rng):
+			_append_agenda_unique(country.active_agenda, policy)
+		_surface_response_policy(country)
+		_surface_declared_policy(country)
+		_trim_active_agenda(country)
+
+func _refresh_active_agendas_after_negotiation() -> void:
+	for country in countries:
+		if country.active_agenda.is_empty():
+			_build_active_agendas()
+			return
+		_surface_declared_policy(country)
+		_trim_active_agenda(country)
+
+func _trim_active_agenda(country) -> void:
+	while country.active_agenda.size() > ACTIVE_AGENDA_MAX:
+		var policy: Dictionary = country.active_agenda.pop_back()
+		if not _is_basic_policy(policy):
+			country.policy_catalog_discard.push_front(policy)
+
+func _ranked_basic_policies(country) -> Array:
+	var basics := []
+	for policy in country.policy_menu:
+		if _is_basic_policy(policy):
+			basics.append(policy)
+	basics.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return _agenda_priority(country, a) > _agenda_priority(country, b)
+	)
+	return basics
+
+func _agenda_priority(country, policy: Dictionary) -> int:
+	var score := 0
+	var tags: Array = policy.get("tags", [])
+	for tag in country.domestic_pressure.get("demand", {}).get("preferred_policy_tags", []):
+		if tags.has(tag):
+			score += 100
+	for card in country.hand:
+		var response: Dictionary = card.get("response", {})
+		for tag in response.get("removed_by_tags", []):
+			if tags.has(tag):
+				score += 80
+	var gdp_gap := int(country.tracks.get("gdp_gap", 0))
+	var unemployment := int(country.tracks.get("unemployment", 0))
+	var inflation := int(country.tracks.get("inflation", 0))
+	var financial_stress := int(country.tracks.get("financial_stress", 0))
+	if gdp_gap < 0 and (tags.has("fiscal") or tags.has("monetary") or tags.has("employment")):
+		score += 35
+	if unemployment >= 5 and (tags.has("employment") or tags.has("fiscal")):
+		score += 30
+	if inflation >= 4 and tags.has("monetary"):
+		score += 28
+	if financial_stress >= 5 and (tags.has("financial") or tags.has("liquidity")):
+		score += 30
+	if int(world.tracks.get("depression", 0)) >= 4 and tags.has("cooperation"):
+		score += 28
+	return score
+
+func _surface_response_policy(country) -> void:
+	for card in country.hand:
+		var response: Dictionary = card.get("response", {})
+		var wanted_tags: Array = response.get("removed_by_tags", [])
+		if wanted_tags.is_empty():
+			continue
+		var policy := _take_policy_matching_tags(country, wanted_tags)
+		if not policy.is_empty():
+			_append_agenda_unique(country.active_agenda, policy, true)
+			return
+
+func _surface_declared_policy(country) -> void:
+	var tag := String(country.declared_agenda)
+	if tag.is_empty():
+		tag = String(country.support_request_tag)
+	if tag.is_empty():
+		return
+	var policy := _take_policy_matching_tags(country, [tag])
+	if not policy.is_empty():
+		_append_agenda_unique(country.active_agenda, policy, true)
+
+func _take_policy_matching_tags(country, wanted_tags: Array) -> Dictionary:
+	for i in range(country.policy_catalog_deck.size()):
+		var policy: Dictionary = country.policy_catalog_deck[i]
+		if _policy_has_any_tag(policy, wanted_tags):
+			country.policy_catalog_deck.remove_at(i)
+			return policy
+	for i in range(country.policy_catalog_discard.size()):
+		var policy: Dictionary = country.policy_catalog_discard[i]
+		if _policy_has_any_tag(policy, wanted_tags):
+			country.policy_catalog_discard.remove_at(i)
+			return policy
+	for policy in country.policy_menu:
+		if _policy_has_any_tag(policy, wanted_tags):
+			return policy
+	return {}
+
+func _policy_has_any_tag(policy: Dictionary, wanted_tags: Array) -> bool:
+	var tags: Array = policy.get("tags", [])
+	for tag in wanted_tags:
+		if tags.has(tag):
+			return true
+	return false
+
+func _append_agenda_unique(target: Array, policy: Dictionary, to_front := false) -> void:
+	var policy_id := String(policy.get("id", ""))
+	for i in range(target.size()):
+		var existing: Dictionary = target[i]
+		if String(existing.get("id", "")) == policy_id:
+			if to_front and i > 0:
+				target.remove_at(i)
+				target.push_front(existing)
+			return
+	if to_front:
+		target.push_front(policy.duplicate(true))
+	else:
+		target.append(policy.duplicate(true))
+
+func _basic_count(agenda: Array) -> int:
+	var count := 0
+	for policy in agenda:
+		if _is_basic_policy(policy):
+			count += 1
+	return count
+
+func _is_basic_policy(policy: Dictionary) -> bool:
+	return BASIC_POLICY_IDS.has(String(policy.get("id", ""))) or String(policy.get("catalog_type", "")) == "basic"
+
 func _cleanup_after_resolution() -> void:
 	for country in countries:
 		country.selected_policy = {}
+		country.discard_active_agenda()
 		_discard_hand(country)
 		country.selected_target_index = -1
 		country.selected_response_index = -1
@@ -439,6 +591,8 @@ func _cleanup_after_resolution() -> void:
 	world.clamp_tracks()
 
 func _move_selected_to_discard(country) -> void:
+	if _is_basic_policy(country.selected_policy):
+		return
 	country.put_policy_on_cooldown(country.selected_policy, 3)
 	return
 
@@ -469,6 +623,9 @@ func _clone_country(source) -> CountryStateScript:
 	clone.tags = source.tags.duplicate(true)
 	clone.cost_modifiers = source.cost_modifiers.duplicate(true)
 	clone.policy_menu = source.policy_menu.duplicate(true)
+	clone.policy_catalog_deck = source.policy_catalog_deck.duplicate(true)
+	clone.policy_catalog_discard = source.policy_catalog_discard.duplicate(true)
+	clone.active_agenda = source.active_agenda.duplicate(true)
 	clone.policy_cooldowns = source.policy_cooldowns.duplicate(true)
 	clone.tracks = source.tracks.duplicate(true)
 	clone.deck = source.deck.duplicate(true)
@@ -508,8 +665,9 @@ func _preview_policy_cost(country, policy: Dictionary) -> Dictionary:
 func _ensure_selected_policy(country) -> void:
 	if not country.selected_policy.is_empty():
 		return
-	if not country.policy_menu.is_empty():
-		country.selected_policy = country.policy_menu[0]
+	var options: Array = country.active_agenda
+	if not options.is_empty():
+		country.selected_policy = options[0]
 		country.selected_response_index = _default_response_index(country)
 
 func _ensure_selected_target(country_index: int, country_list := []) -> void:
@@ -799,5 +957,10 @@ func _assert_invariants(context: String) -> void:
 	for country in countries:
 		for worker in country.assigned_worker_list():
 			_require(CountryStateScript.WORKERS.has(worker), "%s keeps worker assignment valid" % context)
+		if not is_finished and (current_phase() == "negotiation" or current_phase() == "policy_planning"):
+			_require(country.active_agenda.size() >= 4, "%s country %s has enough active agenda options" % [context, country.country_id])
+			_require(country.active_agenda.size() <= ACTIVE_AGENDA_MAX, "%s country %s keeps active agenda bounded" % [context, country.country_id])
+		for card in country.deck + country.hand + country.discard:
+			_require(String(card.get("type", "")) != "policy", "%s country %s keeps policy cards out of the state deck" % [context, country.country_id])
 		for track_key in REQUIRED_COUNTRY_TRACKS:
 			_require(country.tracks.has(track_key), "%s country %s has track %s" % [context, country.country_id, track_key])

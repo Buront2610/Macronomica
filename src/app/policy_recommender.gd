@@ -7,10 +7,11 @@ static func recommend_for_country(game, country_index: int) -> Dictionary:
 	if country_index < 0 or country_index >= game.countries.size():
 		return {}
 	var country = game.countries[country_index]
+	var options: Array = game.policy_options(country_index)
 	var best_index := -1
 	var best_score := -999
-	for i in range(country.policy_menu.size()):
-		var card: Dictionary = country.policy_menu[i]
+	for i in range(options.size()):
+		var card: Dictionary = options[i]
 		if not country.is_policy_available(card):
 			continue
 		var workers := workers_for_policy(game, country, card)
@@ -20,7 +21,7 @@ static func recommend_for_country(game, country_index: int) -> Dictionary:
 			best_index = i
 	if best_index < 0:
 		return {}
-	var selected: Dictionary = country.policy_menu[best_index]
+	var selected: Dictionary = options[best_index]
 	var workers := workers_for_policy(game, country, selected)
 	return {
 		"policy_index": best_index,

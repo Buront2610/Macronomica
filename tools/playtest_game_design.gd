@@ -78,13 +78,14 @@ func _run_playtest(seed: int) -> void:
 func _select_recommended_policies(game) -> void:
 	for i in range(game.countries.size()):
 		var recommendation := PolicyRecommenderScript.recommend_for_country(game, i)
-		if recommendation.is_empty() or game.countries[i].policy_menu.is_empty():
+		var options: Array = game.policy_options(i)
+		if recommendation.is_empty() or options.is_empty():
 			no_policy_turns += 1
 			continue
 		var policy_index := int(recommendation.get("policy_index", -1))
-		if policy_index < 0 or policy_index >= game.countries[i].policy_menu.size():
+		if policy_index < 0 or policy_index >= options.size():
 			continue
-		var card: Dictionary = game.countries[i].policy_menu[policy_index]
+		var card: Dictionary = options[policy_index]
 		var card_id := String(card.get("id", ""))
 		policy_counts[card_id] = int(policy_counts.get(card_id, 0)) + 1
 		game.select_policy(i, policy_index)
@@ -133,9 +134,10 @@ func _declare_recommended_cooperation(game) -> void:
 		if recommendation.is_empty():
 			continue
 		var policy_index := int(recommendation.get("policy_index", -1))
-		if policy_index < 0 or policy_index >= game.countries[i].policy_menu.size():
+		var options: Array = game.policy_options(i)
+		if policy_index < 0 or policy_index >= options.size():
 			continue
-		var card: Dictionary = game.countries[i].policy_menu[policy_index]
+		var card: Dictionary = options[policy_index]
 		if card.get("tags", []).has("cooperation"):
 			game.declare_agenda(i, "cooperation")
 			game.request_support(i, "cooperation")

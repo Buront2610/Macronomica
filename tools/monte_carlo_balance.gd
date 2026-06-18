@@ -45,7 +45,11 @@ func _declare_recommended_cooperation(game) -> void:
 		var recommendation := PolicyRecommenderScript.recommend_for_country(game, i)
 		if recommendation.is_empty():
 			continue
-		var card: Dictionary = game.countries[i].policy_menu[int(recommendation.get("policy_index", -1))]
+		var options: Array = game.policy_options(i)
+		var policy_index := int(recommendation.get("policy_index", -1))
+		if policy_index < 0 or policy_index >= options.size():
+			continue
+		var card: Dictionary = options[policy_index]
 		if card.get("tags", []).has("cooperation"):
 			game.declare_agenda(i, "cooperation")
 

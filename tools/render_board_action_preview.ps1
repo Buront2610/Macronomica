@@ -8,6 +8,10 @@ $ErrorActionPreference = "Stop"
 
 $repo = Resolve-Path (Join-Path $PSScriptRoot "..")
 $godot = Get-Command godot_console -ErrorAction SilentlyContinue
+$wingetConsole = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64_console.exe"
+if (-not $godot -and (Test-Path $wingetConsole)) {
+    $godot = [pscustomobject]@{ Source = $wingetConsole }
+}
 if (-not $godot) {
     $godot = Get-Command godot -ErrorAction SilentlyContinue
 }

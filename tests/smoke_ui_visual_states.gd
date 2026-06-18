@@ -47,17 +47,17 @@ func _check_state(viewport_size: Vector2i, state: String) -> void:
 	_assert(ui.country_seats.size() == 4, "%s %s keeps four country seats" % [state, viewport_size])
 	if state == "default":
 		var page_size := int(ui.board_layout.get("hand_columns", 4)) * int(ui.board_layout.get("hand_rows", 4))
-		var menu_size: int = ui.game.countries[ui.selected_country_index].policy_menu.size()
-		_assert(ui.policy_menu_nodes.size() == mini(page_size, menu_size), "%s %s shows one readable page of the selected policy menu" % [state, viewport_size])
+		var menu_size: int = ui.game.policy_options(ui.selected_country_index).size()
+		_assert(ui.policy_menu_nodes.size() == mini(page_size, menu_size), "%s %s shows one readable page of the active policy agenda" % [state, viewport_size])
 		var next_page: Control = ui.board_layer.get_node_or_null("PolicyPageNext")
 		_assert(next_page != null and next_page.visible == (menu_size > page_size), "%s %s shows paging only when the policy menu exceeds the frame" % [state, viewport_size])
 		if menu_size <= page_size and menu_size > 0:
-			var template: Dictionary = ui.game.countries[ui.selected_country_index].policy_menu[0]
-			while ui.game.countries[ui.selected_country_index].policy_menu.size() <= page_size + 2:
+			var template: Dictionary = ui.game.policy_options(ui.selected_country_index)[0]
+			while ui.game.countries[ui.selected_country_index].active_agenda.size() <= page_size + 2:
 				var extra: Dictionary = template.duplicate(true)
-				extra["id"] = "paging_test_%d" % ui.game.countries[ui.selected_country_index].policy_menu.size()
-				extra["display_name"] = "ページ確認政策%d" % ui.game.countries[ui.selected_country_index].policy_menu.size()
-				ui.game.countries[ui.selected_country_index].policy_menu.append(extra)
+				extra["id"] = "paging_test_%d" % ui.game.countries[ui.selected_country_index].active_agenda.size()
+				extra["display_name"] = "ページ確認政策%d" % ui.game.countries[ui.selected_country_index].active_agenda.size()
+				ui.game.countries[ui.selected_country_index].active_agenda.append(extra)
 			ui._refresh_board(false)
 			await process_frame
 			_assert(ui.policy_menu_nodes.size() == page_size, "%s %s caps an oversized policy menu to one page" % [state, viewport_size])
@@ -84,7 +84,9 @@ func _check_state(viewport_size: Vector2i, state: String) -> void:
 			_assert(_inside_viewport(seat, viewport), "%s %s keeps country seat inside viewport: %s" % [state, viewport_size, seat.name])
 		for label_name in ["NextDeckLabel", "PipelineLabel", "ElectionLabel", "WelfareLabel"]:
 			var info_label: Label = seat.get_node_or_null(label_name)
-			_assert(info_label != null and not info_label.text.is_empty(), "%s %s keeps %s populated on %s" % [state, viewport_size, label_name, seat.name])
+			_assert(info_label != null, "%s %s keeps %s node on %s" % [state, viewport_size, label_name, seat.name])
+			if info_label != null and info_label.visible:
+				_assert(not info_label.text.is_empty(), "%s %s keeps visible %s populated on %s" % [state, viewport_size, label_name, seat.name])
 	for card in ui.policy_menu_nodes:
 		_assert(_inside_viewport(card, viewport), "%s %s keeps policy menu card inside viewport: %s" % [state, viewport_size, card.name])
 	for token_name in ["RestartToken", "RecommendToken", "AdvanceToken"]:
@@ -102,7 +104,7 @@ func _check_state(viewport_size: Vector2i, state: String) -> void:
 
 func _prepare_worker_assignment(ui) -> void:
 	for country_index in range(ui.game.countries.size()):
-		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
+		var policy_index := _first_policy_index(ui.game.policy_options(country_index))
 		if policy_index >= 0:
 			ui.game.select_policy(country_index, policy_index)
 	ui.game.move_to_phase("worker_assignment")

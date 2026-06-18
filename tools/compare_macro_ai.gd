@@ -61,9 +61,10 @@ func _declare_agendas(game, mode: String) -> void:
 		if recommendation.is_empty():
 			continue
 		var policy_index := int(recommendation.get("policy_index", -1))
-		if policy_index < 0 or policy_index >= game.countries[i].policy_menu.size():
+		var options: Array = game.policy_options(i)
+		if policy_index < 0 or policy_index >= options.size():
 			continue
-		var card: Dictionary = game.countries[i].policy_menu[policy_index]
+		var card: Dictionary = options[policy_index]
 		if card.get("tags", []).has("cooperation"):
 			game.declare_agenda(i, "cooperation")
 			game.request_support(i, "cooperation")
@@ -75,7 +76,7 @@ func _select_policies(game, mode: String) -> void:
 			continue
 		var policy_index := int(recommendation.get("policy_index", -1))
 		game.select_policy(i, policy_index)
-		var card: Dictionary = game.countries[i].policy_menu[policy_index]
+		var card: Dictionary = game.policy_options(i)[policy_index]
 		if String(card.get("target", "")) == "country":
 			var target_index := _target_for_naive(game, i)
 			game.select_policy_target(i, target_index)
@@ -97,10 +98,11 @@ func _recommend(game, country_index: int, mode: String) -> Dictionary:
 
 func _naive_recommend_for_country(game, country_index: int) -> Dictionary:
 	var country = game.countries[country_index]
+	var options: Array = game.policy_options(country_index)
 	var best_index := -1
 	var best_score := -999999
-	for i in range(country.policy_menu.size()):
-		var card: Dictionary = country.policy_menu[i]
+	for i in range(options.size()):
+		var card: Dictionary = options[i]
 		if not country.is_policy_available(card):
 			continue
 		var score := _naive_policy_score(card)
@@ -109,7 +111,7 @@ func _naive_recommend_for_country(game, country_index: int) -> Dictionary:
 			best_index = i
 	if best_index < 0:
 		return {}
-	var worker := _naive_worker_for(country.policy_menu[best_index])
+	var worker := _naive_worker_for(options[best_index])
 	return {"policy_index": best_index, "worker": worker, "workers": [worker], "score": best_score}
 
 func _naive_policy_score(card: Dictionary) -> int:

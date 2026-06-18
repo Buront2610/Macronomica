@@ -26,12 +26,12 @@ func _init() -> void:
 	quit(0)
 
 func _select_first_policy(game, country_index: int) -> void:
-	var country = game.countries[country_index]
-	for i in range(country.policy_menu.size()):
-		if country.policy_menu[i].get("type", "") == "policy":
+	var options: Array = game.policy_options(country_index)
+	for i in range(options.size()):
+		if options[i].get("type", "") == "policy":
 			game.select_policy(country_index, i)
 			return
-	_assert(false, "country has at least one policy in menu")
+	_assert(false, "country has at least one policy in agenda")
 
 func _assert(condition: bool, message: String) -> void:
 	if condition:

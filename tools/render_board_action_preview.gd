@@ -84,7 +84,7 @@ func _run() -> void:
 		return
 	await process_frame
 	if OS.get_environment("MACRONOMICA_PREVIEW_ACTION") != "0":
-		var policy_index := _first_policy_index(ui.game.countries[0].policy_menu)
+		var policy_index := _first_policy_index(ui.game.policy_options(0))
 		if policy_index >= 0:
 			var card_node: Control = ui.policy_menu_nodes[policy_index]
 			ui._on_policy_selected(0, policy_index, card_node.position)
@@ -104,14 +104,14 @@ func _save_preview() -> void:
 	quit(0)
 
 func _prepare_policy_submitted_preview(ui) -> void:
-	var policy_index := _first_policy_index(ui.game.countries[0].policy_menu)
+	var policy_index := _first_policy_index(ui.game.policy_options(0))
 	if policy_index >= 0:
 		ui.game.select_policy(0, policy_index)
 	ui.selected_country_index = 1
 
 func _prepare_worker_assignment_preview(ui) -> void:
 	for country_index in range(ui.game.countries.size()):
-		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
+		var policy_index := _first_policy_index(ui.game.policy_options(country_index))
 		if policy_index >= 0:
 			ui.game.select_policy(country_index, policy_index)
 	ui.game.move_to_phase("worker_assignment")
