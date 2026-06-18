@@ -381,8 +381,8 @@ func _build_policy_slot() -> void:
 	policy_slot = _make_piece("PolicySlot", board_layout["policy_slot_pos"], board_layout["policy_slot_size"], Color(0.050, 0.036, 0.024, 0.84), BOARD_LINE, 2, "card")
 	policy_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var slot_size: Vector2 = board_layout["policy_slot_size"]
-	_add_label_to(policy_slot, "PolicySlotTitle", "同時公開卓", Vector2(0, 8), Vector2(slot_size.x, 22), 15, WARN.lightened(0.18))
-	policy_slot_label = _add_label_to(policy_slot, "PolicySlotLabel", "", Vector2(14, 30), Vector2(slot_size.x - 28, 40), 13, TEXT, true)
+	_add_label_to(policy_slot, "PolicySlotTitle", "操作ガイド", Vector2(0, 8), Vector2(slot_size.x, 24), 17, WARN.lightened(0.18))
+	policy_slot_label = _add_label_to(policy_slot, "PolicySlotLabel", "", Vector2(16, 34), Vector2(slot_size.x - 32, 42), 14, TEXT, true)
 	policy_cost_labels.clear()
 	var socket_w := (slot_size.x - 28.0) / float(COST_KEYS.size())
 	for i in range(COST_KEYS.size()):
@@ -687,6 +687,8 @@ func _build_worker_tokens() -> void:
 			if game.can_assign_worker():
 				_on_worker_assigned(selected_country_index, worker_id, token.position)
 		token.add_child(_make_icon(UiCatalogScript.worker_token(worker), Vector2(5, 5), token_size - Vector2(10, 10), Color.WHITE))
+		var worker_label := _add_label_to(token, "WorkerLabel", _worker_short_label(worker), Vector2(4, token_size.y - 17), Vector2(token_size.x - 8, 13), 9, TEXT, false)
+		worker_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		worker_nodes[worker] = token
 
 func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
@@ -701,7 +703,11 @@ func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
 		menu_panel.visible = show_tray
 		var title: Label = menu_panel.get_node_or_null("PolicyMenuTitle")
 		if title != null:
-			title.text = "常設政策メニュー（山札/手札なし）" if show_menu else "担当ワーカー"
+			var country_label := "%s国" % UiCatalogScript.country_emblem(selected_country_index)
+			title.text = "%sの政策メニュー（1枚クリック）" % country_label if show_menu else "%sの担当ワーカー（選んで印確定）" % country_label
+		var legend: Label = menu_panel.get_node_or_null("PolicyMenuLegend")
+		if legend != null:
+			legend.text = "共/構/協/固/危 = 政策の出所" if show_menu else "官僚/中銀/外交/監査/ロビイスト = 政策の通し方"
 	for i in range(20):
 		var slot = board_layer.get_node_or_null("PolicyMenuSlot_%d" % i)
 		if slot != null:
@@ -922,6 +928,16 @@ func _refresh_title() -> void:
 	if turn != null:
 		turn.text = "ターン %d/%d  %s" % [game.turn, game.turn_limit, game.current_phase_name()]
 	_set_label("AdvanceTokenLabel", _advance_token_text())
+	var advance = board_layer.get_node_or_null("AdvanceToken")
+	if advance != null:
+		advance.tooltip_text = _advance_token_tip()
+		advance.set_skin(Color(0.09, 0.060, 0.026, 0.88), WARN.lightened(0.06), 2, "circle")
+	var recommend = board_layer.get_node_or_null("RecommendToken")
+	if recommend != null:
+		recommend.tooltip_text = _recommend_token_tip()
+	var restart = board_layer.get_node_or_null("RestartToken")
+	if restart != null:
+		restart.tooltip_text = "現在のゲームを破棄してタイトルに戻ります。"
 
 func _refresh_phase() -> void:
 	for i in range(phase_pips.size()):
@@ -1082,20 +1098,33 @@ func _refresh_policy_slot(animate: bool) -> void:
 	var country = game.countries[selected_country_index]
 	var phase: String = game.current_phase()
 	var country_name := "%s国" % UiCatalogScript.country_emblem(selected_country_index)
+	var title: Label = policy_slot.get_node_or_null("PolicySlotTitle")
 	if phase == "policy_planning":
+		if title != null:
+			title.text = "操作ガイド: 政策計画"
 		if not country.selected_policy.is_empty() and String(country.selected_policy.get("target", "")) == "country":
-			policy_slot_label.text = "%sの対象国を指名\n%s" % [country_name, _target_effect_preview(country)]
+			policy_slot_label.text = "%s: 対象国マットをクリック\n%s" % [country_name, _target_effect_preview(country)]
 		else:
-			policy_slot_label.text = "%s 伏せ札提出済み\n次の国へ" % country_name if not country.selected_policy.is_empty() else "%sの政策案を伏せる\n政策メニューから1枚選択" % country_name
+			policy_slot_label.text = "%s: 提出済み。右上で次国へ" % country_name if not country.selected_policy.is_empty() else "%s: 下の政策を1枚クリック\n出所・圧力・不足を確認" % country_name
 	elif phase == "worker_assignment":
-		policy_slot_label.text = "%sの伏せ札に\n担当印を押す" % country_name
+		if title != null:
+			title.text = "操作ガイド: ワーカー配置"
+		policy_slot_label.text = "%s: 下の担当印を選択\n終えたら右上「印確定」" % country_name
 	elif phase == "simultaneous_reveal":
-		policy_slot_label.text = "4国の政策案を\n同時公開"
+		if title != null:
+			title.text = "操作ガイド: 同時公開"
+		policy_slot_label.text = "4国の伏せ札を公開\n右上「公開」をクリック"
 	elif phase == "resolution":
-		policy_slot_label.text = "%sを確認\n次で進める" % _resolution_step_name(resolution_step_index) if resolution_review_active else "公開済み政策を\n順に解決"
+		if title != null:
+			title.text = "操作ガイド: 解決"
+		policy_slot_label.text = "%sを確認\n右上「解決」で進む" % _resolution_step_name(resolution_step_index) if resolution_review_active else "公開済み政策を\n順に解決"
 	elif phase == "negotiation":
-		policy_slot_label.text = "%s国 交渉中\n共同宣言 / 次で政策計画へ" % country_name
+		if title != null:
+			title.text = "操作ガイド: 国際交渉"
+		policy_slot_label.text = "%s: 上の議題をクリック可\n終えたら右上「政策へ」" % country_name
 	else:
+		if title != null:
+			title.text = "操作ガイド"
 		policy_slot_label.text = CardTextFormatterScript.planned_text(country, game.revealed_policies, phase, game.is_finished).replace("[center]", "").replace("[/center]", "").replace("[b]", "").replace("[/b]", "")
 	_refresh_cost_sockets(country)
 	if animate:
@@ -1638,6 +1667,34 @@ func _advance_token_text() -> String:
 		return "終了"
 	return "進行"
 
+func _advance_token_tip() -> String:
+	if turn_news_active:
+		return "新聞を閉じて盤面へ戻ります。"
+	if game.current_phase() == "negotiation":
+		return "交渉を終えて、各国の政策計画へ進みます。"
+	if game.current_phase() == "policy_planning":
+		if not _all_policies_submitted():
+			return "未提出の国へフォーカスを移します。政策は下段メニューから1枚選びます。"
+		return "全政策が伏せられたので、ワーカー配置へ進みます。"
+	if game.current_phase() == "worker_assignment":
+		if not _all_workers_confirmed():
+			return "現在の国の担当印を確定し、次の国へ進みます。"
+		return "全担当印が確定したので、同時公開へ進みます。"
+	if game.current_phase() == "simultaneous_reveal":
+		return "4国の伏せ札を公開し、解決レビューを始めます。"
+	if resolution_review_active or game.current_phase() == "resolution":
+		return "解決レビューを1段階進めます。最後まで進むとターンを解決します。"
+	if game.is_finished:
+		return "ゲームは終了しています。"
+	return "次のフェーズへ進みます。"
+
+func _recommend_token_tip() -> String:
+	if game.can_select_policy():
+		return "各国の国内圧力・不足・効果を見て、政策案を自動選択します。"
+	if game.can_assign_worker():
+		return "選択済み政策に合わせて、担当ワーカーを自動配置します。"
+	return "現在のフェーズでは推奨操作はありません。"
+
 func _start_resolution_review(previous_phase: int) -> void:
 	last_resolution_snapshot = _capture_resolution_snapshot()
 	resolution_review_active = true
@@ -2081,11 +2138,9 @@ func _bump(node: Control) -> void:
 	tween.tween_property(node, "scale", original, 0.12)
 
 func _screen() -> Vector2:
-	var viewport_size := get_viewport_rect().size
-	var window_size := Vector2(DisplayServer.window_get_size())
-	if window_size.x > 0 and window_size.y > 0:
-		return Vector2(minf(viewport_size.x, window_size.x), minf(viewport_size.y, window_size.y))
-	return viewport_size
+	if size.x > 0 and size.y > 0:
+		return size
+	return get_viewport_rect().size
 
 func _world_short_name(key: String) -> String:
 	var names := {
@@ -2344,6 +2399,16 @@ func _short_tag_list(tags: Array, limit: int) -> String:
 	for i in range(mini(limit, tags.size())):
 		parts.append(names.get(String(tags[i]), String(tags[i])))
 	return " / ".join(parts)
+
+func _worker_short_label(worker: String) -> String:
+	var names := {
+		"bureaucrats": "官僚",
+		"central_bank_staff": "中銀",
+		"diplomat": "外交",
+		"auditor": "監査",
+		"lobbyist": "ロビ"
+	}
+	return names.get(worker, worker.substr(0, 2))
 
 func _country_risk_words(country) -> String:
 	var risks := []
