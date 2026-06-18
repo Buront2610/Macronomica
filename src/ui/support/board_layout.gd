@@ -12,10 +12,10 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var center_right := board_right
 	var center_w := center_right - center_left
 	var center_x := center_left + center_w * 0.5
-	var menu_columns := 10.0
+	var menu_columns := 8.0
 	var hand_gap := 8.0
-	var hand_card_w := clampf((center_w - 96.0 - hand_gap * (menu_columns - 1.0)) / menu_columns, 82.0, 108.0)
-	var hand_card_size := Vector2(hand_card_w, 76.0)
+	var hand_card_w := clampf((center_w - 96.0 - hand_gap * (menu_columns - 1.0)) / menu_columns, 96.0, 112.0)
+	var hand_card_size := Vector2(hand_card_w, 92.0)
 	var hand_panel_size := Vector2(hand_card_size.x * menu_columns + hand_gap * (menu_columns - 1.0) + 40.0, hand_card_size.y * 2.0 + hand_gap + 40.0)
 	var hand_panel_x := clampf(center_x - hand_panel_size.x * 0.5, center_left, center_right - hand_panel_size.x)
 	var hand_panel_pos := Vector2(hand_panel_x, viewport_size.y - hand_panel_size.y - 18.0)
@@ -30,6 +30,8 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 
 	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.255, 178.0, 196.0))
 	var world_pos := Vector2(center_left, header_h + 6.0)
+	var planning_country_size := Vector2(clampf(center_w * 0.62, 560.0, 700.0), 86.0)
+	var planning_country_pos := Vector2(center_x - planning_country_size.x * 0.5, world_pos.y + 12.0)
 	var between_countries_w := maxf(360.0, center_w - country_size.x * 2.0 - 54.0)
 	var negotiation_size := Vector2(minf(510.0, between_countries_w), 78.0)
 	var negotiation_pos := Vector2(center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 10.0)
@@ -79,6 +81,8 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"event_size": event_size,
 		"world_panel_pos": world_pos,
 		"world_panel_size": world_size,
+		"planning_country_pos": planning_country_pos,
+		"planning_country_size": planning_country_size,
 		"world_tracks_origin": world_pos + Vector2(38.0, 54.0),
 		"world_track_step": Vector2(world_track_w + world_track_gap, 0.0),
 		"world_track_size": Vector2(world_track_w, world_size.y - 74.0),

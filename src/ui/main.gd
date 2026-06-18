@@ -64,6 +64,12 @@ var country_next_labels: Array = []
 var country_pipeline_labels: Array = []
 var country_election_labels: Array = []
 var country_welfare_labels: Array = []
+var planning_country_panel: Control
+var planning_country_title: Label
+var planning_country_subtitle: Label
+var planning_country_pressure: Label
+var planning_country_stats: Label
+var planning_country_progress: Label
 var policy_menu_nodes: Array = []
 var domestic_state_labels: Array = []
 var domestic_state_cards: Array = []
@@ -201,6 +207,7 @@ func _build_board() -> void:
 	_build_table_marks()
 	_build_event_card()
 	_build_world_tracks()
+	_build_planning_country_panel()
 	_build_collapse_warning()
 	_build_agenda_tiles()
 	_build_country_seats()
@@ -287,6 +294,25 @@ func _build_world_tracks() -> void:
 		rail.position = Vector2(tile.size.x * 0.5 - 43, tile.size.y - 19)
 		rail.size = Vector2(86, 13)
 		tile.add_child(rail)
+
+func _build_planning_country_panel() -> void:
+	var panel_pos: Vector2 = board_layout["planning_country_pos"]
+	var panel_size: Vector2 = board_layout["planning_country_size"]
+	planning_country_panel = _make_piece("PlanningCountryPanel", panel_pos, panel_size, Color(0.050, 0.036, 0.024, 0.92), COUNTRY_ACCENTS[0], 3, "plaque")
+	planning_country_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add_label_to(planning_country_panel, "PlanningCountryCaption", "政策計画フレーム", Vector2(18, 7), Vector2(150, 16), 11, WARN.lightened(0.18), false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_add_label_to(planning_country_panel, "PlanningCountryEmblem", "", Vector2(18, 24), Vector2(58, 44), 36, TEXT, false)
+	planning_country_title = _add_label_to(planning_country_panel, "PlanningCountryTitle", "", Vector2(82, 18), Vector2(260, 30), 18, TEXT, true)
+	planning_country_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	planning_country_subtitle = _add_label_to(planning_country_panel, "PlanningCountrySubtitle", "", Vector2(82, 50), Vector2(260, 20), 12, MUTED, false)
+	planning_country_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	planning_country_pressure = _add_label_to(planning_country_panel, "PlanningCountryPressure", "", Vector2(358, 16), Vector2(180, 24), 14, TEXT, true)
+	planning_country_pressure.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	planning_country_stats = _add_label_to(planning_country_panel, "PlanningCountryStats", "", Vector2(358, 41), Vector2(220, 36), 13, WARN.lightened(0.20), true)
+	planning_country_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	planning_country_progress = _add_label_to(planning_country_panel, "PlanningCountryProgress", "", Vector2(panel_size.x - 104, 18), Vector2(86, 48), 16, TEXT, true)
+	planning_country_progress.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	planning_country_progress.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
 func _build_agenda_tiles() -> void:
 	var negotiation = _make_piece("NegotiationPanel", board_layout["negotiation_pos"], board_layout["negotiation_size"], Color(0.060, 0.042, 0.026, 0.72), BOARD_LINE, 2, "plaque")
@@ -785,13 +811,14 @@ func _make_policy_card(card: Dictionary, policy_menu_index: int, display_country
 			_set_policy_preview(policy_menu_index)
 	)
 	if include_coin:
-		card_node.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2((card_size.x - 32.0) * 0.5, 6), Vector2(32, 32), Color.WHITE, "CardCoin"))
-	var label_y := 42.0 if include_coin else 5.0
-	var label := _add_label_to(card_node, "CardName", _ellipsize(UiCatalogScript.short_card_name(card), 7), Vector2(7, label_y), Vector2(card_size.x - 14, 18), 11, INK if card.get("type", "") == "policy" else TEXT, false)
+		var icon_size := minf(44.0, card_size.y * 0.48)
+		card_node.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2((card_size.x - icon_size) * 0.5, 8), Vector2(icon_size, icon_size), Color.WHITE, "CardCoin"))
+	var label_y := 56.0 if include_coin else 5.0
+	var label := _add_label_to(card_node, "CardName", _ellipsize(UiCatalogScript.short_card_name(card), 9), Vector2(8, label_y), Vector2(card_size.x - 16, 20), 13, INK if card.get("type", "") == "policy" else TEXT, false)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var cost_text := _policy_menu_footer(country, card)
-	var cost_label := _add_label_to(card_node, "CardCost", _ellipsize(cost_text, 9), Vector2(6, card_size.y - 16), Vector2(card_size.x - 12, 12), 8, INK.darkened(0.06) if available else INK.lightened(0.25), false)
+	var cost_label := _add_label_to(card_node, "CardCost", _ellipsize(cost_text, 11), Vector2(8, card_size.y - 19), Vector2(card_size.x - 16, 15), 10, INK.darkened(0.06) if available else INK.lightened(0.25), false)
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
@@ -922,6 +949,7 @@ func _refresh_board(animate: bool) -> void:
 	_refresh_title()
 	_refresh_phase()
 	_refresh_world()
+	_refresh_planning_country_panel()
 	_refresh_collapse_warning()
 	_refresh_agenda()
 	_refresh_country_seats()
@@ -990,6 +1018,38 @@ func _refresh_world() -> void:
 		if icon != null:
 			icon.modulate = color.lightened(0.20)
 
+func _refresh_planning_country_panel() -> void:
+	if planning_country_panel == null:
+		return
+	var phase: String = game.current_phase()
+	planning_country_panel.visible = phase == "policy_planning"
+	if not planning_country_panel.visible:
+		return
+	var country = game.countries[selected_country_index]
+	var accent: Color = COUNTRY_ACCENTS[selected_country_index]
+	planning_country_panel.set_skin(Color(0.050, 0.036, 0.024, 0.93), accent.lightened(0.10), 3, "plaque")
+	var emblem: Label = planning_country_panel.get_node_or_null("PlanningCountryEmblem")
+	if emblem != null:
+		emblem.text = "%s国" % UiCatalogScript.country_emblem(selected_country_index)
+		emblem.add_theme_color_override("font_color", accent.lightened(0.25))
+	if planning_country_title != null:
+		planning_country_title.text = String(country.display_name)
+	if planning_country_subtitle != null:
+		planning_country_subtitle.text = _ellipsize(String(country.summary), 24)
+	if planning_country_pressure != null:
+		planning_country_pressure.text = _pressure_summary(country).replace("\n", "  ")
+	if planning_country_stats != null:
+		var t: Dictionary = country.tracks
+		planning_country_stats.text = "GDP %d / 物価 %d / 失業 %d / 金融 %d / %s" % [
+			int(t.get("gdp_gap", 0)),
+			int(t.get("inflation", 0)),
+			int(t.get("unemployment", 0)),
+			int(t.get("financial_stress", 0)),
+			_welfare_check_summary(country)
+		]
+	if planning_country_progress != null:
+		planning_country_progress.text = "担当\n%d/4" % (_submitted_policy_count() + 1)
+
 func _refresh_collapse_warning() -> void:
 	if collapse_warning == null:
 		return
@@ -1037,7 +1097,7 @@ func _refresh_country_seats() -> void:
 		var active: bool = i == selected_country_index
 		var targeted_by_selected := _selected_policy_target_index() == i
 		var seat = country_seats[i]
-		seat.visible = phase != "policy_planning" or active or target_mode
+		seat.visible = phase != "policy_planning" or target_mode
 		var border_color: Color = WARN if targeted_by_selected and phase == "policy_planning" else accent
 		var fill := Color(0.090, 0.064, 0.034, 0.94) if active else Color(0.060, 0.046, 0.030, 0.86)
 		var border_width := 3 if active or (targeted_by_selected and phase == "policy_planning") else 2
@@ -1338,6 +1398,8 @@ func _refresh_context_visibility() -> void:
 	var domestic_panel: Control = board_layer.get_node_or_null("DomesticStatePanel")
 	if domestic_panel != null:
 		domestic_panel.visible = phase == "policy_planning" or phase == "worker_assignment"
+	if planning_country_panel != null:
+		planning_country_panel.visible = phase == "policy_planning"
 	if policy_slot != null and selected_country_index >= 0 and selected_country_index < game.countries.size():
 		var country = game.countries[selected_country_index]
 		var waiting_for_target: bool = not country.selected_policy.is_empty() and String(country.selected_policy.get("target", "")) == "country"
@@ -1349,7 +1411,7 @@ func _refresh_context_visibility() -> void:
 			target_mode = not selected_country.selected_policy.is_empty() and String(selected_country.selected_policy.get("target", "")) == "country"
 		for i in range(country_seats.size()):
 			var seat: Control = country_seats[i]
-			seat.visible = i == selected_country_index or target_mode
+			seat.visible = target_mode
 
 func _refresh_resolution_links() -> void:
 	if resolution_overlay == null or resolution_marker_layer == null:
@@ -2003,6 +2065,13 @@ func _all_policies_submitted() -> bool:
 		if country.selected_policy.is_empty():
 			return false
 	return true
+
+func _submitted_policy_count() -> int:
+	var count := 0
+	for country in game.countries:
+		if not country.selected_policy.is_empty():
+			count += 1
+	return count
 
 func _all_workers_confirmed() -> bool:
 	_ensure_worker_confirmations()
