@@ -52,5 +52,7 @@ jobs:
             "res://tests/smoke_ui_components.gd"
           )
           for test_script in "${tests[@]}"; do
-            ./godot --headless --path . --script "${test_script}"
+            echo "::group::${test_script}"
+            timeout 90s ./godot --headless --path . --script "${test_script}"
+            echo "::endgroup::"
           done
