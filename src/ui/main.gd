@@ -231,6 +231,8 @@ func _build_surfaces() -> void:
 	menu_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var menu_title := _add_label_to(menu_panel, "PolicyMenuTitle", "常設政策メニュー（山札/手札なし）", Vector2(16, 4), Vector2(330, 16), 12, WARN.lightened(0.18), false)
 	menu_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var menu_legend := _add_label_to(menu_panel, "PolicyMenuLegend", "共/構/協/固/危 = 政策の出所", Vector2(350, 5), Vector2(menu_panel.size.x - 370, 14), 10, MUTED, false)
+	menu_legend.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 func _build_table_marks() -> void:
 	_add_label("Title", "マクロノミカ", board_layout["title_pos"], board_layout["title_size"], 36, TEXT)
@@ -762,15 +764,24 @@ func _make_policy_card(card: Dictionary, policy_menu_index: int, display_country
 		coin_layer.z_index = 4
 		card_node.add_child(coin_layer)
 		coin_layer.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2.ZERO, coin_layer.size, Color.WHITE, "CardCoin"))
+		var source_badge = _make_child_piece(card_node, "PolicySourceBadge", Vector2(5, 5), Vector2(22, 15), _policy_source_color(card), INK, 1, "plaque")
+		var source_label := _add_label_to(source_badge, "PolicySourceLabel", _policy_source_short(card), Vector2.ZERO, source_badge.size, 9, TEXT, false)
+		source_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var label_y := 34.0 if include_coin else 5.0
 	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(6, label_y), Vector2(card_size.x - 12, 18), 12, INK if card.get("type", "") == "policy" else TEXT, false)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var cost_text := _policy_menu_cost_summary(country, card)
+	var cost_text := _policy_menu_footer(country, card)
 	var cost_label := _add_label_to(card_node, "CardCost", cost_text, Vector2(6, card_size.y - 16), Vector2(card_size.x - 12, 12), 9, INK.darkened(0.06) if available else INK.lightened(0.25), false)
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
+
+func _policy_menu_footer(country, card: Dictionary) -> String:
+	var pressure := "圧OK" if PolicyRecommenderScript.pressure_matches(country, card) else "圧外"
+	if not country.is_policy_available(card):
+		return "%s %s 冷却%dT" % [_policy_source_short(card), pressure, int(country.policy_cooldowns.get(String(card.get("id", "")), 0))]
+	return "%s %s %s" % [_policy_source_short(card), pressure, _policy_menu_cost_summary(country, card)]
 
 func _policy_menu_cost_summary(country, card: Dictionary) -> String:
 	if not country.is_policy_available(card):
@@ -785,6 +796,62 @@ func _policy_menu_cost_summary(country, card: Dictionary) -> String:
 		if parts.size() >= 3:
 			break
 	return "コストなし" if parts.is_empty() else " ".join(parts)
+
+func _policy_source_short(card: Dictionary) -> String:
+	var source := String(card.get("_menu_source", ""))
+	if source.begins_with("module:"):
+		return "構"
+	if source == "common":
+		return "共"
+	if source == "cooperation":
+		return "協"
+	if source == "unique":
+		return "固"
+	if source.begins_with("crisis:"):
+		return "危"
+	return "?"
+
+func _policy_source_color(card: Dictionary) -> Color:
+	var source := String(card.get("_menu_source", ""))
+	if source.begins_with("module:"):
+		return BLUE.darkened(0.16)
+	if source == "common":
+		return Color(0.38, 0.30, 0.18)
+	if source == "cooperation":
+		return GOOD.darkened(0.16)
+	if source == "unique":
+		return WARN.darkened(0.20)
+	if source.begins_with("crisis:"):
+		return BAD.darkened(0.12)
+	return Color(0.18, 0.16, 0.13)
+
+func _policy_source_label(card: Dictionary) -> String:
+	var source := String(card.get("_menu_source", ""))
+	if source.begins_with("module:"):
+		return "国家構成:%s" % source.substr("module:".length())
+	if source == "common":
+		return "共通政策"
+	if source == "cooperation":
+		return "国際協調政策"
+	if source == "unique":
+		return "国固有政策"
+	if source.begins_with("crisis:"):
+		return "危機対応:%s" % source.substr("crisis:".length())
+	return "出所未設定"
+
+func _policy_source_preview(card: Dictionary) -> String:
+	var source := String(card.get("_menu_source", ""))
+	if source.begins_with("module:"):
+		return "構:%s" % source.substr("module:".length()).substr(0, 8)
+	if source == "common":
+		return "共通"
+	if source == "cooperation":
+		return "協調"
+	if source == "unique":
+		return "固有"
+	if source.begins_with("crisis:"):
+		return "危機"
+	return "出所?"
 
 func _policy_preview_text(country, policy: Dictionary, index: int) -> String:
 	var tags: Array = policy.get("tags", [])
@@ -809,13 +876,18 @@ func _policy_preview_text(country, policy: Dictionary, index: int) -> String:
 		country_effect if not country_effect.is_empty() else "-",
 		world_effect if not world_effect.is_empty() else "-"
 	]
-	return "#%02d  %s  [%s]\nコスト:%s  %s\n%s" % [
+	var pressure_text := "圧OK" if PolicyRecommenderScript.pressure_matches(country, policy) else "圧外"
+	var cost_text := _policy_menu_cost_summary(country, policy).replace(" ", "")
+	var shortage_brief := shortage_text.replace("不足:", "不:").replace(" ", "")
+	var effects_brief := effect_text.replace("自国:", "国:").replace("世界:", "世:")
+	return "#%02d  %s [%s]\n制約:%s %s %s\n%s" % [
 		index + 1,
-		String(policy.get("display_name", policy.get("id", "政策"))).substr(0, 18),
-		_short_tag_list(tags, 3),
-		_policy_menu_cost_summary(country, policy),
-		shortage_text,
-		effect_text
+		String(policy.get("display_name", policy.get("id", "政策"))).substr(0, 14),
+		_policy_source_preview(policy),
+		pressure_text,
+		cost_text,
+		shortage_brief,
+		effects_brief
 	]
 
 func _plain_card_detail(country, card: Dictionary) -> String:

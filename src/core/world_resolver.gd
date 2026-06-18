@@ -86,6 +86,7 @@ static func _add_policies_to_country(country, policy_ids: Array, policy_index, l
 		if not policy_index.has(policy_id) or _policy_menu_has(country, policy_id):
 			continue
 		var policy: Dictionary = policy_index[policy_id].duplicate(true)
+		policy["_menu_source"] = "crisis:%s" % source_name
 		country.policy_menu.append(policy)
 		log.append("%s は「%s」を受け、危機対応政策「%s」を得ました。" % [country.display_name, source_name, policy.get("display_name", policy_id)])
 

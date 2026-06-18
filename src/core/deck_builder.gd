@@ -12,22 +12,11 @@ const COMMON_POLICY_IDS := [
 	"social_safety_net"
 ]
 const TARGET_STATE_DECK_SIZE := 12
-const MODULE_POLICY_COUNT := 6
 const COOPERATION_POLICY_IDS := [
 	"swap_line",
 	"joint_fiscal_pact",
 	"debt_restructuring",
 	"tariff_freeze_pact"
-]
-const MODULE_POLICY_FILLER_IDS := [
-	"structural_reform",
-	"progressive_tax_reform",
-	"anti_corruption_drive",
-	"export_subsidy",
-	"infrastructure_investment",
-	"capital_controls",
-	"resource_diversification",
-	"stabilization_fund_drawdown"
 ]
 
 static func build_deck(preset: Dictionary, module_defs: Dictionary, policy_index: Dictionary, card_index: Dictionary, rng) -> Array:
@@ -56,28 +45,19 @@ static func build_policy_menu(preset: Dictionary, module_defs: Dictionary, polic
 	var cards: Array = []
 	for policy_id in COMMON_POLICY_IDS:
 		if policy_index.has(policy_id):
-			_append_unique(cards, policy_index[policy_id])
+			_append_policy_menu_card(cards, policy_index[policy_id], "common")
 	for module_id in preset.get("modules", []):
 		var module: Dictionary = module_defs.get(module_id, {})
 		for card_id in module.get("policy_cards", []):
 			if policy_index.has(card_id):
-				_append_unique_by_id(cards, policy_index[card_id], COMMON_POLICY_IDS + COOPERATION_POLICY_IDS)
+				_append_policy_menu_card(cards, policy_index[card_id], "module:%s" % String(module.get("display_name", module_id)), COMMON_POLICY_IDS + COOPERATION_POLICY_IDS)
 	for policy_id in preset.get("unique_policies", []):
 		if policy_index.has(policy_id):
-			_append_unique_by_id(cards, policy_index[policy_id], COMMON_POLICY_IDS + COOPERATION_POLICY_IDS)
-	_append_module_policy_fillers(cards, policy_index)
+			_append_policy_menu_card(cards, policy_index[policy_id], "unique", COMMON_POLICY_IDS + COOPERATION_POLICY_IDS)
 	for policy_id in COOPERATION_POLICY_IDS:
 		if policy_index.has(policy_id):
-			_append_unique(cards, policy_index[policy_id])
+			_append_policy_menu_card(cards, policy_index[policy_id], "cooperation")
 	return cards
-
-static func _append_module_policy_fillers(cards: Array, policy_index: Dictionary) -> void:
-	var filler_index := 0
-	while cards.size() < COMMON_POLICY_IDS.size() + MODULE_POLICY_COUNT:
-		var policy_id: String = MODULE_POLICY_FILLER_IDS[filler_index % MODULE_POLICY_FILLER_IDS.size()]
-		filler_index += 1
-		if policy_index.has(policy_id):
-			_append_copy(cards, policy_id, policy_index, {})
 
 static func _append_state_fillers(cards: Array, filler_ids: Array, card_index: Dictionary) -> void:
 	if filler_ids.is_empty():
@@ -98,17 +78,16 @@ static func _append_unique(cards: Array, card: Dictionary) -> void:
 			return
 	cards.append(card)
 
-static func _append_unique_by_id(cards: Array, card: Dictionary, excluded_ids: Array) -> void:
+static func _append_policy_menu_card(cards: Array, card: Dictionary, menu_source: String, excluded_ids := []) -> void:
 	var card_id := String(card.get("id", ""))
 	if excluded_ids.has(card_id):
 		return
-	_append_unique(cards, card)
-
-static func _append_copy(cards: Array, card_id: String, policy_index: Dictionary, card_index: Dictionary) -> void:
-	if policy_index.has(card_id):
-		cards.append(policy_index[card_id].duplicate(true))
-	elif card_index.has(card_id):
-		cards.append(card_index[card_id].duplicate(true))
+	for existing in cards:
+		if String(existing.get("id", "")) == card_id:
+			return
+	var copy := card.duplicate(true)
+	copy["_menu_source"] = menu_source
+	cards.append(copy)
 
 static func _policy_count(cards: Array) -> int:
 	var count := 0
