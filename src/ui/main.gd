@@ -10,7 +10,6 @@ const BoardLayoutScript := preload("res://src/ui/support/board_layout.gd")
 const BoardPieceScript := preload("res://src/ui/support/board_piece.gd")
 const BoardTrailScript := preload("res://src/ui/support/board_trail.gd")
 const BoardResolutionOverlayScript := preload("res://src/ui/support/board_resolution_overlay.gd")
-const BG_TEXTURE := preload("res://assets/ui/policy_room_background.png")
 
 const INK := Color(0.08, 0.065, 0.045)
 const TEXT := Color(0.98, 0.96, 0.86)
@@ -49,6 +48,7 @@ const COST_KEYS := ["fiscal", "political", "administrative", "credibility", "int
 
 var game
 var token_assets
+var bg_texture: Texture2D
 var board_layer: Control
 var selected_country_index := 0
 var phase_pips: Array = []
@@ -98,6 +98,7 @@ var log_highlight_key := ""
 func _ready() -> void:
 	_apply_preview_window_size()
 	token_assets = TokenAssetsScript.new()
+	bg_texture = load("res://assets/ui/policy_room_background.png")
 	game = GameStateScript.new()
 	game.new_game()
 	_build_board()
@@ -205,7 +206,7 @@ func _build_board() -> void:
 
 func _add_background() -> void:
 	var bg := TextureRect.new()
-	bg.texture = BG_TEXTURE
+	bg.texture = bg_texture
 	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
