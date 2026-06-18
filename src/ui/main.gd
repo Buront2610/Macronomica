@@ -58,6 +58,7 @@ var country_policy_labels: Array = []
 var country_stamp_slots: Array = []
 var country_worker_icons: Array = []
 var country_pressure_labels: Array = []
+var country_state_labels: Array = []
 var country_chip_racks: Array = []
 var country_next_labels: Array = []
 var country_pipeline_labels: Array = []
@@ -221,6 +222,8 @@ func _build_surfaces() -> void:
 	play.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var hand = _make_piece("HandPanel", board_layout["hand_panel_pos"], board_layout["hand_panel_size"], Color(0.070, 0.050, 0.030, 0.94), BOARD_LINE, 2, "plaque")
 	hand.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var menu_title := _add_label_to(hand, "PolicyMenuTitle", "政策メニュー（常設・デッキではない）", Vector2(16, 4), Vector2(260, 16), 12, WARN.lightened(0.18), false)
+	menu_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 
 func _build_table_marks() -> void:
 	_add_label("Title", "マクロノミカ", board_layout["title_pos"], board_layout["title_size"], 36, TEXT)
@@ -298,6 +301,7 @@ func _build_country_seats() -> void:
 	country_stamp_slots.clear()
 	country_worker_icons.clear()
 	country_pressure_labels.clear()
+	country_state_labels.clear()
 	country_chip_racks.clear()
 	country_next_labels.clear()
 	country_pipeline_labels.clear()
@@ -321,29 +325,34 @@ func _build_country_seats() -> void:
 		pressure_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		country_pressure_labels.append(pressure_label)
 
-		var policy = _make_child_piece(seat, "PolicySlot", Vector2(seat_size.x * 0.47, 36), Vector2(seat_size.x * 0.31, seat_size.y - 50), Color(0.032, 0.038, 0.038, 0.94), accent, 2, "card")
+		var state_card = _make_child_piece(seat, "StateHandCard", Vector2(seat_size.x * 0.47, 36), Vector2(seat_size.x * 0.29, 54), Color(0.16, 0.13, 0.10, 0.96), BAD.darkened(0.08), 2, "card")
+		var state_label := _add_label_to(state_card, "StateHandLabel", "", Vector2(7, 5), state_card.size - Vector2(14, 10), 11, TEXT, true)
+		state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		state_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		country_state_labels.append(state_label)
+
+		var policy = _make_child_piece(seat, "PolicySlot", Vector2(seat_size.x * 0.47, 94), Vector2(seat_size.x * 0.29, 30), Color(0.032, 0.038, 0.038, 0.94), accent, 2, "card")
 		var policy_icon_size: float = minf(policy.size.x - 12.0, policy.size.y - 26.0)
-		policy.add_child(_make_icon("coordination_ring", Vector2(policy.size.x * 0.5 - policy_icon_size * 0.5, 5), Vector2(policy_icon_size, policy_icon_size), Color(0.75, 0.68, 0.45, 0.86), "PolicyBackIcon"))
-		var policy_label := _add_label_to(policy, "PolicyLabel", "", Vector2(4, policy.size.y - 23), Vector2(policy.size.x - 8, 20), 11, TEXT, true)
+		if policy_icon_size >= 12.0:
+			policy.add_child(_make_icon("coordination_ring", Vector2(5, policy.size.y * 0.5 - policy_icon_size * 0.5), Vector2(policy_icon_size, policy_icon_size), Color(0.75, 0.68, 0.45, 0.86), "PolicyBackIcon"))
+		var policy_label := _add_label_to(policy, "PolicyLabel", "", Vector2(8, 4), Vector2(policy.size.x - 16, 22), 11, TEXT, false)
 		country_policy_slots.append(policy)
 		country_policy_labels.append(policy_label)
 
 		var stamp = _make_child_piece(seat, "StampSlot", Vector2(seat_size.x - 64, 44), Vector2(52, 52), Color(0.020, 0.018, 0.014, 0.68), accent, 1, "circle")
 		stamp.add_child(_make_icon("bureaucrat_seal", Vector2.ZERO, stamp.size, Color.WHITE, "WorkerIcon"))
 		_add_label_to(stamp, "WorkerCount", "", Vector2(29, 30), Vector2(18, 16), 10, WARN.lightened(0.18))
-		var stamp_label := _add_label_to(seat, "StampLabel", "担当印", Vector2(seat_size.x - 72, 98), Vector2(64, 18), 11, MUTED)
-		stamp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		country_stamp_slots.append(stamp)
 		country_worker_icons.append(stamp.get_node("WorkerIcon"))
 
-		var info_y := seat_size.y - 34.0
-		var next_label := _add_label_to(seat, "NextDeckLabel", "", Vector2(14, info_y), Vector2(seat_size.x * 0.34, 15), 9, MUTED, true)
+		var info_y := seat_size.y - 21.0
+		var next_label := _add_label_to(seat, "NextDeckLabel", "", Vector2(14, info_y), Vector2(seat_size.x * 0.34, 16), 10, MUTED, false)
 		next_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var pipeline_label := _add_label_to(seat, "PipelineLabel", "", Vector2(seat_size.x * 0.37, info_y), Vector2(seat_size.x * 0.23, 15), 9, WARN.lightened(0.16), true)
+		var pipeline_label := _add_label_to(seat, "PipelineLabel", "", Vector2(seat_size.x * 0.37, info_y), Vector2(seat_size.x * 0.23, 16), 10, WARN.lightened(0.16), false)
 		pipeline_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var election_label := _add_label_to(seat, "ElectionLabel", "", Vector2(seat_size.x * 0.60, info_y), Vector2(seat_size.x * 0.18, 15), 9, MUTED, true)
+		var election_label := _add_label_to(seat, "ElectionLabel", "", Vector2(seat_size.x * 0.60, info_y), Vector2(seat_size.x * 0.18, 16), 10, MUTED, false)
 		election_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var welfare_label := _add_label_to(seat, "WelfareLabel", "", Vector2(seat_size.x * 0.78, info_y), Vector2(seat_size.x * 0.18, 15), 9, MUTED, true)
+		var welfare_label := _add_label_to(seat, "WelfareLabel", "", Vector2(seat_size.x * 0.78, info_y), Vector2(seat_size.x * 0.18, 16), 10, MUTED, false)
 		welfare_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		country_next_labels.append(next_label)
 		country_pipeline_labels.append(pipeline_label)
@@ -648,6 +657,9 @@ func _rebuild_hand(animate: bool, origin := Vector2.INF) -> void:
 	var hand_panel = board_layer.get_node_or_null("HandPanel")
 	if hand_panel != null:
 		hand_panel.visible = show_tray
+		var title: Label = hand_panel.get_node_or_null("PolicyMenuTitle")
+		if title != null:
+			title.text = "政策メニュー（常設・デッキではない）" if show_menu else "担当ワーカー"
 	for i in range(20):
 		var slot = board_layer.get_node_or_null("HandSlot_%d" % i)
 		if slot != null:
@@ -686,7 +698,7 @@ func _make_policy_card(card: Dictionary, hand_index: int, display_country_index 
 	var border: Color = COUNTRY_ACCENTS[country_index] if selected else BOARD_LINE
 	var card_size: Vector2 = board_layout.get("hand_card_size", Vector2(82, 108))
 	var card_node = BoardPieceScript.new()
-	card_node.name = "HandCard_%d" % hand_index
+	card_node.name = "PolicyMenuCard_%d" % hand_index
 	card_node.size = card_size
 	card_node.set_skin(face, border, 3 if selected else 2, "card")
 	card_node.tooltip_text = _plain_card_detail(country, card)
@@ -694,18 +706,18 @@ func _make_policy_card(card: Dictionary, hand_index: int, display_country_index 
 		if card.get("type", "") == "policy" and game.can_select_policy():
 			_on_policy_selected(selected_country_index, hand_index, card_node.position)
 	if include_coin:
-		var coin_size := minf(card_size.y - 14.0, 38.0)
+		var coin_size := minf(card_size.y - 20.0, 32.0)
 		var coin_layer := Control.new()
 		coin_layer.name = "CardCoinLayer"
-		coin_layer.position = _snap_vec(Vector2(8, (card_size.y - coin_size) * 0.5))
+		coin_layer.position = _snap_vec(Vector2((card_size.x - coin_size) * 0.5, 3))
 		coin_layer.size = _snap_vec(Vector2(coin_size, coin_size))
 		coin_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		coin_layer.z_index = 4
 		card_node.add_child(coin_layer)
 		coin_layer.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2.ZERO, coin_layer.size, Color.WHITE, "CardCoin"))
-	var label_x := 52.0 if include_coin else 8.0
-	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(label_x, 5), Vector2(card_size.x - label_x - 8, card_size.y - 10), 13, INK if card.get("type", "") == "policy" else TEXT, true)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var label_y := 36.0 if include_coin else 5.0
+	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(6, label_y), Vector2(card_size.x - 12, card_size.y - label_y - 4), 12, INK if card.get("type", "") == "policy" else TEXT, false)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
 
@@ -826,8 +838,9 @@ func _refresh_country_seats() -> void:
 		var border_color: Color = WARN if targeted_by_selected else accent
 		seat.set_skin(Color(0.090, 0.064, 0.034, 0.94) if active else Color(0.060, 0.046, 0.030, 0.86), border_color, 3 if active or targeted_by_selected else 2, "card")
 		country_pressure_labels[i].text = _pressure_summary(country)
+		country_state_labels[i].text = _state_hand_card_text(country)
 		country_policy_labels[i].text = _policy_slot_summary(country)
-		country_next_labels[i].text = _next_deck_summary(country)
+		country_next_labels[i].text = "手:%s" % _state_card_summary(country)
 		country_pipeline_labels[i].text = _pipeline_summary(country)
 		country_election_labels[i].text = _election_short_status(country)
 		country_welfare_labels[i].text = _welfare_check_summary(country)
@@ -1000,7 +1013,7 @@ func _refresh_resolution_links() -> void:
 			var country_diff_label := _diff_chip_label(_as_dict(_as_dict(item.get("country_diffs", {})).get(country_index, {})), "国")
 			if is_focus_country:
 				paths.append(_resolution_path(2, _control_center(country_seats[country_index]), accent, "国"))
-			_add_result_chip("CountryResult_%d" % country_index, _control_center(country_seats[country_index]) + Vector2(-18, 42), country_diff_label, accent)
+			_add_result_chip("CountryResult_%d" % country_index, _country_result_chip_center(country_index, -14), country_diff_label, accent)
 		if _resolution_stage_visible(3, active_step):
 			for key in item.get("world_effect_keys", []):
 				if world_path_count >= 2:
@@ -1014,7 +1027,7 @@ func _refresh_resolution_links() -> void:
 		if int(item.get("mutation_count", 0)) > 0 and _resolution_stage_visible(4, active_step):
 			if is_focus_country:
 				paths.append(_resolution_path(4, _control_center(country_seats[country_index]) + Vector2(0, 56), BAD, "変"))
-			_add_result_chip("DeckResult_%d" % country_index, _control_center(country_seats[country_index]) + Vector2(18, 42), "変", BAD)
+			_add_result_chip("DeckResult_%d" % country_index, _country_result_chip_center(country_index, 18), "変", BAD)
 	var macro: Dictionary = last_resolution_snapshot.get("macro", {})
 	if not macro.is_empty() and _resolution_stage_visible(5, active_step):
 		var macro_world: Dictionary = macro.get("world_diff", {})
@@ -1056,6 +1069,14 @@ func _country_pressure_center(country_index: int) -> Vector2:
 	var pressure: Control = country_seats[country_index].get_node("PressureCard")
 	return _control_center(pressure)
 
+func _country_result_chip_center(country_index: int, offset_y: float) -> Vector2:
+	var seat: Control = country_seats[country_index]
+	var screen_center := _screen().x * 0.5
+	var outside_x := seat.global_position.x + seat.size.x + 22.0
+	if seat.global_position.x > screen_center:
+		outside_x = seat.global_position.x - 22.0
+	return Vector2(outside_x, seat.global_position.y + seat.size.y * 0.5 + offset_y)
+
 func _add_result_chip(node_name: String, center: Vector2, text: String, accent: Color) -> void:
 	var chip_size := Vector2(38, 28) if text.length() > 1 else Vector2(28, 28)
 	var chip = BoardPieceScript.new()
@@ -1071,6 +1092,8 @@ func _add_result_chip(node_name: String, center: Vector2, text: String, accent: 
 	label.size = chip_size
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.add_theme_color_override("font_color", accent.lightened(0.30))
 	label.add_theme_font_size_override("font_size", 11 if text.length() > 1 else 12)
 	_apply_label_outline(label, accent.lightened(0.30))
@@ -1135,12 +1158,28 @@ func _state_card_summary(country) -> String:
 		return "なし"
 	var parts := []
 	for card in country.hand:
-		if String(card.get("type", "")) != "vulnerability":
+		if not _is_state_card(card):
 			continue
 		parts.append(UiCatalogScript.short_card_name(card).substr(0, 5))
 		if parts.size() >= 2:
 			break
 	return " / ".join(parts) if not parts.is_empty() else "なし"
+
+func _state_hand_card_text(country) -> String:
+	if country.hand.is_empty():
+		return "状態手札\nなし"
+	var parts := []
+	for card in country.hand:
+		if not _is_state_card(card):
+			continue
+		parts.append(UiCatalogScript.short_card_name(card).substr(0, 6))
+		if parts.size() >= 2:
+			break
+	return "状態手札\n%s" % (" / ".join(parts) if not parts.is_empty() else "なし")
+
+func _is_state_card(card: Dictionary) -> bool:
+	var type := String(card.get("type", ""))
+	return type == "vulnerability" or type == "legacy"
 
 func _response_target_summary(country) -> String:
 	var candidates := _response_candidate_indices(country)
@@ -1659,6 +1698,9 @@ func _add_label(node_name: String, text: String, position: Vector2, label_size: 
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if node_name != "Title" and node_name != "TurnLabel" else HORIZONTAL_ALIGNMENT_LEFT
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if wrap else TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	if not wrap:
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", font_size)
 	_apply_label_outline(label, color)
@@ -1675,6 +1717,9 @@ func _add_label_to(parent: Control, node_name: String, text: String, position: V
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if wrap else TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	if not wrap:
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", font_size)
 	_apply_label_outline(label, color)
@@ -1975,8 +2020,8 @@ func _pressure_summary(country) -> String:
 	if pressure.is_empty():
 		return "国内圧力\nなし"
 	var tags: Array = pressure.get("demand", {}).get("preferred_policy_tags", [])
-	var preferred := _short_tag_list(tags, 2)
-	return "%s\n求: %s\n無視: 反発" % [
+	var preferred := _short_tag_list(tags, 1)
+	return "%s\n求:%s" % [
 		String(pressure.get("display_name", "国内圧力")),
 		preferred if not preferred.is_empty() else "不明"
 	]
@@ -2045,7 +2090,17 @@ func _short_tag_list(tags: Array, limit: int) -> String:
 		"reform": "改革",
 		"growth": "成長",
 		"infrastructure": "インフラ",
-		"resource": "資源"
+		"resource": "資源",
+		"export_subsidy": "輸出補助",
+		"social_policy": "社会保障",
+		"fund": "基金",
+		"beggar_thy_neighbor": "近隣窮乏",
+		"consumption": "消費",
+		"housing": "住宅",
+		"banking": "銀行",
+		"capital_control": "資本規制",
+		"swap_line": "スワップ",
+		"debt_restructuring": "債務再編"
 	}
 	var parts := []
 	for i in range(mini(limit, tags.size())):
