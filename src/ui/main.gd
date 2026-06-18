@@ -639,18 +639,18 @@ func _build_policy_preview_panel() -> void:
 	policy_preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	policy_preview_panel.z_index = 24
 	_add_label_to(policy_preview_panel, "PolicyPreviewTitle", "フォーカス中の政策", Vector2(14, 7), Vector2(170, 18), 13, WARN.lightened(0.16), false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	policy_focus_card = _make_child_piece(policy_preview_panel, "PolicyFocusCard", Vector2(14, 30), Vector2(150, 82), CARD_FACE, BOARD_LINE, 2, "card")
+	policy_focus_card = _make_child_piece(policy_preview_panel, "PolicyFocusCard", Vector2(14, 30), Vector2(190, 84), CARD_FACE, BOARD_LINE, 2, "card")
 	policy_focus_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	policy_focus_icon = _make_icon("reform_wrench", Vector2(12, 10), Vector2(38, 38), Color.WHITE, "PolicyFocusIcon")
+	policy_focus_icon = _make_icon("reform_wrench", Vector2(12, 12), Vector2(44, 44), Color.WHITE, "PolicyFocusIcon")
 	policy_focus_card.add_child(policy_focus_icon)
-	policy_focus_title = _add_label_to(policy_focus_card, "PolicyFocusTitle", "", Vector2(56, 9), Vector2(82, 34), 14, INK, true)
+	policy_focus_title = _add_label_to(policy_focus_card, "PolicyFocusTitle", "", Vector2(66, 10), Vector2(112, 36), 15, INK, true)
 	policy_focus_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	policy_focus_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	policy_focus_source = _add_label_to(policy_focus_card, "PolicyFocusSource", "", Vector2(12, 52), Vector2(126, 14), 10, INK.darkened(0.05), false)
-	policy_focus_source.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	policy_focus_cost = _add_label_to(policy_focus_card, "PolicyFocusCost", "", Vector2(12, 67), Vector2(126, 12), 9, INK.darkened(0.05), false)
+	policy_focus_source = _add_label_to(policy_focus_card, "PolicyFocusSource", "", Vector2(66, 48), Vector2(112, 14), 10, INK.darkened(0.05), false)
+	policy_focus_source.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	policy_focus_cost = _add_label_to(policy_focus_card, "PolicyFocusCost", "", Vector2(12, 66), Vector2(166, 14), 10, INK.darkened(0.05), false)
 	policy_focus_cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	policy_preview_label = _add_label_to(policy_preview_panel, "PolicyPreviewLabel", "", Vector2(180, 30), Vector2(panel_size.x - 196, panel_size.y - 40), 13, TEXT, true)
+	policy_preview_label = _add_label_to(policy_preview_panel, "PolicyPreviewLabel", "", Vector2(220, 30), Vector2(panel_size.x - 236, panel_size.y - 40), 13, TEXT, true)
 	policy_preview_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	policy_preview_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
@@ -785,24 +785,16 @@ func _make_policy_card(card: Dictionary, policy_menu_index: int, display_country
 			_set_policy_preview(policy_menu_index)
 	)
 	if include_coin:
-		var coin_size := minf(card_size.y - 34.0, 34.0)
-		var coin_layer := Control.new()
-		coin_layer.name = "CardCoinLayer"
-		coin_layer.position = _snap_vec(Vector2((card_size.x - coin_size) * 0.5, 4))
-		coin_layer.size = _snap_vec(Vector2(coin_size, coin_size))
-		coin_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		coin_layer.z_index = 4
-		card_node.add_child(coin_layer)
-		coin_layer.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2.ZERO, coin_layer.size, Color.WHITE, "CardCoin"))
-		var source_badge = _make_child_piece(card_node, "PolicySourceBadge", Vector2(5, 5), Vector2(22, 15), _policy_source_color(card), INK, 1, "plaque")
+		card_node.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2((card_size.x - 32.0) * 0.5, 5), Vector2(32, 32), Color.WHITE, "CardCoin"))
+		var source_badge = _make_child_piece(card_node, "PolicySourceBadge", Vector2(card_size.x - 27.0, 4), Vector2(20, 14), _policy_source_color(card), INK, 1, "plaque")
 		var source_label := _add_label_to(source_badge, "PolicySourceLabel", _policy_source_short(card), Vector2.ZERO, source_badge.size, 9, TEXT, false)
 		source_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var label_y := 34.0 if include_coin else 5.0
-	var label := _add_label_to(card_node, "CardName", _ellipsize(UiCatalogScript.short_card_name(card), 7), Vector2(6, label_y), Vector2(card_size.x - 12, 20), 12, INK if card.get("type", "") == "policy" else TEXT, false)
+	var label_y := 39.0 if include_coin else 5.0
+	var label := _add_label_to(card_node, "CardName", _ellipsize(UiCatalogScript.short_card_name(card), 7), Vector2(6, label_y), Vector2(card_size.x - 12, 18), 11, INK if card.get("type", "") == "policy" else TEXT, false)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var cost_text := _policy_menu_footer(country, card)
-	var cost_label := _add_label_to(card_node, "CardCost", _ellipsize(cost_text, 10), Vector2(6, card_size.y - 19), Vector2(card_size.x - 12, 15), 10, INK.darkened(0.06) if available else INK.lightened(0.25), false)
+	var cost_label := _add_label_to(card_node, "CardCost", _ellipsize(cost_text, 9), Vector2(6, card_size.y - 16), Vector2(card_size.x - 12, 12), 8, INK.darkened(0.06) if available else INK.lightened(0.25), false)
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
