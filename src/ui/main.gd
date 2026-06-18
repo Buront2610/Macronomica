@@ -873,6 +873,8 @@ func _refresh_policy_slot(animate: bool) -> void:
 		policy_slot_label.text = "4国の政策案を\n同時公開"
 	elif phase == "resolution":
 		policy_slot_label.text = "%sを確認\n次で進める" % _resolution_step_name(resolution_step_index) if resolution_review_active else "公開済み政策を\n順に解決"
+	elif phase == "negotiation":
+		policy_slot_label.text = "%s国 交渉中\n共同宣言 / 次で政策計画へ" % country_name
 	else:
 		policy_slot_label.text = CardTextFormatterScript.planned_text(country, game.revealed_policies, phase, game.is_finished).replace("[center]", "").replace("[/center]", "").replace("[b]", "").replace("[/b]", "")
 	_refresh_cost_sockets(country)
@@ -1397,6 +1399,8 @@ func _advance_token_text() -> String:
 		return "公開"
 	if game.current_phase() == "simultaneous_reveal":
 		return "公開"
+	if game.current_phase() == "negotiation":
+		return "政策へ"
 	if resolution_review_active or game.current_phase() == "resolution":
 		return "解決"
 	if game.is_finished:
