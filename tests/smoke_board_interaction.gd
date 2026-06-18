@@ -17,14 +17,14 @@ func _run() -> void:
 	ui._refresh_board(false)
 	var log_click := InputEventMouseButton.new()
 	log_click.button_index = MOUSE_BUTTON_LEFT
-	log_click.pressed = true
+	log_click.pressed = false
 	ui.board_layer.get_node("LogPanel")._gui_input(log_click)
 	await process_frame
 	_assert(ui.log_highlight_key == "depression", "news log click highlights the related world track")
 	var agenda_tile: Control = ui.board_layer.get_node("Agenda_cooperation")
 	var agenda_click := InputEventMouseButton.new()
 	agenda_click.button_index = MOUSE_BUTTON_LEFT
-	agenda_click.pressed = true
+	agenda_click.pressed = false
 	agenda_tile._gui_input(agenda_click)
 	await process_frame
 	_assert(ui.game.countries[0].declared_agenda == "cooperation", "agenda tile places a joint declaration for the selected country")
@@ -40,7 +40,7 @@ func _run() -> void:
 	_assert(_descendants_ignore_mouse(card_node), "hand card children do not steal card clicks")
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = true
+	click.pressed = false
 	card_node._gui_input(click)
 	await process_frame
 	_assert(not ui.game.countries[0].selected_policy.is_empty(), "policy can be placed from the board policy menu")
@@ -89,7 +89,7 @@ func _run() -> void:
 	_assert(ui.selected_country_index == 2, "country seat can select another player policy menu")
 	_assert(ui.board_layer.get_node_or_null("CountryFocusGhost") != null, "country selection creates a moving focus marker")
 	_assert(_first_board_trail(ui) != null, "country selection creates a board trail")
-	_assert(ui.hand_nodes.size() == ui.game.countries[2].policy_menu.size(), "selected country policy menu is redealt on the board")
+	_assert(ui.hand_nodes.is_empty(), "worker assignment hides the policy menu to keep the board operable")
 
 	var previous_phase: int = ui.game.phase_index
 	ui._on_advance_pressed()

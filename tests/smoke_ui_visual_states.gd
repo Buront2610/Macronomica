@@ -45,7 +45,10 @@ func _check_state(viewport_size: Vector2i, state: String) -> void:
 	var viewport := Rect2(Vector2.ZERO, ui.get_viewport_rect().size)
 	_assert(ui.board_layer != null, "%s %s has board layer" % [state, viewport_size])
 	_assert(ui.country_seats.size() == 4, "%s %s keeps four country seats" % [state, viewport_size])
-	_assert(ui.hand_nodes.size() == ui.game.countries[ui.selected_country_index].policy_menu.size(), "%s %s shows the selected policy menu" % [state, viewport_size])
+	if state == "default":
+		_assert(ui.hand_nodes.size() == ui.game.countries[ui.selected_country_index].policy_menu.size(), "%s %s shows the selected policy menu" % [state, viewport_size])
+	else:
+		_assert(ui.hand_nodes.is_empty(), "%s %s hides policy menu outside policy planning" % [state, viewport_size])
 	for node_name in ["WorldPanel", "EventCard", "PolicySlot", "ResolutionFlow", "ScorePanel", "LogPanel", "CountryDetailPanel"]:
 		var node: Control = ui.board_layer.get_node_or_null(node_name)
 		_assert(node != null, "%s %s has %s" % [state, viewport_size, node_name])

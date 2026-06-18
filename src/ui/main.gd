@@ -96,11 +96,78 @@ var turn_news_active := false
 var log_highlight_key := ""
 
 func _ready() -> void:
+	_apply_preview_window_size()
 	token_assets = TokenAssetsScript.new()
 	game = GameStateScript.new()
 	game.new_game()
 	_build_board()
 	_refresh_board(true)
+	_apply_preview_state_from_env()
+
+func _apply_preview_window_size() -> void:
+	var width := int(OS.get_environment("MACRONOMICA_PREVIEW_WIDTH"))
+	var height := int(OS.get_environment("MACRONOMICA_PREVIEW_HEIGHT"))
+	if width > 0 and height > 0:
+		DisplayServer.window_set_size(Vector2i(width, height))
+		size = Vector2(width, height)
+
+func _apply_preview_state_from_env() -> void:
+	var preview_state := OS.get_environment("MACRONOMICA_PREVIEW_STATE")
+	if preview_state.is_empty():
+		return
+	if preview_state == "title":
+		return
+	if preview_state == "country_select":
+		_show_country_select()
+		return
+	_hide_entry_overlays()
+	game.move_to_phase("policy_planning")
+	selected_country_index = 0
+	if preview_state == "policy_submitted":
+		var policy_index := _preview_first_policy_index(game.countries[0].policy_menu)
+		if policy_index >= 0:
+			game.select_policy(0, policy_index)
+		selected_country_index = 1
+	elif preview_state == "worker_assignment":
+		_preview_submit_all_policies()
+		game.move_to_phase("worker_assignment")
+		_reset_worker_confirmations()
+	elif preview_state == "simultaneous_reveal":
+		_preview_submit_all_policies()
+		game.move_to_phase("worker_assignment")
+		_preview_assign_workers()
+		game.move_to_phase("simultaneous_reveal")
+	elif preview_state == "resolution":
+		_preview_submit_all_policies()
+		game.move_to_phase("worker_assignment")
+		_preview_assign_workers()
+		game.move_to_phase("resolution")
+		resolution_review_active = true
+		resolution_step_index = maxi(0, int(OS.get_environment("MACRONOMICA_PREVIEW_RESOLUTION_STEP")))
+		last_resolution_snapshot = game.preview_resolution_outcome()
+	elif preview_state == "final":
+		game.world.tracks["depression"] = 10
+		game.resolve_turn()
+	_refresh_board(false)
+
+func _preview_submit_all_policies() -> void:
+	for country_index in range(game.countries.size()):
+		var policy_index := _preview_first_policy_index(game.countries[country_index].policy_menu)
+		if policy_index >= 0:
+			game.select_policy(country_index, policy_index)
+
+func _preview_assign_workers() -> void:
+	var workers := ["bureaucrats", "central_bank_staff", "diplomat", "auditor"]
+	for country_index in range(game.countries.size()):
+		game.assign_worker(country_index, workers[country_index % workers.size()])
+		if country_index < worker_assignment_confirmed.size():
+			worker_assignment_confirmed[country_index] = true
+
+func _preview_first_policy_index(cards: Array) -> int:
+	for i in range(cards.size()):
+		if cards[i].get("type", "") == "policy":
+			return i
+	return -1
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_SIZE_CHANGED:
@@ -151,7 +218,7 @@ func _add_background() -> void:
 func _build_surfaces() -> void:
 	var play = _make_piece("PlaySurface", board_layout["play_surface_pos"], board_layout["play_surface_size"], Color(0.030, 0.037, 0.034, 0.16), Color(0.62, 0.45, 0.22, 0.28), 1, "plaque")
 	play.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var hand = _make_piece("HandPanel", board_layout["hand_panel_pos"], board_layout["hand_panel_size"], Color(0.070, 0.050, 0.030, 0.72), BOARD_LINE, 2, "plaque")
+	var hand = _make_piece("HandPanel", board_layout["hand_panel_pos"], board_layout["hand_panel_size"], Color(0.070, 0.050, 0.030, 0.94), BOARD_LINE, 2, "plaque")
 	hand.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func _build_table_marks() -> void:
@@ -510,25 +577,23 @@ func _select_start_country(country_index: int) -> void:
 		_bump(country_seats[country_index])
 
 func _build_hand_slots() -> void:
-	var origin: Vector2 = board_layout["hand_origin"]
-	var step: Vector2 = board_layout["hand_step"]
 	var card_size: Vector2 = board_layout["hand_card_size"]
-	for i in range(5):
-		var slot = _make_piece("HandSlot_%d" % i, origin + step * i + Vector2(0, 6), card_size, Color(0.025, 0.020, 0.016, 0.70), BOARD_LINE.darkened(0.10), 1, "card")
+	for i in range(20):
+		var slot = _make_piece("HandSlot_%d" % i, _policy_menu_position(i), card_size, Color(0.025, 0.020, 0.016, 0.72), BOARD_LINE.darkened(0.10), 1, "card")
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func _build_status_panels() -> void:
 	var score_pos: Vector2 = board_layout["score_pos"]
 	var score_size: Vector2 = board_layout["score_size"]
-	var score = _make_piece("ScorePanel", score_pos, score_size, Color(0.060, 0.044, 0.026, 0.62), BOARD_LINE, 1, "plaque")
+	var score = _make_piece("ScorePanel", score_pos, score_size, Color(0.060, 0.044, 0.026, 0.94), BOARD_LINE, 1, "plaque")
 	score.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_add_label_to(score, "ScoreTitle", "威信", Vector2(8, 2), Vector2(34, 16), 10, WARN.lightened(0.18))
-	score_panel = _add_label_to(score, "ScoreComponent", "", Vector2(44, 2), Vector2(score_size.x - 52, 16), 10, TEXT)
+	_add_label_to(score, "ScoreTitle", "威信", Vector2(8, 1), Vector2(40, 18), 13, WARN.lightened(0.18))
+	score_panel = _add_label_to(score, "ScoreComponent", "", Vector2(52, 1), Vector2(score_size.x - 60, 18), 13, TEXT)
 	score_panel.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 
 	var log_pos: Vector2 = board_layout["log_pos"]
 	var log_size: Vector2 = board_layout["log_size"]
-	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.78, 0.66, 0.45, 0.92), BOARD_LINE, 2, "card")
+	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.78, 0.66, 0.45, 0.96), BOARD_LINE, 2, "card")
 	log.tooltip_text = "クリックで最新ニュースに関係する世界トラックを強調"
 	log.pressed = _on_log_panel_pressed
 	_add_label_to(log, "LogTitle", "世界経済新聞", Vector2(0, 8), Vector2(log_size.x, 20), 14, INK)
@@ -538,7 +603,7 @@ func _build_status_panels() -> void:
 	log_panel.size = Vector2(log_size.x - 24, log_size.y - 44)
 	log_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	log_panel.add_theme_color_override("default_color", INK)
-	log_panel.add_theme_font_size_override("font_size", 13)
+	log_panel.add_theme_font_size_override("font_size", 14)
 	log_panel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	log_panel.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	log.add_child(log_panel)
@@ -546,11 +611,11 @@ func _build_status_panels() -> void:
 func _build_country_detail_panel() -> void:
 	var detail_pos: Vector2 = board_layout["country_detail_pos"]
 	var detail_size: Vector2 = board_layout["country_detail_size"]
-	var panel = _make_piece("CountryDetailPanel", detail_pos, detail_size, Color(0.060, 0.044, 0.028, 0.74), BOARD_LINE, 1, "card")
+	var panel = _make_piece("CountryDetailPanel", detail_pos, detail_size, Color(0.060, 0.044, 0.028, 0.95), BOARD_LINE, 1, "card")
 	panel.tooltip_text = "クリックで対応任務の対象を切替"
 	panel.pressed = _on_country_detail_pressed
-	_add_label_to(panel, "CountryDetailTitle", "国勢メモ", Vector2(0, 7), Vector2(detail_size.x, 20), 13, WARN.lightened(0.18))
-	country_detail_label = _add_label_to(panel, "CountryDetailLabel", "", Vector2(14, 30), Vector2(detail_size.x - 28, detail_size.y - 34), 13, TEXT, true)
+	_add_label_to(panel, "CountryDetailTitle", "国勢メモ", Vector2(0, 7), Vector2(detail_size.x, 22), 15, WARN.lightened(0.18))
+	country_detail_label = _add_label_to(panel, "CountryDetailLabel", "", Vector2(14, 32), Vector2(detail_size.x - 28, detail_size.y - 36), 14, TEXT, true)
 	country_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	country_detail_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
@@ -576,28 +641,41 @@ func _rebuild_hand(animate: bool, origin := Vector2.INF) -> void:
 	for node in hand_coin_nodes:
 		node.queue_free()
 	hand_coin_nodes.clear()
+	var phase: String = game.current_phase()
+	var show_menu: bool = phase == "policy_planning"
+	var show_tray: bool = show_menu or phase == "worker_assignment"
+	var hand_panel = board_layer.get_node_or_null("HandPanel")
+	if hand_panel != null:
+		hand_panel.visible = show_tray
+	for i in range(20):
+		var slot = board_layer.get_node_or_null("HandSlot_%d" % i)
+		if slot != null:
+			slot.visible = show_menu
+	if not show_menu:
+		return
 	var country = game.countries[selected_country_index]
-	var hand_origin: Vector2 = board_layout["hand_origin"]
-	var hand_step: Vector2 = board_layout["hand_step"]
-	var card_size: Vector2 = board_layout.get("hand_card_size", Vector2(82, 108))
 	var source := origin
 	if source == Vector2.INF and selected_country_index < country_seats.size():
 		source = country_seats[selected_country_index].position + Vector2(60, 46)
 	for i in range(country.policy_menu.size()):
 		var card: Dictionary = country.policy_menu[i]
-		var card_node = _make_policy_card(card, i, -1, false)
-		var final_pos := hand_origin + hand_step * i
+		var card_node = _make_policy_card(card, i, -1, true)
+		var final_pos := _policy_menu_position(i)
 		card_node.position = final_pos
 		card_node.rotation_degrees = 0.0
 		card_node.z_index = 12
 		board_layer.add_child(card_node)
 		hand_nodes.append(card_node)
-		var coin_node = _make_hand_card_coin(card, final_pos, card_size)
-		board_layer.add_child(coin_node)
-		hand_coin_nodes.append(coin_node)
 		if animate:
 			_animate_hand_deal(card_node, source, final_pos, 0.025 * i)
-			_animate_hand_deal(coin_node, source + coin_node.position - final_pos, coin_node.position, 0.025 * i)
+
+func _policy_menu_position(index: int) -> Vector2:
+	var origin: Vector2 = board_layout["hand_origin"]
+	var step: Vector2 = board_layout["hand_step"]
+	var columns := int(board_layout.get("hand_columns", 10))
+	var col := index % columns
+	var row := floori(float(index) / float(columns))
+	return origin + Vector2(step.x * col, step.y * row)
 
 func _make_policy_card(card: Dictionary, hand_index: int, display_country_index := -1, include_coin := true):
 	var country_index := selected_country_index if display_country_index < 0 else display_country_index
@@ -610,23 +688,32 @@ func _make_policy_card(card: Dictionary, hand_index: int, display_country_index 
 	card_node.name = "HandCard_%d" % hand_index
 	card_node.size = card_size
 	card_node.set_skin(face, border, 3 if selected else 2, "card")
-	card_node.tooltip_text = String(card.get("description", ""))
+	card_node.tooltip_text = _plain_card_detail(country, card)
 	card_node.pressed = func() -> void:
 		if card.get("type", "") == "policy" and game.can_select_policy():
 			_on_policy_selected(selected_country_index, hand_index, card_node.position)
 	if include_coin:
-		var coin_size := minf(card_size.x * 0.68, 66.0)
+		var coin_size := minf(card_size.y - 14.0, 38.0)
 		var coin_layer := Control.new()
 		coin_layer.name = "CardCoinLayer"
-		coin_layer.position = _snap_vec(Vector2((card_size.x - coin_size) * 0.5, 10))
+		coin_layer.position = _snap_vec(Vector2(8, (card_size.y - coin_size) * 0.5))
 		coin_layer.size = _snap_vec(Vector2(coin_size, coin_size))
 		coin_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		coin_layer.z_index = 4
 		card_node.add_child(coin_layer)
 		coin_layer.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2.ZERO, coin_layer.size, Color.WHITE, "CardCoin"))
-	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(8, card_size.y - 42), Vector2(card_size.x - 16, 34), 13, INK if card.get("type", "") == "policy" else TEXT, true)
+	var label_x := 52.0 if include_coin else 8.0
+	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(label_x, 5), Vector2(card_size.x - label_x - 8, card_size.y - 10), 13, INK if card.get("type", "") == "policy" else TEXT, true)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
+
+func _plain_card_detail(country, card: Dictionary) -> String:
+	var text := CardTextFormatterScript.card_detail(country, card)
+	for token in ["[b]", "[/b]", "[center]", "[/center]"]:
+		text = text.replace(token, "")
+	text = text.replace("[color=#9aa0a4]", "").replace("[color=#999999]", "").replace("[/color]", "")
+	return text
 
 func _make_hand_card_coin(card: Dictionary, card_position: Vector2, card_size: Vector2) -> TextureRect:
 	var coin_size := minf(card_size.x * 0.75, 78.0)
@@ -1204,8 +1291,22 @@ func _refresh_country_detail_panel() -> void:
 
 func _refresh_workers() -> void:
 	var assigned: Array = game.countries[selected_country_index].assigned_worker_list()
-	for worker in worker_nodes.keys():
+	var show_workers: bool = game.current_phase() == "worker_assignment"
+	var tray_pos: Vector2 = board_layout["hand_panel_pos"]
+	var tray_size: Vector2 = board_layout["hand_panel_size"]
+	var token_gap := 20.0
+	var token_size: Vector2 = board_layout["worker_size"]
+	var total_width := token_size.x * WORKERS.size() + token_gap * (WORKERS.size() - 1)
+	var token_y := tray_pos.y + (tray_size.y - token_size.y) * 0.5
+	var token_x := tray_pos.x + (tray_size.x - total_width) * 0.5
+	for i in range(WORKERS.size()):
+		var worker: String = WORKERS[i]
 		var node = worker_nodes[worker]
+		node.visible = show_workers
+		if not show_workers:
+			continue
+		node.position = _snap_vec(Vector2(token_x + (token_size.x + token_gap) * i, token_y))
+		node.home_position = node.position
 		var selected: bool = assigned.has(worker)
 		node.set_skin(Color(0, 0, 0, 0.04), COUNTRY_ACCENTS[selected_country_index] if selected else Color(0, 0, 0, 0.10), 3 if selected else 1, "circle")
 
@@ -1608,6 +1709,7 @@ func _animate_card_to_slot(country_index: int, card: Dictionary, from_pos: Vecto
 	var ghost = _make_policy_card(card, -1, country_index)
 	ghost.name = "PolicyGhost"
 	ghost.position = _snap_vec(from_pos)
+	ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	board_layer.add_child(ghost)
 	var card_center: Vector2 = ghost.size * 0.5
 	_animate_trail(from_pos + card_center, to_pos + card_center, COUNTRY_ACCENTS[country_index], 0.28)
@@ -1695,7 +1797,11 @@ func _bump(node: Control) -> void:
 	tween.tween_property(node, "scale", original, 0.12)
 
 func _screen() -> Vector2:
-	return get_viewport_rect().size
+	var viewport_size := get_viewport_rect().size
+	var window_size := Vector2(DisplayServer.window_get_size())
+	if window_size.x > 0 and window_size.y > 0:
+		return Vector2(minf(viewport_size.x, window_size.x), minf(viewport_size.y, window_size.y))
+	return viewport_size
 
 func _world_short_name(key: String) -> String:
 	var names := {

@@ -30,7 +30,7 @@ func _run() -> void:
 	_assert(ui.country_seats.size() == 4, "runtime board shows four country seats without scroll")
 	_assert(ui.worker_nodes.size() == 5, "runtime board shows worker tokens as board pieces")
 	_assert(ui.phase_pips.size() == ui.GameStateScript.PHASES.size(), "runtime board shows phase pips as board markers")
-	_assert(ui.hand_nodes.size() == ui.game.countries[ui.selected_country_index].policy_menu.size(), "runtime board shows selected policy menu as board cards")
+	_assert(ui.hand_nodes.is_empty(), "runtime board hides policy menu outside policy planning")
 	_assert(ui.policy_slot != null, "runtime board has a physical policy slot")
 	for key in ui.WORLD_TRACKS:
 		_assert(ui.board_layer.get_node_or_null("WorldTrack_%s" % key) != null, "runtime board shows world track: %s" % key)
@@ -79,7 +79,7 @@ func _run() -> void:
 	_assert(play_surface.size.x >= viewport.size.x * 0.66, "play surface owns the screen width")
 	_assert(world_panel.size.x >= viewport.size.x * 0.58, "world board is visually dominant")
 	_assert(world_panel.size.y >= 178.0, "world board is tall enough to read")
-	_assert(log_panel.size.x * log_panel.size.y < viewport.size.x * viewport.size.y * 0.10, "newspaper rail does not dominate the board")
+	_assert(log_panel.size.x * log_panel.size.y < viewport.size.x * viewport.size.y * 0.14, "newspaper rail stays secondary while remaining readable")
 	_assert(_inside_viewport(country_detail_panel, viewport), "country detail panel remains inside the board viewport")
 	_assert(country_detail_panel.size.y >= 88.0, "country detail panel remains large enough to read")
 	_assert(ui.country_detail_label.get_theme_font_size("font_size") >= 13, "country detail text remains readable")

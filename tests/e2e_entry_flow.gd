@@ -40,8 +40,8 @@ func _run() -> void:
 
 	_assert(not ui.title_overlay.visible and not ui.country_select_overlay.visible, "entry overlays close after country choice")
 	_assert(ui.player_country_index == 2, "entry flow stores the chosen country")
-	_assert(ui.selected_country_index == 2, "chosen country becomes the active board policy menu")
-	_assert(ui.hand_nodes.size() == ui.game.countries[2].policy_menu.size(), "chosen country policy menu is visible on the board")
+	_assert(ui.selected_country_index == 2, "chosen country becomes the active board country")
+	_assert(ui.hand_nodes.is_empty(), "entry starts at negotiation without crowding the board with policy menu")
 
 	if failed:
 		quit(1)
@@ -52,7 +52,7 @@ func _run() -> void:
 func _click(control: Control) -> void:
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = true
+	click.pressed = false
 	control._gui_input(click)
 
 func _assert(condition: bool, message: String) -> void:

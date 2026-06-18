@@ -71,7 +71,7 @@ func _first_policy_index(hand: Array) -> int:
 func _click(control: Control) -> void:
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = true
+	click.pressed = false
 	control._gui_input(click)
 
 func _assert(condition: bool, message: String) -> void:

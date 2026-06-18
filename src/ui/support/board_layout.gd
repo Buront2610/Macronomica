@@ -4,7 +4,7 @@ class_name BoardLayout
 static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var margin := 18.0
 	var header_h := 74.0
-	var info_w := clampf(viewport_size.x * 0.155, 190.0, 220.0)
+	var info_w := clampf(viewport_size.x * 0.20, 240.0, 300.0)
 	var board_left := margin
 	var info_x := viewport_size.x - info_w - margin
 	var board_right := info_x - 18.0
@@ -12,26 +12,28 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var center_right := board_right
 	var center_w := center_right - center_left
 	var center_x := center_left + center_w * 0.5
-	var bottom_y := viewport_size.y - 144.0
+	var menu_columns := 10.0
+	var hand_gap := 8.0
+	var hand_card_w := clampf((center_w - 96.0 - hand_gap * (menu_columns - 1.0)) / menu_columns, 82.0, 108.0)
+	var hand_card_size := Vector2(hand_card_w, 54.0)
+	var hand_panel_size := Vector2(hand_card_size.x * menu_columns + hand_gap * (menu_columns - 1.0) + 40.0, hand_card_size.y * 2.0 + hand_gap + 40.0)
+	var hand_panel_x := clampf(center_x - hand_panel_size.x * 0.5, center_left, center_right - hand_panel_size.x)
+	var hand_panel_pos := Vector2(hand_panel_x, viewport_size.y - hand_panel_size.y - 18.0)
+	var bottom_y := hand_panel_pos.y - 18.0
 
 	var country_size := Vector2(clampf(center_w * 0.255, 246.0, 286.0), clampf(viewport_size.y * 0.172, 118.0, 136.0))
 	var country_gap := 10.0
-	var policy_menu_count := 18.0
-	var hand_card_w := clampf((center_w - 40.0) / policy_menu_count - 5.0, 54.0, 72.0)
-	var hand_card_size := Vector2(hand_card_w, 92.0)
-	var hand_step := Vector2((center_w - hand_card_size.x) / (policy_menu_count - 1.0), 0.0)
-	var hand_count_w := hand_card_size.x + hand_step.x * (policy_menu_count - 1.0)
-	var hand_x := clampf(center_x - hand_count_w * 0.5, center_left, center_right - hand_count_w)
-	var hand_panel_pos := Vector2(hand_x - 20.0, bottom_y - 14.0)
-	var hand_panel_size := Vector2(hand_count_w + 40.0, hand_card_size.y + 30.0)
+	var hand_step := Vector2(hand_card_size.x + hand_gap, hand_card_size.y + hand_gap)
+	var hand_origin := hand_panel_pos + Vector2(20.0, 20.0)
 
 	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.255, 178.0, 196.0))
 	var world_pos := Vector2(center_left, header_h + 6.0)
-	var negotiation_size := Vector2(minf(584.0, center_w - country_size.x * 2.0 - 18.0), 78.0)
+	var between_countries_w := maxf(360.0, center_w - country_size.x * 2.0 - 54.0)
+	var negotiation_size := Vector2(minf(510.0, between_countries_w), 78.0)
 	var negotiation_pos := Vector2(center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 10.0)
 	var policy_slot_size := Vector2(286.0, 82.0)
 	var policy_slot_pos := Vector2(center_x - policy_slot_size.x * 0.5, negotiation_pos.y + negotiation_size.y + 8.0)
-	var resolution_flow_size := Vector2(minf(center_w - 140.0, 840.0), 70.0)
+	var resolution_flow_size := Vector2(minf(560.0, between_countries_w), 70.0)
 	var resolution_flow_pos := Vector2(center_x - resolution_flow_size.x * 0.5, policy_slot_pos.y + policy_slot_size.y + 8.0)
 	var world_track_gap := 8.0
 	var world_track_w := (world_size.x - 76.0 - world_track_gap * 6.0) / 7.0
@@ -98,7 +100,8 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"worker_origin": Vector2(worker_x, worker_y),
 		"worker_step": Vector2(68.0, 0.0),
 		"worker_size": worker_size,
-		"hand_origin": Vector2(hand_x, bottom_y),
+		"hand_origin": hand_origin,
 		"hand_step": hand_step,
-		"hand_card_size": hand_card_size
+		"hand_card_size": hand_card_size,
+		"hand_columns": int(menu_columns)
 	}

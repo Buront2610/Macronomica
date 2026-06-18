@@ -28,10 +28,10 @@ func _run() -> void:
 		var policy_index := _first_policy_index(ui.game.countries[country_index].policy_menu)
 		_assert(policy_index >= 0, "country %d has a playable policy card" % country_index)
 		var card_node: Control = ui.hand_nodes[policy_index]
-		_assert(_control_min_size(card_node, Vector2(54, 88)), "policy menu card remains readable: %s" % card_node.name)
+		_assert(_control_min_size(card_node, Vector2(82, 52)), "policy menu card remains tappable: %s" % card_node.name)
 		var click := InputEventMouseButton.new()
 		click.button_index = MOUSE_BUTTON_LEFT
-		click.pressed = true
+		click.pressed = false
 		card_node._gui_input(click)
 		await process_frame
 		_assert(not ui.game.countries[country_index].selected_policy.is_empty(), "country %d can submit a policy through the policy menu" % country_index)
