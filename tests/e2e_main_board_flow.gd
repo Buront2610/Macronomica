@@ -97,8 +97,8 @@ func _run() -> void:
 	_assert(not ui.turn_news_active and not ui.turn_news_panel.visible, "advance closes the turn result newspaper")
 
 	var log_panel: Label = ui.log_panel
-	_assert(log_panel != null and log_panel.text.contains("・"), "newspaper shows summarized headlines")
-	_assert(_control_min_size(ui.board_layer.get_node("AdvanceToken"), Vector2(104, 104)), "advance token is a large primary action")
+	_assert(log_panel != null and log_panel.text == "クリックで詳細", "newspaper is collapsed to a compact opener on the board")
+	_assert(_control_min_size(ui.board_layer.get_node("AdvanceToken"), Vector2(190, 36)), "negotiation advance is a large in-panel primary action")
 	_assert(_control_min_size(ui.board_layer.get_node("ResolutionFlow"), Vector2(500, 48)), "resolution flow has enough physical size")
 
 	if failed:

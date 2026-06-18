@@ -15,6 +15,8 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var focus_right := viewport_size.x - margin
 	var focus_w := focus_right - center_left
 	var focus_x := center_left + focus_w * 0.5
+	var wide_center_w := focus_right - center_left
+	var wide_center_x := center_left + wide_center_w * 0.5
 	var menu_columns := 4.0
 	var menu_rows := 4.0
 	var hand_gap := 12.0
@@ -35,11 +37,12 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 
 	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.34, 244.0, 292.0))
 	var world_pos := Vector2(center_left, header_h + 6.0)
+	var wide_world_size := Vector2(wide_center_w, world_size.y)
 	var planning_country_size := Vector2(clampf(focus_w * 0.72, 760.0, 1040.0), 132.0)
 	var planning_country_pos := Vector2(focus_x - planning_country_size.x * 0.5, world_pos.y + 12.0)
 	var between_countries_w := maxf(360.0, center_w - country_size.x * 2.0 - 54.0)
-	var negotiation_size := Vector2(minf(510.0, between_countries_w), 78.0)
-	var negotiation_pos := Vector2(center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 10.0)
+	var negotiation_size := Vector2(clampf(wide_center_w * 0.68, 780.0, 980.0), 306.0)
+	var negotiation_pos := Vector2(wide_center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 18.0)
 	var policy_slot_size := Vector2(440.0, 118.0)
 	var policy_slot_pos := Vector2(center_x - policy_slot_size.x * 0.5, negotiation_pos.y + negotiation_size.y + 8.0)
 	var resolution_flow_size := Vector2(clampf(between_countries_w, 500.0, 560.0), 118.0)
@@ -73,7 +76,7 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var state_panel_pos := Vector2(center_x - state_panel_size.x * 0.5, minf(state_panel_y, policy_preview_pos.y - state_panel_size.y - 12.0))
 	var right_log_y := event_pos.y + event_size.y + 12.0
 	var detail_h := clampf(viewport_size.y * 0.19, 152.0, 190.0)
-	var log_h := maxf(82.0, bottom_y - right_log_y - detail_h - 16.0)
+	var log_h := 58.0
 
 	return {
 		"play_surface_pos": Vector2(center_left, header_h),
@@ -101,14 +104,15 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"event_size": event_size,
 		"world_panel_pos": world_pos,
 		"world_panel_size": world_size,
+		"world_panel_wide_size": wide_world_size,
 		"planning_country_pos": planning_country_pos,
 		"planning_country_size": planning_country_size,
 		"world_tracks_origin": world_pos + Vector2(38.0, 54.0),
 		"world_track_step": Vector2(world_track_w + world_track_gap, world_track_h + world_track_gap),
 		"world_track_size": Vector2(world_track_w, world_track_h),
-		"agenda_origin": negotiation_pos + Vector2(18.0, 14.0),
-		"agenda_step": Vector2((negotiation_size.x - 34.0) / 4.0, 0.0),
-		"agenda_size": Vector2(112.0, 60.0),
+		"agenda_origin": negotiation_pos + Vector2(24.0, 90.0),
+		"agenda_step": Vector2((negotiation_size.x - 48.0) / 4.0, 0.0),
+		"agenda_size": Vector2((negotiation_size.x - 84.0) / 4.0, 92.0),
 		"negotiation_pos": negotiation_pos,
 		"negotiation_size": negotiation_size,
 		"country_seat_positions": [

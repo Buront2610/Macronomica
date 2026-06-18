@@ -21,6 +21,8 @@ func _run() -> void:
 	ui.board_layer.get_node("LogPanel")._gui_input(log_click)
 	await process_frame
 	_assert(ui.log_highlight_key == "depression", "news log click highlights the related world track")
+	_assert(ui.turn_news_active and ui.turn_news_panel.visible, "news log click opens the newspaper drawer")
+	ui._hide_turn_news_overlay()
 	var agenda_tile: Control = ui.board_layer.get_node("Agenda_cooperation")
 	var agenda_click := InputEventMouseButton.new()
 	agenda_click.button_index = MOUSE_BUTTON_LEFT
@@ -28,8 +30,10 @@ func _run() -> void:
 	agenda_tile._gui_input(agenda_click)
 	await process_frame
 	_assert(ui.game.countries[0].declared_agenda == "cooperation", "agenda tile places a joint declaration for the selected country")
+	_assert(ui.selected_country_index == 1, "agenda declaration advances focus to the next undeclared country")
 	_assert(_agenda_filled_pip_count(ui, "cooperation") == 1, "joint declaration pips are public during negotiation")
 	ui.game.countries[0].declared_agenda = ""
+	ui.selected_country_index = 0
 	ui.game.advance_phase()
 	ui._refresh_board(false)
 	await process_frame

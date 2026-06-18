@@ -1,27 +1,24 @@
 param(
     [int]$Width = 0,
     [int]$Height = 0,
+    [string]$State = "",
     [string]$Name = "board_action_preview"
 )
 
 $ErrorActionPreference = "Stop"
 
 $repo = Resolve-Path (Join-Path $PSScriptRoot "..")
-$godot = Get-Command godot_console -ErrorAction SilentlyContinue
 $wingetConsole = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64_console.exe"
-if (-not $godot -and (Test-Path $wingetConsole)) {
-    $godot = [pscustomobject]@{ Source = $wingetConsole }
-}
-if (-not $godot) {
-    $godot = Get-Command godot -ErrorAction SilentlyContinue
-}
-if ($godot) {
+$wingetGui = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64.exe"
+$godot = Get-Command godot -ErrorAction SilentlyContinue
+if (Test-Path $wingetGui) {
+    $godotPath = $wingetGui
+} elseif ($godot) {
     $godotPath = $godot.Source
+} elseif (Test-Path $wingetConsole) {
+    $godotPath = $wingetConsole
 } else {
-    $godotPath = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64_console.exe"
-    if (-not (Test-Path $godotPath)) {
-        $godotPath = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64.exe"
-    }
+    $godotPath = ""
 }
 if (-not (Test-Path $godotPath)) {
     throw "Godot executable was not found."
@@ -41,9 +38,14 @@ if ($Height -gt 0) {
 } else {
     Remove-Item Env:\MACRONOMICA_PREVIEW_HEIGHT -ErrorAction SilentlyContinue
 }
+if (-not [string]::IsNullOrWhiteSpace($State)) {
+    $env:MACRONOMICA_PREVIEW_STATE = $State
+} else {
+    Remove-Item Env:\MACRONOMICA_PREVIEW_STATE -ErrorAction SilentlyContinue
+}
 
-& $godotPath --path $repo --script "res://tools/render_board_action_preview.gd"
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$process = Start-Process -FilePath $godotPath -ArgumentList @("--path", "$repo", "--script", "res://tools/render_board_action_preview.gd") -Wait -PassThru -WindowStyle Hidden
+if ($process.ExitCode -ne 0) { exit $process.ExitCode }
 
 [pscustomobject]@{
     Path = $env:MACRONOMICA_PREVIEW_PATH

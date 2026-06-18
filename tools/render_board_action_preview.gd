@@ -29,6 +29,12 @@ func _run() -> void:
 		_save_preview()
 		return
 	ui._hide_entry_overlays()
+	if preview_state == "negotiation":
+		ui._refresh_board(false)
+		await process_frame
+		await process_frame
+		_save_preview()
+		return
 	if preview_state == "policy_planning":
 		ui.game.move_to_phase("policy_planning")
 		ui._refresh_board(false)

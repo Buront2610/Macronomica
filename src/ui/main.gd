@@ -71,6 +71,10 @@ var planning_country_pressure: Label
 var planning_country_stats: Label
 var planning_country_progress: Label
 var policy_menu_nodes: Array = []
+var negotiation_country_cards: Array = []
+var negotiation_country_labels: Array = []
+var negotiation_focus_label: Label
+var negotiation_status_label: Label
 var domestic_state_labels: Array = []
 var domestic_state_cards: Array = []
 var domestic_state_deck_label: Label
@@ -140,6 +144,9 @@ func _apply_preview_state_from_env() -> void:
 		_show_country_select()
 		return
 	_hide_entry_overlays()
+	if preview_state == "negotiation":
+		_refresh_board(false)
+		return
 	game.move_to_phase("policy_planning")
 	selected_country_index = 0
 	if preview_state == "policy_submitted":
@@ -322,9 +329,20 @@ func _build_planning_country_panel() -> void:
 	planning_country_progress.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
 func _build_agenda_tiles() -> void:
+	negotiation_country_cards.clear()
+	negotiation_country_labels.clear()
 	var negotiation = _make_piece("NegotiationPanel", board_layout["negotiation_pos"], board_layout["negotiation_size"], Color(0.060, 0.042, 0.026, 0.72), BOARD_LINE, 2, "plaque")
 	negotiation.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_add_label_to(negotiation, "NegotiationTitle", "国際交渉", Vector2(0, 6), Vector2(negotiation.size.x, 18), 13, WARN.lightened(0.16))
+	var title := _add_label_to(negotiation, "NegotiationTitle", "国際交渉", Vector2(24, 14), Vector2(220, 30), 24, WARN.lightened(0.16))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	negotiation_focus_label = _add_label_to(negotiation, "NegotiationFocus", "", Vector2(250, 15), Vector2(negotiation.size.x - 274, 28), 18, TEXT, false)
+	negotiation_focus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var step_w: float = (negotiation.size.x - 72.0) / 3.0
+	var steps := ["1  国を選ぶ", "2  宣言を押す", "3  政策選択へ"]
+	for i in range(3):
+		var step = _make_child_piece(negotiation, "NegotiationStep_%d" % i, Vector2(24.0 + step_w * i, 50), Vector2(step_w - 10.0, 30), Color(0.035, 0.030, 0.022, 0.86), BOARD_LINE.darkened(0.15), 1, "card")
+		step.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_add_label_to(step, "NegotiationStepLabel", steps[i], Vector2.ZERO, step.size, 14, MUTED, false)
 	var start: Vector2 = board_layout["agenda_origin"]
 	var step: Vector2 = board_layout["agenda_step"]
 	for i in range(AGENDA.size()):
@@ -333,13 +351,27 @@ func _build_agenda_tiles() -> void:
 		tile.tooltip_text = "選択中の国が共同宣言を置きます。"
 		tile.pressed = func(tag := String(item["tag"])) -> void:
 			_on_agenda_declared(tag)
-		_add_label_to(tile, "AgendaIcon", String(item["icon"]), Vector2(0, 5), Vector2(tile.size.x, 25), 22, WARN.lightened(0.05))
-		_add_label_to(tile, "AgendaName", String(item["name"]), Vector2(0, 31), Vector2(tile.size.x, 22), 13, TEXT)
+		_add_label_to(tile, "AgendaIcon", String(item["icon"]), Vector2(0, 9), Vector2(tile.size.x, 32), 28, WARN.lightened(0.05))
+		_add_label_to(tile, "AgendaName", String(item["name"]), Vector2(0, 43), Vector2(tile.size.x, 24), 17, TEXT)
+		_add_label_to(tile, "AgendaAction", "この宣言を置く", Vector2(0, 66), Vector2(tile.size.x, 18), 12, MUTED)
 		var pips := Control.new()
 		pips.name = "AgendaPips"
-		pips.position = Vector2(24, 57)
+		pips.position = Vector2(tile.size.x * 0.5 - 28.0, 82)
 		pips.size = Vector2(70, 8)
 		tile.add_child(pips)
+	var country_w: float = (negotiation.size.x - 60.0) / 4.0
+	for i in range(4):
+		var card: Control = _make_child_piece(negotiation, "NegotiationCountry_%d" % i, Vector2(24.0 + country_w * i, 202), Vector2(country_w - 8.0, 40), Color(0.032, 0.030, 0.024, 0.90), COUNTRY_ACCENTS[i], 1, "card")
+		card.mouse_filter = Control.MOUSE_FILTER_STOP
+		card.pressed = func(country_index := i) -> void:
+			selected_country_index = country_index
+			_refresh_board(true)
+		var label := _add_label_to(card, "NegotiationCountryLabel", "", Vector2(8, 7), Vector2(card.size.x - 16, 24), 14, TEXT, false)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		negotiation_country_cards.append(card)
+		negotiation_country_labels.append(label)
+	negotiation_status_label = _add_label_to(negotiation, "NegotiationStatus", "", Vector2(24, 242), Vector2(negotiation.size.x - 48, 20), 13, MUTED, false)
+	negotiation_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 
 func _build_country_seats() -> void:
 	country_seats.clear()
@@ -700,19 +732,21 @@ func _build_status_panels() -> void:
 
 	var log_pos: Vector2 = board_layout["log_pos"]
 	var log_size: Vector2 = board_layout["log_size"]
-	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.78, 0.66, 0.45, 0.96), BOARD_LINE, 2, "card")
-	log.tooltip_text = "クリックで最新ニュースに関係する世界トラックを強調"
+	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.78, 0.66, 0.45, 0.94), BOARD_LINE, 2, "card")
+	log.tooltip_text = "クリックで新聞とログ要約を開きます。"
 	log.pressed = _on_log_panel_pressed
-	_add_label_to(log, "LogTitle", "世界経済新聞", Vector2(0, 10), Vector2(log_size.x, 24), 17, INK)
+	var log_title := _add_label_to(log, "LogTitle", "新聞を開く", Vector2(16, 8), Vector2(118, 22), 17, INK)
+	log_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	log_panel = Label.new()
 	log_panel.name = "LogComponent"
-	log_panel.position = Vector2(14, 42)
-	log_panel.size = Vector2(log_size.x - 28, log_size.y - 54)
+	log_panel.position = Vector2(142, 10)
+	log_panel.size = Vector2(log_size.x - 158, log_size.y - 20)
 	log_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	log_panel.add_theme_color_override("default_color", INK)
-	log_panel.add_theme_font_size_override("font_size", 16)
-	log_panel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	log_panel.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	log_panel.add_theme_font_size_override("font_size", 13)
+	log_panel.autowrap_mode = TextServer.AUTOWRAP_OFF
+	log_panel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	log_panel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	log.add_child(log_panel)
 
 func _build_country_detail_panel() -> void:
@@ -1018,10 +1052,29 @@ func _refresh_title() -> void:
 	_set_label("AdvanceTokenLabel", _advance_token_text())
 	var advance = board_layer.get_node_or_null("AdvanceToken")
 	if advance != null:
+		var advance_label: Label = advance.get_node_or_null("AdvanceTokenLabel")
+		if game.current_phase() == "negotiation":
+			advance.position = _snap_vec(board_layout["negotiation_pos"] + board_layout["negotiation_size"] - Vector2(226.0, 50.0))
+			advance.size = Vector2(202, 38)
+			advance.z_index = 18
+			advance.set_skin(Color(0.12, 0.075, 0.026, 0.96), WARN.lightened(0.12), 3, "card")
+			if advance_label != null:
+				advance_label.position = Vector2.ZERO
+				advance_label.size = advance.size
+				advance_label.add_theme_font_size_override("font_size", 21)
+		else:
+			advance.position = _snap_vec(board_layout["advance_command_pos"])
+			advance.size = Vector2(108, 108)
+			advance.z_index = 0
+			advance.set_skin(Color(0.09, 0.060, 0.026, 0.88), WARN.lightened(0.06), 2, "circle")
+			if advance_label != null:
+				advance_label.position = Vector2.ZERO
+				advance_label.size = advance.size
+				advance_label.add_theme_font_size_override("font_size", 28)
 		advance.tooltip_text = _advance_token_tip()
-		advance.set_skin(Color(0.09, 0.060, 0.026, 0.88), WARN.lightened(0.06), 2, "circle")
 	var recommend = board_layer.get_node_or_null("RecommendToken")
 	if recommend != null:
+		recommend.visible = game.current_phase() != "negotiation"
 		recommend.tooltip_text = _recommend_token_tip()
 		_set_label("RecommendTokenLabel", _recommend_token_text())
 	var restart = board_layer.get_node_or_null("RestartToken")
@@ -1144,6 +1197,24 @@ func _refresh_agenda() -> void:
 		tile.set_skin(Color(0.18, 0.13, 0.065, 0.94) if declared_here else Color(0.15, 0.105, 0.055, 0.92), COUNTRY_ACCENTS[selected_country_index] if declared_here else BOARD_LINE, 3 if declared_here else 2, "card")
 		for i in range(4):
 			pips.add_child(_make_pip(Vector2(i * 14, 0), 8, WARN if i < count else TOKEN_EMPTY))
+	for i in range(negotiation_country_cards.size()):
+		var card: Control = negotiation_country_cards[i]
+		var label: Label = negotiation_country_labels[i]
+		var active := i == selected_country_index
+		var country = game.countries[i]
+		var declared := String(country.declared_agenda)
+		var declaration := _agenda_display_name(declared) if not declared.is_empty() else "未宣言"
+		card.visible = game.current_phase() == "negotiation"
+		card.set_skin(Color(0.070, 0.052, 0.032, 0.96) if active else Color(0.032, 0.030, 0.024, 0.90), COUNTRY_ACCENTS[i] if active else BOARD_LINE.darkened(0.18), 3 if active else 1, "card")
+		label.text = "%s国  %s%s" % [UiCatalogScript.country_emblem(i), "選択中: " if active else "", declaration]
+		label.add_theme_color_override("font_color", COUNTRY_ACCENTS[i].lightened(0.28) if active else TEXT)
+	if negotiation_focus_label != null:
+		var active_country = game.countries[selected_country_index]
+		var active_declared := String(active_country.declared_agenda)
+		negotiation_focus_label.text = "%s国の宣言を選ぶ" % UiCatalogScript.country_emblem(selected_country_index) if active_declared.is_empty() else "%s国は「%s」を宣言済み" % [UiCatalogScript.country_emblem(selected_country_index), _agenda_display_name(active_declared)]
+	if negotiation_status_label != null:
+		var missing := _countries_without_agenda_count()
+		negotiation_status_label.text = "宣言後は次の未宣言国へ自動で移動します。未宣言: %d国" % missing
 
 func _refresh_country_seats() -> void:
 	var phase: String = game.current_phase()
@@ -1157,7 +1228,7 @@ func _refresh_country_seats() -> void:
 		var active: bool = i == selected_country_index
 		var targeted_by_selected := _selected_policy_target_index() == i
 		var seat = country_seats[i]
-		seat.visible = (phase != "policy_planning" and phase != "worker_assignment") or target_mode
+		seat.visible = (phase != "policy_planning" and phase != "worker_assignment" and phase != "negotiation") or target_mode
 		var border_color: Color = WARN if targeted_by_selected and phase == "policy_planning" else accent
 		var fill := Color(0.090, 0.064, 0.034, 0.94) if active else Color(0.060, 0.046, 0.030, 0.86)
 		var border_width := 3 if active or (targeted_by_selected and phase == "policy_planning") else 2
@@ -1351,7 +1422,7 @@ func _refresh_status_panels() -> void:
 			parts.append("%s %d" % [String(score.get("display_name", "")).substr(0, 2), int(score.get("score", 0))])
 		score_panel.text = "  ".join(parts)
 	if log_panel != null:
-		log_panel.text = _news_headlines(game.log)
+		log_panel.text = "クリックで詳細"
 
 func _refresh_final_score_overlay() -> void:
 	if final_score_panel == null:
@@ -1436,6 +1507,7 @@ func _refresh_context_visibility() -> void:
 	var planning_focus := phase == "policy_planning"
 	var worker_focus := phase == "worker_assignment"
 	var world_visible := not planning_focus and not worker_focus
+	_apply_world_layout(phase == "negotiation")
 	var world_panel: Control = board_layer.get_node_or_null("WorldPanel")
 	if world_panel != null:
 		world_panel.visible = world_visible
@@ -1446,7 +1518,10 @@ func _refresh_context_visibility() -> void:
 	for node_name in ["EventCard", "ScorePanel", "LogPanel", "CountryDetailPanel"]:
 		var sidebar_node: Control = board_layer.get_node_or_null(node_name)
 		if sidebar_node != null:
-			sidebar_node.visible = not planning_focus and not worker_focus
+			sidebar_node.visible = not planning_focus and not worker_focus and phase != "negotiation"
+	var score_node: Control = board_layer.get_node_or_null("ScorePanel")
+	if score_node != null:
+		score_node.visible = not planning_focus and not worker_focus
 	var negotiation_panel: Control = board_layer.get_node_or_null("NegotiationPanel")
 	if negotiation_panel != null:
 		negotiation_panel.visible = phase == "negotiation"
@@ -1465,7 +1540,7 @@ func _refresh_context_visibility() -> void:
 	if policy_slot != null and selected_country_index >= 0 and selected_country_index < game.countries.size():
 		var country = game.countries[selected_country_index]
 		var waiting_for_target: bool = not country.selected_policy.is_empty() and String(country.selected_policy.get("target", "")) == "country"
-		policy_slot.visible = (phase != "policy_planning" and phase != "worker_assignment") or waiting_for_target
+		policy_slot.visible = (phase != "policy_planning" and phase != "worker_assignment" and phase != "negotiation") or waiting_for_target
 		if phase == "resolution" or resolution_review_active:
 			policy_slot.visible = false
 	if planning_focus:
@@ -1476,6 +1551,56 @@ func _refresh_context_visibility() -> void:
 		for i in range(country_seats.size()):
 			var seat: Control = country_seats[i]
 			seat.visible = target_mode
+
+func _apply_world_layout(wide: bool) -> void:
+	var panel: Control = board_layer.get_node_or_null("WorldPanel")
+	if panel == null:
+		return
+	var panel_pos: Vector2 = board_layout["world_panel_pos"]
+	var panel_size: Vector2 = board_layout["world_panel_wide_size"] if wide and board_layout.has("world_panel_wide_size") else board_layout["world_panel_size"]
+	panel.position = _snap_vec(panel_pos)
+	panel.size = _snap_vec(panel_size)
+	var title: Label = panel.get_node_or_null("WorldPanelTitle")
+	if title != null:
+		title.size = Vector2(panel.size.x, 28)
+	var hint: Label = panel.get_node_or_null("WorldPanelHint")
+	if hint != null:
+		hint.position = Vector2(0, panel.size.y - 30)
+		hint.size = Vector2(panel.size.x, 20)
+	var columns := 4
+	var gap := 12.0 if wide else 10.0
+	var track_w := (panel_size.x - 76.0 - gap * float(columns - 1)) / float(columns)
+	var track_h := (panel_size.y - 86.0 - gap) * 0.5
+	var start := panel_pos + Vector2(38.0, 54.0)
+	for i in range(WORLD_TRACKS.size()):
+		var key: String = WORLD_TRACKS[i]
+		var tile: Control = board_layer.get_node_or_null("WorldTrack_%s" % key)
+		if tile == null:
+			continue
+		var col := i % columns
+		var row := floori(float(i) / float(columns))
+		tile.position = _snap_vec(start + Vector2((track_w + gap) * col, (track_h + gap) * row))
+		tile.size = _snap_vec(Vector2(track_w, track_h))
+		var icon_size: float = minf(44.0, tile.size.y - 46.0)
+		var icon: TextureRect = tile.get_node_or_null("TrackIcon")
+		if icon != null:
+			icon.position = _snap_vec(Vector2(12, 13))
+			icon.size = _snap_vec(Vector2(icon_size, icon_size))
+		var label: Label = tile.get_node_or_null("TrackLabel")
+		if label != null:
+			label.position = _snap_vec(Vector2(64, 9))
+			label.size = _snap_vec(Vector2(tile.size.x - 126, 24))
+		var value_label: Label = tile.get_node_or_null("TrackValue")
+		if value_label != null:
+			value_label.position = _snap_vec(Vector2(tile.size.x - 64, 8))
+		var meaning: Label = tile.get_node_or_null("TrackMeaning")
+		if meaning != null:
+			meaning.position = _snap_vec(Vector2(64, 36))
+			meaning.size = _snap_vec(Vector2(tile.size.x - 78, 22))
+		var rail: Control = tile.get_node_or_null("TrackRail")
+		if rail != null:
+			rail.position = _snap_vec(Vector2(16, tile.size.y - 22))
+			rail.size = _snap_vec(Vector2(tile.size.x - 32, 14))
 
 func _refresh_resolution_links() -> void:
 	if resolution_overlay == null or resolution_marker_layer == null:
@@ -1868,7 +1993,7 @@ func _advance_token_text() -> String:
 	if game.current_phase() == "simultaneous_reveal":
 		return "公開"
 	if game.current_phase() == "negotiation":
-		return "政策へ"
+		return "政策選択へ"
 	if resolution_review_active or game.current_phase() == "resolution":
 		return "解決"
 	if game.is_finished:
@@ -1985,12 +2110,16 @@ func _on_log_panel_pressed() -> void:
 		var track = board_layer.get_node_or_null("WorldTrack_%s" % log_highlight_key)
 		if track != null:
 			_bump(track)
+	_show_turn_news_overlay()
 
 func _on_agenda_declared(tag: String) -> void:
 	if game.current_phase() != "negotiation":
 		return
 	game.declare_agenda(selected_country_index, tag)
 	game.request_support(selected_country_index, tag)
+	var next_country := _next_country_without_agenda(selected_country_index)
+	if next_country >= 0:
+		selected_country_index = next_country
 	_refresh_board(true)
 
 func _on_country_detail_pressed() -> void:
@@ -2563,6 +2692,30 @@ func _resolution_step_name(index: int) -> String:
 		return "解決処理"
 	return names[index]
 
+func _agenda_display_name(tag: String) -> String:
+	for item in AGENDA:
+		if String(item.get("tag", "")) == tag:
+			return String(item.get("name", tag))
+	return tag
+
+func _next_country_without_agenda(after_index: int) -> int:
+	if game == null or game.countries.is_empty():
+		return -1
+	for offset in range(1, game.countries.size() + 1):
+		var index: int = int((after_index + offset) % game.countries.size())
+		if String(game.countries[index].declared_agenda).is_empty():
+			return index
+	return -1
+
+func _countries_without_agenda_count() -> int:
+	if game == null:
+		return 0
+	var count := 0
+	for country in game.countries:
+		if String(country.declared_agenda).is_empty():
+			count += 1
+	return count
+
 func _news_headlines(log_entries: Array) -> String:
 	var headlines := []
 	for i in range(log_entries.size() - 1, -1, -1):
@@ -2584,6 +2737,16 @@ func _news_headlines(log_entries: Array) -> String:
 	for headline in headlines:
 		text += "・%s\n\n" % headline
 	return text.strip_edges()
+
+func _latest_news_summary() -> String:
+	if game == null or game.log.is_empty():
+		return "未読"
+	for i in range(game.log.size() - 1, -1, -1):
+		var line := String(game.log[i]).strip_edges()
+		if line.is_empty() or line.begins_with("----") or line.begins_with("フェーズ:") or line.begins_with("新しいゲーム"):
+			continue
+		return _short_news_line(line)
+	return "未読"
 
 func _short_news_line(line: String) -> String:
 	var cleaned := line.replace("世界イベント「", "").replace("」: ", "：")
