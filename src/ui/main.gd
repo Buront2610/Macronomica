@@ -603,7 +603,7 @@ func _select_start_country(country_index: int) -> void:
 func _build_policy_menu_slots() -> void:
 	var card_size: Vector2 = board_layout["hand_card_size"]
 	for i in range(20):
-		var slot = _make_piece("PolicyMenuSlot_%d" % i, _policy_menu_position(i), card_size, Color(0.025, 0.020, 0.016, 0.72), BOARD_LINE.darkened(0.10), 1, "card")
+		var slot = _make_piece("PolicyMenuSlot_%d" % i, _policy_menu_position(i), card_size, Color(0.018, 0.015, 0.012, 0.42), Color(0.32, 0.24, 0.14, 0.42), 1, "card")
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func _build_domestic_state_panel() -> void:
@@ -785,12 +785,9 @@ func _make_policy_card(card: Dictionary, policy_menu_index: int, display_country
 			_set_policy_preview(policy_menu_index)
 	)
 	if include_coin:
-		card_node.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2((card_size.x - 32.0) * 0.5, 5), Vector2(32, 32), Color.WHITE, "CardCoin"))
-		var source_badge = _make_child_piece(card_node, "PolicySourceBadge", Vector2(card_size.x - 27.0, 4), Vector2(20, 14), _policy_source_color(card), INK, 1, "plaque")
-		var source_label := _add_label_to(source_badge, "PolicySourceLabel", _policy_source_short(card), Vector2.ZERO, source_badge.size, 9, TEXT, false)
-		source_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var label_y := 39.0 if include_coin else 5.0
-	var label := _add_label_to(card_node, "CardName", _ellipsize(UiCatalogScript.short_card_name(card), 7), Vector2(6, label_y), Vector2(card_size.x - 12, 18), 11, INK if card.get("type", "") == "policy" else TEXT, false)
+		card_node.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2((card_size.x - 32.0) * 0.5, 6), Vector2(32, 32), Color.WHITE, "CardCoin"))
+	var label_y := 42.0 if include_coin else 5.0
+	var label := _add_label_to(card_node, "CardName", _ellipsize(UiCatalogScript.short_card_name(card), 7), Vector2(7, label_y), Vector2(card_size.x - 14, 18), 11, INK if card.get("type", "") == "policy" else TEXT, false)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var cost_text := _policy_menu_footer(country, card)
