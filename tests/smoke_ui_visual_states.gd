@@ -49,7 +49,7 @@ func _check_state(viewport_size: Vector2i, state: String) -> void:
 		_assert(ui.policy_menu_nodes.size() == ui.game.countries[ui.selected_country_index].policy_menu.size(), "%s %s shows the selected policy menu" % [state, viewport_size])
 	else:
 		_assert(ui.policy_menu_nodes.is_empty(), "%s %s hides policy menu outside policy planning" % [state, viewport_size])
-	for node_name in ["WorldPanel", "EventCard", "PolicySlot", "ResolutionFlow", "DomesticStatePanel", "ScorePanel", "LogPanel", "CountryDetailPanel"]:
+	for node_name in ["WorldPanel", "EventCard", "PolicySlot", "ResolutionFlow", "DomesticStatePanel", "PolicyPreviewPanel", "ScorePanel", "LogPanel", "CountryDetailPanel"]:
 		var node: Control = ui.board_layer.get_node_or_null(node_name)
 		_assert(node != null, "%s %s has %s" % [state, viewport_size, node_name])
 		if node != null:

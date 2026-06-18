@@ -67,6 +67,10 @@ var country_welfare_labels: Array = []
 var policy_menu_nodes: Array = []
 var domestic_state_labels: Array = []
 var domestic_state_cards: Array = []
+var domestic_state_deck_label: Label
+var policy_preview_panel: Control
+var policy_preview_label: Label
+var policy_preview_index := 0
 var worker_nodes := {}
 var policy_slot
 var policy_slot_label: Label
@@ -198,6 +202,7 @@ func _build_board() -> void:
 	_build_policy_slot()
 	_build_resolution_flow()
 	_build_domestic_state_panel()
+	_build_policy_preview_panel()
 	_build_policy_menu_slots()
 	_build_worker_tokens()
 	_build_status_panels()
@@ -224,7 +229,7 @@ func _build_surfaces() -> void:
 	play.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var menu_panel = _make_piece("PolicyMenuPanel", board_layout["hand_panel_pos"], board_layout["hand_panel_size"], Color(0.070, 0.050, 0.030, 0.94), BOARD_LINE, 2, "plaque")
 	menu_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var menu_title := _add_label_to(menu_panel, "PolicyMenuTitle", "常設政策メニュー（ドローしない）", Vector2(16, 4), Vector2(300, 16), 12, WARN.lightened(0.18), false)
+	var menu_title := _add_label_to(menu_panel, "PolicyMenuTitle", "常設政策メニュー（山札/手札なし）", Vector2(16, 4), Vector2(330, 16), 12, WARN.lightened(0.18), false)
 	menu_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 
 func _build_table_marks() -> void:
@@ -601,15 +606,17 @@ func _build_domestic_state_panel() -> void:
 	var panel_size: Vector2 = board_layout["domestic_state_panel_size"]
 	var panel = _make_piece("DomesticStatePanel", panel_pos, panel_size, Color(0.045, 0.036, 0.028, 0.94), BAD.darkened(0.10), 2, "plaque")
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var title := _add_label_to(panel, "DomesticStateTitle", "公開国内情勢（状態デッキから2枚）", Vector2(0, 8), Vector2(panel_size.x, 20), 14, WARN.lightened(0.16), false)
+	var title := _add_label_to(panel, "DomesticStateTitle", "公開国内情勢（状態デッキから2枚）", Vector2(0, 6), Vector2(panel_size.x, 20), 14, WARN.lightened(0.16), false)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var hint := _add_label_to(panel, "DomesticStateHint", "これは政策カードではない。今ターン発火する脆弱性・レガシー。", Vector2(18, panel_size.y - 24), Vector2(panel_size.x - 36, 17), 11, MUTED, false)
+	domestic_state_deck_label = _add_label_to(panel, "DomesticStateDeckZones", "", Vector2(22, 27), Vector2(panel_size.x - 44, 18), 11, MUTED, false)
+	domestic_state_deck_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var hint := _add_label_to(panel, "DomesticStateHint", "政策に山札/手札はない。ここだけが状態デッキの公開ゾーン。", Vector2(18, panel_size.y - 23), Vector2(panel_size.x - 36, 17), 11, MUTED, false)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var card_size: Vector2 = board_layout["domestic_state_card_size"]
 	var first_x := 34.0
 	var gap := 18.0
 	for i in range(2):
-		var card = _make_child_piece(panel, "DomesticStateCard_%d" % i, Vector2(first_x + (card_size.x + gap) * i, 34), card_size, Color(0.17, 0.13, 0.10, 0.97), BAD.darkened(0.04), 2, "card")
+		var card = _make_child_piece(panel, "DomesticStateCard_%d" % i, Vector2(first_x + (card_size.x + gap) * i, 50), card_size, Color(0.17, 0.13, 0.10, 0.97), BAD.darkened(0.04), 2, "card")
 		var icon = _make_icon("reform_wrench", Vector2(8, 12), Vector2(38, 38), Color.WHITE, "DomesticStateIcon")
 		card.add_child(icon)
 		var label := _add_label_to(card, "DomesticStateLabel", "", Vector2(52, 8), Vector2(card_size.x - 60, card_size.y - 16), 12, TEXT, true)
@@ -617,6 +624,16 @@ func _build_domestic_state_panel() -> void:
 		label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 		domestic_state_cards.append(card)
 		domestic_state_labels.append(label)
+
+func _build_policy_preview_panel() -> void:
+	var panel_pos: Vector2 = board_layout["policy_preview_pos"]
+	var panel_size: Vector2 = board_layout["policy_preview_size"]
+	policy_preview_panel = _make_piece("PolicyPreviewPanel", panel_pos, panel_size, Color(0.060, 0.044, 0.026, 0.95), BOARD_LINE, 2, "plaque")
+	policy_preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add_label_to(policy_preview_panel, "PolicyPreviewTitle", "政策候補プレビュー", Vector2(14, 6), Vector2(150, 18), 12, WARN.lightened(0.16), false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	policy_preview_label = _add_label_to(policy_preview_panel, "PolicyPreviewLabel", "", Vector2(18, 26), Vector2(panel_size.x - 36, panel_size.y - 32), 12, TEXT, true)
+	policy_preview_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	policy_preview_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
 func _build_status_panels() -> void:
 	var score_pos: Vector2 = board_layout["score_pos"]
@@ -682,7 +699,7 @@ func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
 		menu_panel.visible = show_tray
 		var title: Label = menu_panel.get_node_or_null("PolicyMenuTitle")
 		if title != null:
-			title.text = "常設政策メニュー（ドローしない）" if show_menu else "担当ワーカー"
+			title.text = "常設政策メニュー（山札/手札なし）" if show_menu else "担当ワーカー"
 	for i in range(20):
 		var slot = board_layer.get_node_or_null("PolicyMenuSlot_%d" % i)
 		if slot != null:
@@ -717,7 +734,10 @@ func _make_policy_card(card: Dictionary, policy_menu_index: int, display_country
 	var country_index := selected_country_index if display_country_index < 0 else display_country_index
 	var country = game.countries[country_index]
 	var selected: bool = not country.selected_policy.is_empty() and country.selected_policy.get("id", "") == card.get("id", "")
+	var available: bool = country.is_policy_available(card)
 	var face: Color = CARD_FACE if card.get("type", "") == "policy" else Color(0.16, 0.15, 0.12, 1.0)
+	if not available:
+		face = face.darkened(0.24)
 	var border: Color = COUNTRY_ACCENTS[country_index] if selected else BOARD_LINE
 	var card_size: Vector2 = board_layout.get("hand_card_size", Vector2(82, 108))
 	var card_node = BoardPieceScript.new()
@@ -726,23 +746,77 @@ func _make_policy_card(card: Dictionary, policy_menu_index: int, display_country
 	card_node.set_skin(face, border, 3 if selected else 2, "card")
 	card_node.tooltip_text = _plain_card_detail(country, card)
 	card_node.pressed = func() -> void:
-		if card.get("type", "") == "policy" and game.can_select_policy():
+		if card.get("type", "") == "policy" and game.can_select_policy() and available:
 			_on_policy_selected(selected_country_index, policy_menu_index, card_node.position)
+	card_node.mouse_entered.connect(func() -> void:
+		if game.current_phase() == "policy_planning":
+			_set_policy_preview(policy_menu_index)
+	)
 	if include_coin:
-		var coin_size := minf(card_size.y - 20.0, 32.0)
+		var coin_size := minf(card_size.y - 34.0, 34.0)
 		var coin_layer := Control.new()
 		coin_layer.name = "CardCoinLayer"
-		coin_layer.position = _snap_vec(Vector2((card_size.x - coin_size) * 0.5, 3))
+		coin_layer.position = _snap_vec(Vector2((card_size.x - coin_size) * 0.5, 4))
 		coin_layer.size = _snap_vec(Vector2(coin_size, coin_size))
 		coin_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		coin_layer.z_index = 4
 		card_node.add_child(coin_layer)
 		coin_layer.add_child(_make_icon(UiCatalogScript.card_token(card), Vector2.ZERO, coin_layer.size, Color.WHITE, "CardCoin"))
-	var label_y := 36.0 if include_coin else 5.0
-	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(6, label_y), Vector2(card_size.x - 12, card_size.y - label_y - 4), 12, INK if card.get("type", "") == "policy" else TEXT, false)
+	var label_y := 34.0 if include_coin else 5.0
+	var label := _add_label_to(card_node, "CardName", UiCatalogScript.short_card_name(card), Vector2(6, label_y), Vector2(card_size.x - 12, 18), 12, INK if card.get("type", "") == "policy" else TEXT, false)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var cost_text := _policy_menu_cost_summary(country, card)
+	var cost_label := _add_label_to(card_node, "CardCost", cost_text, Vector2(6, card_size.y - 16), Vector2(card_size.x - 12, 12), 9, INK.darkened(0.06) if available else INK.lightened(0.25), false)
+	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return card_node
+
+func _policy_menu_cost_summary(country, card: Dictionary) -> String:
+	if not country.is_policy_available(card):
+		return "冷却:%dT" % int(country.policy_cooldowns.get(String(card.get("id", "")), 0))
+	var costs: Dictionary = card.get("costs", {})
+	var parts := []
+	for key in COST_KEYS:
+		var value := int(costs.get(key, 0))
+		if value <= 0:
+			continue
+		parts.append("%s%d" % [_cost_short_name(key), value])
+		if parts.size() >= 3:
+			break
+	return "コストなし" if parts.is_empty() else " ".join(parts)
+
+func _policy_preview_text(country, policy: Dictionary, index: int) -> String:
+	var tags: Array = policy.get("tags", [])
+	var preview: Dictionary = game._preview_policy_cost(country, policy)
+	var shortages: Dictionary = preview.get("shortages", {}) if preview is Dictionary else {}
+	var shortage_parts := []
+	for key in COST_KEYS:
+		var value := int(shortages.get(key, 0))
+		if value <= 0:
+			continue
+		shortage_parts.append("%s%d" % [_cost_short_name(key), value])
+		if shortage_parts.size() >= 3:
+			break
+	var shortage_text := "不足なし" if shortage_parts.is_empty() else "不足:%s" % " ".join(shortage_parts)
+	var effects: Dictionary = policy.get("effects", {})
+	var country_effect := _short_effect_scope(effects.get("country", {}))
+	var world_effect := _short_effect_scope(effects.get("world", {}))
+	if String(policy.get("target", "")) == "country":
+		country_effect = _short_effect_scope(effects.get("donor", {}))
+		world_effect = _short_effect_scope(effects.get("recipient", {}))
+	var effect_text := "自国:%s / 世界:%s" % [
+		country_effect if not country_effect.is_empty() else "-",
+		world_effect if not world_effect.is_empty() else "-"
+	]
+	return "#%02d  %s  [%s]\nコスト:%s  %s\n%s" % [
+		index + 1,
+		String(policy.get("display_name", policy.get("id", "政策"))).substr(0, 18),
+		_short_tag_list(tags, 3),
+		_policy_menu_cost_summary(country, policy),
+		shortage_text,
+		effect_text
+	]
 
 func _plain_card_detail(country, card: Dictionary) -> String:
 	var text := CardTextFormatterScript.card_detail(country, card)
@@ -768,6 +842,7 @@ func _refresh_board(animate: bool) -> void:
 	_refresh_resolution_links()
 	_refresh_final_score_overlay()
 	_refresh_domestic_state_panel()
+	_refresh_policy_preview_panel()
 	_rebuild_policy_menu(animate)
 
 func _refresh_title() -> void:
@@ -880,6 +955,13 @@ func _refresh_domestic_state_panel() -> void:
 	var title: Label = panel.get_node_or_null("DomesticStateTitle")
 	if title != null:
 		title.text = "%s国の公開国内情勢（状態デッキ）" % UiCatalogScript.country_emblem(selected_country_index)
+	if domestic_state_deck_label != null:
+		domestic_state_deck_label.text = "状態山札:%d  公開:%d  捨札:%d  次札:%s" % [
+			country.deck.size(),
+			country.hand.size(),
+			country.discard.size(),
+			_next_deck_name(country).substr(0, 8)
+		]
 	var visible_states := []
 	for card in country.hand:
 		if _is_state_card(card):
@@ -904,6 +986,25 @@ func _refresh_domestic_state_panel() -> void:
 				card_node.set_skin(Color(0.055, 0.046, 0.038, 0.80), BOARD_LINE.darkened(0.18), 1, "card")
 			label.text = "公開なし\n状態デッキ待ち"
 			card_node.tooltip_text = "この枠は状態デッキから公開される国内情勢カードです。政策カードではありません。"
+
+func _refresh_policy_preview_panel() -> void:
+	if policy_preview_panel == null or policy_preview_label == null:
+		return
+	var show_preview: bool = game.current_phase() == "policy_planning"
+	policy_preview_panel.visible = show_preview
+	if not show_preview:
+		return
+	var country = game.countries[selected_country_index]
+	if country.policy_menu.is_empty():
+		policy_preview_label.text = "政策メニューなし"
+		return
+	policy_preview_index = clampi(policy_preview_index, 0, country.policy_menu.size() - 1)
+	var policy: Dictionary = country.policy_menu[policy_preview_index]
+	policy_preview_label.text = _policy_preview_text(country, policy, policy_preview_index)
+
+func _set_policy_preview(index: int) -> void:
+	policy_preview_index = index
+	_refresh_policy_preview_panel()
 
 func _refresh_policy_slot(animate: bool) -> void:
 	var country = game.countries[selected_country_index]
@@ -1562,6 +1663,7 @@ func _on_country_selected(country_index: int) -> void:
 		var source_index := selected_country_index
 		game.select_policy_target(source_index, country_index)
 		selected_country_index = _next_country_without_policy(source_index)
+		policy_preview_index = 0
 		if selected_country_index < 0:
 			_enter_worker_assignment()
 		_refresh_board(true)
@@ -1573,6 +1675,7 @@ func _on_country_selected(country_index: int) -> void:
 	var previous := selected_country_index
 	last_selected_country_index = previous
 	selected_country_index = country_index
+	policy_preview_index = 0
 	var origin = country_seats[country_index].position + Vector2(60, 46)
 	_refresh_title()
 	_refresh_country_seats()
@@ -1594,6 +1697,7 @@ func _on_policy_selected(country_index: int, policy_index: int, from_pos: Vector
 		selected_country_index = country_index
 	else:
 		selected_country_index = _next_country_without_policy(country_index)
+		policy_preview_index = 0
 		if selected_country_index < 0:
 			_enter_worker_assignment()
 	_refresh_board(false)
