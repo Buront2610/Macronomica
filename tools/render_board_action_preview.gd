@@ -10,6 +10,8 @@ func _run() -> void:
 	var height := int(OS.get_environment("MACRONOMICA_PREVIEW_HEIGHT"))
 	if width > 0 and height > 0:
 		get_root().size = Vector2i(width, height)
+		OS.set_environment("MACRONOMICA_PREVIEW_WIDTH", "")
+		OS.set_environment("MACRONOMICA_PREVIEW_HEIGHT", "")
 		await process_frame
 	var ui = MainScript.new()
 	ui.size = get_root().size
@@ -27,6 +29,13 @@ func _run() -> void:
 		_save_preview()
 		return
 	ui._hide_entry_overlays()
+	if preview_state == "policy_planning":
+		ui.game.move_to_phase("policy_planning")
+		ui._refresh_board(false)
+		await process_frame
+		await process_frame
+		_save_preview()
+		return
 
 	ui.game.advance_phase()
 	ui._refresh_board(false)
