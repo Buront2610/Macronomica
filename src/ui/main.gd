@@ -373,7 +373,7 @@ func _build_policy_slot() -> void:
 	policy_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var slot_size: Vector2 = board_layout["policy_slot_size"]
 	_add_label_to(policy_slot, "PolicySlotTitle", "同時公開卓", Vector2(0, 8), Vector2(slot_size.x, 22), 15, WARN.lightened(0.18))
-	policy_slot_label = _add_label_to(policy_slot, "PolicySlotLabel", "", Vector2(14, 30), Vector2(slot_size.x - 28, 28), 13, TEXT, true)
+	policy_slot_label = _add_label_to(policy_slot, "PolicySlotLabel", "", Vector2(14, 30), Vector2(slot_size.x - 28, 40), 13, TEXT, true)
 	policy_cost_labels.clear()
 	var socket_w := (slot_size.x - 28.0) / float(COST_KEYS.size())
 	for i in range(COST_KEYS.size()):
@@ -436,9 +436,9 @@ func _build_final_score_overlay() -> void:
 		var label := _add_label_to(card, "ScoreText", "", Vector2(12, 66), Vector2(card_w - 24, 132), 14, TEXT, true)
 		label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 		final_score_labels.append(label)
-	var news = _make_child_piece(final_score_panel, "FinalNews", Vector2(22, 326), Vector2(panel_size.x - 44, 122), Color(0.80, 0.69, 0.49, 0.94), BOARD_LINE, 2, "card")
+	var news = _make_child_piece(final_score_panel, "FinalNews", Vector2(22, 318), Vector2(panel_size.x - 44, 150), Color(0.80, 0.69, 0.49, 0.94), BOARD_LINE, 2, "card")
 	_add_label_to(news, "FinalNewsTitle", "世界経済新聞 総括", Vector2(0, 8), Vector2(news.size.x, 20), 15, INK)
-	final_news_label = _add_label_to(news, "FinalNewsText", "", Vector2(18, 34), Vector2(news.size.x - 36, 72), 13, INK, true)
+	final_news_label = _add_label_to(news, "FinalNewsText", "", Vector2(18, 34), Vector2(news.size.x - 36, 102), 13, INK, true)
 	final_news_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	final_news_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	var restart = _make_entry_button(final_score_panel, "FinalRestartButton", "↺  再戦", Vector2(panel_size.x - 128, panel_size.y - 48), Vector2(100, 34), _on_restart_pressed)
@@ -625,7 +625,7 @@ func _build_country_detail_panel() -> void:
 	panel.tooltip_text = "クリックで対応任務の対象を切替"
 	panel.pressed = _on_country_detail_pressed
 	_add_label_to(panel, "CountryDetailTitle", "国勢メモ", Vector2(0, 7), Vector2(detail_size.x, 22), 15, WARN.lightened(0.18))
-	country_detail_label = _add_label_to(panel, "CountryDetailLabel", "", Vector2(14, 32), Vector2(detail_size.x - 28, detail_size.y - 36), 14, TEXT, true)
+	country_detail_label = _add_label_to(panel, "CountryDetailLabel", "", Vector2(14, 32), Vector2(detail_size.x - 28, detail_size.y - 36), 13, TEXT, false)
 	country_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	country_detail_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
@@ -1315,18 +1315,15 @@ func _refresh_country_detail_panel() -> void:
 		return
 	var country = game.countries[selected_country_index]
 	var pressure := String(country.domestic_pressure.get("display_name", "国内圧力なし"))
-	country_detail_label.text = "%s\n圧力:%s / 選挙:%s\n厚生:%d  条件:%s\n次札:%s / %s\n状態:%s\n対応:%s / 印:%s\nリスク:%s\n山札/捨札:%d/%d" % [
-		country.display_name.substr(0, 12),
-		pressure.substr(0, 14),
+	country_detail_label.text = "%s\n圧:%s  選:%s  厚:%d\n状態:%s\n次札:%s  条件:%s\nリスク:%s  山/捨:%d/%d" % [
+		country.display_name.substr(0, 9),
+		pressure.substr(0, 8),
 		_election_status(country),
 		int(country.welfare_score),
-		_welfare_condition_marks(country),
-		_next_deck_name(country),
-		_pipeline_summary(country),
 		_state_card_summary(country),
-		_response_target_summary(country),
-		_worker_summary(country),
-		_country_risk_words(country),
+		_next_deck_name(country).substr(0, 6),
+		_welfare_condition_marks(country),
+		_country_risk_words(country).substr(0, 8),
 		country.deck.size(),
 		country.discard.size()
 	]

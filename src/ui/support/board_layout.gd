@@ -31,7 +31,7 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var between_countries_w := maxf(360.0, center_w - country_size.x * 2.0 - 54.0)
 	var negotiation_size := Vector2(minf(510.0, between_countries_w), 78.0)
 	var negotiation_pos := Vector2(center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 10.0)
-	var policy_slot_size := Vector2(286.0, 82.0)
+	var policy_slot_size := Vector2(286.0, 92.0)
 	var policy_slot_pos := Vector2(center_x - policy_slot_size.x * 0.5, negotiation_pos.y + negotiation_size.y + 8.0)
 	var resolution_flow_size := Vector2(minf(560.0, between_countries_w), 70.0)
 	var resolution_flow_pos := Vector2(center_x - resolution_flow_size.x * 0.5, policy_slot_pos.y + policy_slot_size.y + 8.0)
@@ -51,7 +51,7 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var left_x := center_left + 12.0
 	var right_x := center_right - country_size.x - 12.0
 	var right_log_y := event_pos.y + event_size.y + 12.0
-	var detail_h := clampf(viewport_size.y * 0.17, 116.0, 134.0)
+	var detail_h := clampf(viewport_size.y * 0.18, 126.0, 148.0)
 	var log_h := maxf(82.0, bottom_y - right_log_y - detail_h - 16.0)
 
 	return {

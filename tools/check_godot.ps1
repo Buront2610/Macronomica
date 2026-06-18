@@ -25,6 +25,8 @@ if ($godot) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_ui_visual_states.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $godot.Source --headless --path $repo --script "res://tools/audit_ui_label_fit.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/e2e_entry_flow.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/e2e_clickable_board_flow.gd"
@@ -58,6 +60,8 @@ if (Test-Path $wingetGodot) {
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_board_interaction.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_ui_visual_states.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $wingetGodot --headless --path $repo --script "res://tools/audit_ui_label_fit.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/e2e_entry_flow.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
