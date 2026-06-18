@@ -687,12 +687,12 @@ func _build_worker_tokens() -> void:
 		token.pressed = func(worker_id := worker) -> void:
 			if game.can_assign_worker():
 				_on_worker_assigned(selected_country_index, worker_id, token.position)
-		token.add_child(_make_icon(UiCatalogScript.worker_token(worker), Vector2(10, 12), Vector2(40, 40), Color.WHITE, "WorkerIcon"))
-		var name_label := _add_label_to(token, "WorkerName", UiCatalogScript.worker_name(worker), Vector2(56, 8), Vector2(84, 20), 13, TEXT, false)
+		token.add_child(_make_icon(UiCatalogScript.worker_token(worker), Vector2(10, 12), Vector2(34, 34), Color.WHITE, "WorkerIcon"))
+		var name_label := _add_label_to(token, "WorkerName", UiCatalogScript.worker_name(worker), Vector2(46, 9), Vector2(90, 22), 14, TEXT, false)
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var role_label := _add_label_to(token, "WorkerRole", _worker_role_label(worker), Vector2(56, 31), Vector2(84, 22), 10, MUTED, true)
-		role_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		role_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		var role_label := _add_label_to(token, "WorkerRole", _worker_role_label(worker), Vector2(12, 43), Vector2(124, 22), 12, WARN.lightened(0.18), true)
+		role_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		role_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		worker_nodes[worker] = token
 
 func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
@@ -709,9 +709,12 @@ func _rebuild_policy_menu(animate: bool, origin := Vector2.INF) -> void:
 		if title != null:
 			var country_label := "%s国" % UiCatalogScript.country_emblem(selected_country_index)
 			title.text = "%sの政策メニュー（1枚クリック）" % country_label if show_menu else "%sの担当ワーカー（選んで印確定）" % country_label
+			title.add_theme_font_size_override("font_size", 12 if show_menu else 15)
+			title.add_theme_color_override("font_color", WARN.lightened(0.18) if show_menu else COUNTRY_ACCENTS[selected_country_index].lightened(0.30))
 		var legend: Label = menu_panel.get_node_or_null("PolicyMenuLegend")
 		if legend != null:
 			legend.text = "共/構/協/固/危 = 政策の出所" if show_menu else "官僚/中銀/外交/監査/ロビイスト = 政策の通し方"
+			legend.add_theme_font_size_override("font_size", 10 if show_menu else 12)
 	for i in range(20):
 		var slot = board_layer.get_node_or_null("PolicyMenuSlot_%d" % i)
 		if slot != null:
@@ -1007,14 +1010,21 @@ func _refresh_agenda() -> void:
 			pips.add_child(_make_pip(Vector2(i * 14, 0), 8, WARN if i < count else TOKEN_EMPTY))
 
 func _refresh_country_seats() -> void:
+	var phase: String = game.current_phase()
 	for i in range(country_seats.size()):
 		var country = game.countries[i]
 		var accent: Color = COUNTRY_ACCENTS[i]
 		var active: bool = i == selected_country_index
 		var targeted_by_selected := _selected_policy_target_index() == i
 		var seat = country_seats[i]
-		var border_color: Color = WARN if targeted_by_selected else accent
-		seat.set_skin(Color(0.090, 0.064, 0.034, 0.94) if active else Color(0.060, 0.046, 0.030, 0.86), border_color, 3 if active or targeted_by_selected else 2, "card")
+		var border_color: Color = WARN if targeted_by_selected and phase == "policy_planning" else accent
+		var fill := Color(0.090, 0.064, 0.034, 0.94) if active else Color(0.060, 0.046, 0.030, 0.86)
+		var border_width := 3 if active or (targeted_by_selected and phase == "policy_planning") else 2
+		if phase == "worker_assignment":
+			fill = Color(0.086, 0.060, 0.034, 0.94) if active else Color(0.044, 0.036, 0.028, 0.74)
+			border_color = accent.lightened(0.18) if active else BOARD_LINE.darkened(0.48)
+			border_width = 3 if active else 1
+		seat.set_skin(fill, border_color, border_width, "card")
 		country_pressure_labels[i].text = _pressure_summary(country)
 		country_state_labels[i].text = _state_hand_card_text(country)
 		country_policy_labels[i].text = _policy_slot_summary(country)
@@ -1106,6 +1116,8 @@ func _refresh_policy_slot(animate: bool) -> void:
 	if phase == "policy_planning":
 		if title != null:
 			title.text = "操作ガイド: 政策計画"
+			title.add_theme_font_size_override("font_size", 17)
+		policy_slot_label.add_theme_font_size_override("font_size", 14)
 		if not country.selected_policy.is_empty() and String(country.selected_policy.get("target", "")) == "country":
 			policy_slot_label.text = "%s: 対象国マットをクリック\n%s" % [country_name, _target_effect_preview(country)]
 		else:
@@ -1113,22 +1125,32 @@ func _refresh_policy_slot(animate: bool) -> void:
 	elif phase == "worker_assignment":
 		if title != null:
 			title.text = "操作ガイド: ワーカー配置"
-		policy_slot_label.text = "%s: 下の担当印を選択\n終えたら右上「印確定」" % country_name
+			title.add_theme_font_size_override("font_size", 18)
+		policy_slot_label.add_theme_font_size_override("font_size", 16)
+		policy_slot_label.text = "%s: ワーカーを1つ選ぶ\n選んだら右上「印確定」" % country_name
 	elif phase == "simultaneous_reveal":
 		if title != null:
 			title.text = "操作ガイド: 同時公開"
+			title.add_theme_font_size_override("font_size", 17)
+		policy_slot_label.add_theme_font_size_override("font_size", 14)
 		policy_slot_label.text = "4国の伏せ札を公開\n右上「公開」をクリック"
 	elif phase == "resolution":
 		if title != null:
 			title.text = "操作ガイド: 解決"
+			title.add_theme_font_size_override("font_size", 17)
+		policy_slot_label.add_theme_font_size_override("font_size", 14)
 		policy_slot_label.text = "%sを確認\n右上「解決」で進む" % _resolution_step_name(resolution_step_index) if resolution_review_active else "公開済み政策を\n順に解決"
 	elif phase == "negotiation":
 		if title != null:
 			title.text = "操作ガイド: 国際交渉"
+			title.add_theme_font_size_override("font_size", 17)
+		policy_slot_label.add_theme_font_size_override("font_size", 14)
 		policy_slot_label.text = "%s: 上の議題をクリック可\n終えたら右上「政策へ」" % country_name
 	else:
 		if title != null:
 			title.text = "操作ガイド"
+			title.add_theme_font_size_override("font_size", 17)
+		policy_slot_label.add_theme_font_size_override("font_size", 14)
 		policy_slot_label.text = CardTextFormatterScript.planned_text(country, game.revealed_policies, phase, game.is_finished).replace("[center]", "").replace("[/center]", "").replace("[b]", "").replace("[/b]", "")
 	_refresh_cost_sockets(country)
 	if animate:
@@ -1600,8 +1622,8 @@ func _refresh_workers() -> void:
 	var show_workers: bool = game.current_phase() == "worker_assignment"
 	var tray_pos: Vector2 = board_layout["hand_panel_pos"]
 	var tray_size: Vector2 = board_layout["hand_panel_size"]
-	var token_gap := 12.0
-	var token_size := Vector2(clampf((tray_size.x - 64.0 - token_gap * (WORKERS.size() - 1)) / WORKERS.size(), 126.0, 152.0), 68.0)
+	var token_gap := 14.0
+	var token_size := Vector2(clampf((tray_size.x - 68.0 - token_gap * (WORKERS.size() - 1)) / WORKERS.size(), 132.0, 158.0), 78.0)
 	var total_width := token_size.x * WORKERS.size() + token_gap * (WORKERS.size() - 1)
 	var token_y := tray_pos.y + (tray_size.y - token_size.y) * 0.5 + 2.0
 	var token_x := tray_pos.x + (tray_size.x - total_width) * 0.5
@@ -1615,19 +1637,23 @@ func _refresh_workers() -> void:
 		node.position = _snap_vec(Vector2(token_x + (token_size.x + token_gap) * i, token_y))
 		node.home_position = node.position
 		var selected: bool = assigned.has(worker)
-		node.set_skin(Color(0.090, 0.064, 0.034, 0.97) if selected else Color(0.045, 0.034, 0.024, 0.94), COUNTRY_ACCENTS[selected_country_index] if selected else BOARD_LINE.darkened(0.12), 3 if selected else 2, "card")
+		node.set_skin(Color(0.105, 0.074, 0.040, 0.98) if selected else Color(0.050, 0.038, 0.026, 0.96), COUNTRY_ACCENTS[selected_country_index].lightened(0.20) if selected else BOARD_LINE.darkened(0.16), 4 if selected else 2, "card")
 		var icon: TextureRect = node.get_node_or_null("WorkerIcon")
 		if icon != null:
-			icon.position = _snap_vec(Vector2(10, 14))
-			icon.size = _snap_vec(Vector2(40, 40))
+			icon.position = _snap_vec(Vector2(12, 14))
+			icon.size = _snap_vec(Vector2(36, 36))
 		var name_label: Label = node.get_node_or_null("WorkerName")
 		if name_label != null:
-			name_label.position = _snap_vec(Vector2(58, 9))
-			name_label.size = _snap_vec(Vector2(token_size.x - 68.0, 20))
+			name_label.position = _snap_vec(Vector2(54, 10))
+			name_label.size = _snap_vec(Vector2(token_size.x - 64.0, 24))
+			name_label.add_theme_font_size_override("font_size", 14)
+			name_label.add_theme_color_override("font_color", TEXT)
 		var role_label: Label = node.get_node_or_null("WorkerRole")
 		if role_label != null:
-			role_label.position = _snap_vec(Vector2(58, 31))
-			role_label.size = _snap_vec(Vector2(token_size.x - 68.0, 28))
+			role_label.position = _snap_vec(Vector2(12, 48))
+			role_label.size = _snap_vec(Vector2(token_size.x - 24.0, 22))
+			role_label.add_theme_font_size_override("font_size", 12)
+			role_label.add_theme_color_override("font_color", WARN.lightened(0.18))
 
 func _on_advance_pressed() -> void:
 	if turn_news_active:
