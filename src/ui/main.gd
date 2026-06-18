@@ -528,16 +528,16 @@ func _build_final_score_overlay() -> void:
 	final_score_panel.visible = false
 
 func _build_turn_news_overlay() -> void:
-	var panel_pos: Vector2 = board_layout["log_pos"]
-	var panel_size := Vector2(board_layout["log_size"].x, maxf(250.0, board_layout["log_size"].y + 78.0))
+	var panel_pos: Vector2 = board_layout["news_drawer_pos"]
+	var panel_size: Vector2 = board_layout["news_drawer_size"]
 	turn_news_panel = _make_piece("TurnNewsOverlay", panel_pos, panel_size, Color(0.80, 0.69, 0.49, 0.96), BOARD_LINE, 2, "card")
 	turn_news_panel.z_index = 56
 	turn_news_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	_add_label_to(turn_news_panel, "TurnNewsTitle", "世界経済新聞", Vector2(0, 16), Vector2(panel_size.x, 30), 22, INK)
-	turn_news_label = _add_label_to(turn_news_panel, "TurnNewsText", "", Vector2(18, 56), Vector2(panel_size.x - 36, panel_size.y - 116), 14, INK, true)
+	_add_label_to(turn_news_panel, "TurnNewsTitle", "世界経済新聞 / ログ", Vector2(0, 16), Vector2(panel_size.x, 30), 22, INK)
+	turn_news_label = _add_label_to(turn_news_panel, "TurnNewsText", "", Vector2(22, 58), Vector2(panel_size.x - 44, panel_size.y - 118), 15, INK, true)
 	turn_news_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	turn_news_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-	var next = _make_entry_button(turn_news_panel, "TurnNewsNext", "次ターンへ", Vector2(panel_size.x - 146, panel_size.y - 50), Vector2(124, 36), _hide_turn_news_overlay)
+	var next = _make_entry_button(turn_news_panel, "TurnNewsNext", "閉じる", Vector2(panel_size.x - 128, panel_size.y - 48), Vector2(104, 34), _hide_turn_news_overlay)
 	next.set_skin(Color(0.060, 0.044, 0.028, 0.94), BOARD_LINE, 2, "card")
 	turn_news_panel.visible = false
 
@@ -652,12 +652,16 @@ func _show_turn_news_overlay() -> void:
 	turn_news_panel.visible = true
 	if turn_news_label != null:
 		turn_news_label.text = _turn_news_text()
+	if board_layer != null:
+		_refresh_title()
 	_bump(turn_news_panel)
 
 func _hide_turn_news_overlay() -> void:
 	turn_news_active = false
 	if turn_news_panel != null:
 		turn_news_panel.visible = false
+	if board_layer != null:
+		_refresh_title()
 
 func _select_start_country(country_index: int) -> void:
 	player_country_index = country_index
@@ -735,18 +739,18 @@ func _build_status_panels() -> void:
 	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.78, 0.66, 0.45, 0.94), BOARD_LINE, 2, "card")
 	log.tooltip_text = "クリックで新聞とログ要約を開きます。"
 	log.pressed = _on_log_panel_pressed
-	var log_title := _add_label_to(log, "LogTitle", "新聞を開く", Vector2(16, 8), Vector2(118, 22), 17, INK)
-	log_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_add_label_to(log, "LogTitle", "新聞", Vector2(0, 4), Vector2(log_size.x, 22), 17, INK, false)
 	log_panel = Label.new()
 	log_panel.name = "LogComponent"
-	log_panel.position = Vector2(142, 10)
-	log_panel.size = Vector2(log_size.x - 158, log_size.y - 20)
+	log_panel.position = Vector2(0, 25)
+	log_panel.size = Vector2(log_size.x, 16)
 	log_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	log_panel.add_theme_color_override("default_color", INK)
-	log_panel.add_theme_font_size_override("font_size", 13)
+	log_panel.add_theme_font_size_override("font_size", 10)
 	log_panel.autowrap_mode = TextServer.AUTOWRAP_OFF
 	log_panel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	log_panel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	log_panel.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	log.add_child(log_panel)
 
 func _build_country_detail_panel() -> void:
@@ -1052,6 +1056,7 @@ func _refresh_title() -> void:
 	_set_label("AdvanceTokenLabel", _advance_token_text())
 	var advance = board_layer.get_node_or_null("AdvanceToken")
 	if advance != null:
+		advance.visible = not turn_news_active
 		var advance_label: Label = advance.get_node_or_null("AdvanceTokenLabel")
 		if game.current_phase() == "negotiation":
 			advance.position = _snap_vec(board_layout["negotiation_pos"] + board_layout["negotiation_size"] - Vector2(226.0, 50.0))
@@ -1074,7 +1079,7 @@ func _refresh_title() -> void:
 		advance.tooltip_text = _advance_token_tip()
 	var recommend = board_layer.get_node_or_null("RecommendToken")
 	if recommend != null:
-		recommend.visible = game.current_phase() != "negotiation"
+		recommend.visible = game.current_phase() != "negotiation" and not turn_news_active
 		recommend.tooltip_text = _recommend_token_tip()
 		_set_label("RecommendTokenLabel", _recommend_token_text())
 	var restart = board_layer.get_node_or_null("RestartToken")
@@ -1422,7 +1427,7 @@ func _refresh_status_panels() -> void:
 			parts.append("%s %d" % [String(score.get("display_name", "")).substr(0, 2), int(score.get("score", 0))])
 		score_panel.text = "  ".join(parts)
 	if log_panel != null:
-		log_panel.text = "クリックで詳細"
+		log_panel.text = "ログ"
 
 func _refresh_final_score_overlay() -> void:
 	if final_score_panel == null:
@@ -1515,13 +1520,16 @@ func _refresh_context_visibility() -> void:
 		var world_tile: Control = board_layer.get_node_or_null("WorldTrack_%s" % key)
 		if world_tile != null:
 			world_tile.visible = world_visible
-	for node_name in ["EventCard", "ScorePanel", "LogPanel", "CountryDetailPanel"]:
+	for node_name in ["EventCard", "CountryDetailPanel"]:
 		var sidebar_node: Control = board_layer.get_node_or_null(node_name)
 		if sidebar_node != null:
-			sidebar_node.visible = not planning_focus and not worker_focus and phase != "negotiation"
+			sidebar_node.visible = false
 	var score_node: Control = board_layer.get_node_or_null("ScorePanel")
 	if score_node != null:
 		score_node.visible = not planning_focus and not worker_focus
+	var log_node: Control = board_layer.get_node_or_null("LogPanel")
+	if log_node != null:
+		log_node.visible = not planning_focus and not worker_focus
 	var negotiation_panel: Control = board_layer.get_node_or_null("NegotiationPanel")
 	if negotiation_panel != null:
 		negotiation_panel.visible = phase == "negotiation"
@@ -1855,7 +1863,13 @@ func _cost_short_name(key: String) -> String:
 	return names.get(key, key.substr(0, 1))
 
 func _turn_news_text() -> String:
-	var lines: Array = [_news_headlines(game.log).replace("\n\n", "\n")]
+	var event: Dictionary = game.world.current_event
+	var lines: Array = [
+		"公開イベント: %s" % String(event.get("display_name", "なし")),
+		String(event.get("message", "")),
+		"",
+		_news_headlines(game.log).replace("\n\n", "\n")
+	]
 	var welfare_parts: Array = []
 	for i in range(game.countries.size()):
 		var country = game.countries[i]

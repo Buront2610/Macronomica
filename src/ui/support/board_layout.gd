@@ -9,14 +9,14 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var info_x := viewport_size.x - info_w - margin
 	var board_right := info_x - 18.0
 	var center_left := board_left
-	var center_right := board_right
+	var focus_right := viewport_size.x - margin
+	var center_right := focus_right
 	var center_w := center_right - center_left
 	var center_x := center_left + center_w * 0.5
-	var focus_right := viewport_size.x - margin
 	var focus_w := focus_right - center_left
 	var focus_x := center_left + focus_w * 0.5
-	var wide_center_w := focus_right - center_left
-	var wide_center_x := center_left + wide_center_w * 0.5
+	var wide_center_w := center_w
+	var wide_center_x := center_x
 	var menu_columns := 4.0
 	var menu_rows := 4.0
 	var hand_gap := 12.0
@@ -35,7 +35,7 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var hand_step := Vector2(hand_card_size.x + hand_gap, hand_card_size.y + hand_gap)
 	var hand_origin := hand_panel_pos + Vector2(32.0, 50.0)
 
-	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.34, 244.0, 292.0))
+	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.39, 280.0, 336.0))
 	var world_pos := Vector2(center_left, header_h + 6.0)
 	var wide_world_size := Vector2(wide_center_w, world_size.y)
 	var planning_country_size := Vector2(clampf(focus_w * 0.72, 760.0, 1040.0), 132.0)
@@ -76,7 +76,8 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var state_panel_pos := Vector2(center_x - state_panel_size.x * 0.5, minf(state_panel_y, policy_preview_pos.y - state_panel_size.y - 12.0))
 	var right_log_y := event_pos.y + event_size.y + 12.0
 	var detail_h := clampf(viewport_size.y * 0.19, 152.0, 190.0)
-	var log_h := 58.0
+	var log_h := 46.0
+	var drawer_w := clampf(viewport_size.x * 0.28, 340.0, 430.0)
 
 	return {
 		"play_surface_pos": Vector2(center_left, header_h),
@@ -131,8 +132,10 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"resolution_flow_size": resolution_flow_size,
 		"score_pos": Vector2(info_x, 52.0),
 		"score_size": Vector2(info_w, 26.0),
-		"log_pos": Vector2(info_x, right_log_y),
-		"log_size": Vector2(info_w, log_h),
+		"log_pos": Vector2(focus_right - 86.0, header_h + 12.0),
+		"log_size": Vector2(68.0, log_h),
+		"news_drawer_pos": Vector2(viewport_size.x - drawer_w - margin, header_h + 12.0),
+		"news_drawer_size": Vector2(drawer_w, viewport_size.y - header_h - 36.0),
 		"country_detail_pos": Vector2(info_x, right_log_y + log_h + 8.0),
 		"country_detail_size": Vector2(info_w, detail_h),
 		"worker_origin": Vector2(worker_x, worker_y),
