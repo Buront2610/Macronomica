@@ -405,42 +405,42 @@ func _build_country_seats() -> void:
 		var country = game.countries[i]
 		var title := _add_label_to(seat, "CountryTitle", "%s国" % UiCatalogScript.country_emblem(i), Vector2(18, 12), Vector2(62, 34), 31, accent.lightened(0.22))
 		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var subtitle := _add_label_to(seat, "CountryType", _ellipsize(country.display_name.substr(3), 22), Vector2(88, 14), Vector2(seat_size.x - 196, 28), 17, MUTED)
+		var subtitle := _add_label_to(seat, "CountryType", _ellipsize(country.display_name.substr(3), 28), Vector2(88, 14), Vector2(seat_size.x - 206, 30), 18, MUTED)
 		subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 
-		var pressure = _make_child_piece(seat, "PressureCard", Vector2(18, 56), Vector2(seat_size.x * 0.46, 88), Color(0.86, 0.76, 0.55, 0.96), accent, 1, "card")
-		var pressure_label := _add_label_to(pressure, "PressureLabel", "", Vector2(12, 10), pressure.size - Vector2(24, 20), 16, INK, true)
+		var pressure = _make_child_piece(seat, "PressureCard", Vector2(20, 58), Vector2(seat_size.x * 0.47, 102), Color(0.86, 0.76, 0.55, 0.96), accent, 1, "card")
+		var pressure_label := _add_label_to(pressure, "PressureLabel", "", Vector2(14, 12), pressure.size - Vector2(28, 24), 17, INK, true)
 		pressure_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		country_pressure_labels.append(pressure_label)
 
-		var state_card = _make_child_piece(seat, "StateSummaryCard", Vector2(seat_size.x * 0.52, 56), Vector2(seat_size.x * 0.42, 42), Color(0.16, 0.13, 0.10, 0.96), BAD.darkened(0.08), 2, "card")
-		var state_label := _add_label_to(state_card, "StateSummaryLabel", "", Vector2(10, 6), state_card.size - Vector2(20, 12), 14, TEXT, false)
+		var state_card = _make_child_piece(seat, "StateSummaryCard", Vector2(seat_size.x * 0.53, 58), Vector2(seat_size.x * 0.40, 50), Color(0.16, 0.13, 0.10, 0.96), BAD.darkened(0.08), 2, "card")
+		var state_label := _add_label_to(state_card, "StateSummaryLabel", "", Vector2(12, 7), state_card.size - Vector2(24, 14), 15, TEXT, false)
 		state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		state_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 		country_state_labels.append(state_label)
 
-		var policy = _make_child_piece(seat, "PolicySlot", Vector2(seat_size.x * 0.52, 106), Vector2(seat_size.x * 0.42, 46), Color(0.032, 0.038, 0.038, 0.94), accent, 2, "card")
-		var policy_label := _add_label_to(policy, "PolicyLabel", "", Vector2(10, 8), Vector2(policy.size.x - 20, 30), 15, TEXT, false)
+		var policy = _make_child_piece(seat, "PolicySlot", Vector2(seat_size.x * 0.53, 118), Vector2(seat_size.x * 0.40, 54), Color(0.032, 0.038, 0.038, 0.94), accent, 2, "card")
+		var policy_label := _add_label_to(policy, "PolicyLabel", "", Vector2(12, 10), Vector2(policy.size.x - 24, 34), 16, TEXT, false)
 		country_policy_slots.append(policy)
 		country_policy_labels.append(policy_label)
 
-		var stamp = _make_child_piece(seat, "StampSlot", Vector2(seat_size.x - 76, 12), Vector2(58, 58), Color(0.020, 0.018, 0.014, 0.68), accent, 1, "circle")
+		var stamp = _make_child_piece(seat, "StampSlot", Vector2(seat_size.x - 82, 12), Vector2(64, 64), Color(0.020, 0.018, 0.014, 0.68), accent, 1, "circle")
 		stamp.add_child(_make_icon("bureaucrat_seal", Vector2.ZERO, stamp.size, Color.WHITE, "WorkerIcon"))
 		_add_label_to(stamp, "WorkerCount", "", Vector2(38, 38), Vector2(22, 20), 12, WARN.lightened(0.18))
 		country_stamp_slots.append(stamp)
 		country_worker_icons.append(stamp.get_node("WorkerIcon"))
 
-		var info_y := seat_size.y - 54.0
-		var next_label := _add_label_to(seat, "NextDeckLabel", "", Vector2(18, info_y), Vector2(seat_size.x * 0.35, 22), 13, MUTED, false)
+		var info_y := seat_size.y - 58.0
+		var next_label := _add_label_to(seat, "NextDeckLabel", "", Vector2(20, info_y), Vector2(seat_size.x * 0.35, 24), 14, MUTED, false)
 		next_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		next_label.visible = false
-		var pipeline_label := _add_label_to(seat, "PipelineLabel", "", Vector2(seat_size.x * 0.39, info_y), Vector2(seat_size.x * 0.21, 22), 13, WARN.lightened(0.16), false)
+		var pipeline_label := _add_label_to(seat, "PipelineLabel", "", Vector2(seat_size.x * 0.39, info_y), Vector2(seat_size.x * 0.21, 24), 14, WARN.lightened(0.16), false)
 		pipeline_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		pipeline_label.visible = false
-		var election_label := _add_label_to(seat, "ElectionLabel", "", Vector2(seat_size.x * 0.62, info_y), Vector2(seat_size.x * 0.16, 22), 13, MUTED, false)
+		var election_label := _add_label_to(seat, "ElectionLabel", "", Vector2(seat_size.x * 0.62, info_y), Vector2(seat_size.x * 0.16, 24), 14, MUTED, false)
 		election_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		election_label.visible = false
-		var welfare_label := _add_label_to(seat, "WelfareLabel", "", Vector2(seat_size.x - 104, 16), Vector2(86, 26), 16, WARN.lightened(0.16), false)
+		var welfare_label := _add_label_to(seat, "WelfareLabel", "", Vector2(seat_size.x - 112, 16), Vector2(94, 28), 17, WARN.lightened(0.16), false)
 		welfare_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		country_next_labels.append(next_label)
 		country_pipeline_labels.append(pipeline_label)
@@ -449,8 +449,8 @@ func _build_country_seats() -> void:
 
 		var chips := Control.new()
 		chips.name = "RiskChips"
-		chips.position = Vector2(18, seat_size.y - 30)
-		chips.size = Vector2(seat_size.x - 36, 24)
+		chips.position = Vector2(20, seat_size.y - 34)
+		chips.size = Vector2(seat_size.x - 40, 28)
 		chips.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		seat.add_child(chips)
 		country_chip_racks.append(chips)

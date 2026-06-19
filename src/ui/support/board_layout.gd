@@ -30,7 +30,7 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var policy_preview_pos := Vector2(hand_panel_x, hand_panel_pos.y - policy_preview_size.y - 14.0)
 	var bottom_y := hand_panel_pos.y - 18.0
 
-	var country_size := Vector2(clampf(center_w * 0.38, 392.0, 460.0), clampf(viewport_size.y * 0.26, 192.0, 214.0))
+	var country_size := Vector2(clampf(center_w * 0.30, 510.0, 560.0), clampf(viewport_size.y * 0.25, 192.0, 204.0))
 	var country_gap := 14.0
 	var hand_step := Vector2(hand_card_size.x + hand_gap, hand_card_size.y + hand_gap)
 	var hand_origin := hand_panel_pos + Vector2(32.0, 50.0)
@@ -70,7 +70,7 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var event_size := Vector2(info_w, 164.0)
 	var seat_y := world_pos.y + world_size.y + 10.0
 	var left_x := center_left + 12.0
-	var right_x := center_right - country_size.x - 12.0
+	var right_x := center_right - country_size.x - 330.0
 	var state_panel_size := Vector2(clampf(focus_w * 0.56, 760.0, 980.0), 166.0)
 	var state_panel_y := seat_y + country_size.y * 2.0 + country_gap + 12.0
 	var state_panel_pos := Vector2(center_x - state_panel_size.x * 0.5, minf(state_panel_y, policy_preview_pos.y - state_panel_size.y - 12.0))
