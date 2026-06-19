@@ -24,6 +24,12 @@
     "remove_from_policy_catalog": ["obsolete_subsidy_program"],
     "replace_in_policy_catalog": [{"from": "temporary_relief", "to": "institutionalized_stabilizer"}],
     "add_world_card": "retaliatory_tariffs"
+  },
+  "mutations_by_resolution": {
+    "full": {"add_to_policy_catalog": ["institutionalized_stabilizer"]},
+    "softened": {"add_to_policy_catalog": ["captured_reform"]},
+    "subsidized": {"add_to_policy_catalog": ["pork_barrel_variant"]},
+    "delayed": {"add_to_deck": ["reform_fatigue"]}
   }
 }
 ```
@@ -43,6 +49,7 @@
 - `mutations.remove_from_policy_catalog`: 自国の政策カタログ（山札・捨て札・現在議題・メニュー）から該当政策を除去する。基本政策は除去しない
 - `mutations.replace_in_policy_catalog`: 政策カタログ内の政策を別政策へ置換する。改革の制度化・歪曲・恒久化などを表す
 - `mutations.add_world_card`: 世界イベント捨て札へ追加
+- `mutations_by_resolution`: 成立結果ごとの追加変質。`mutations` に合成される。キーは `full`（完全成立） / `subsidized`（政治不足による補助金混入） / `delayed`（行政不足またはラグによる延期） / `softened`（その他不足による骨抜き）。成功した改革が政策カタログを制度化し、骨抜き政策が歪んだ政策バリアントを残す、といった表現に使う
 
 成立判定はコスト種別ごとに行います。行政不足または `lag` つき政策は `pending_effects` に積まれ、後続ターン開始時に発現します。政治コストだけが不足した場合は補助金混入として扱い、政策効果は出ますが債務と利権カードが増えます。
 

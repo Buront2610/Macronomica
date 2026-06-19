@@ -9,6 +9,7 @@ static func resolve_paid_policy(country, countries: Array, world, policy: Dictio
 	var log: Array = []
 	var success: bool = bool(paid.get("success", true))
 	var shortages: Dictionary = paid.get("shortages", {})
+	var resolution_state := policy_resolution_state(country, policy, paid)
 	var effects: Dictionary = policy.get("effects", {})
 	var target_country = _target_country(country, countries, policy)
 	var country_effects: Dictionary = effects.get("donor", effects.get("country", {})).duplicate(true) if target_country != null else effects.get("country", {}).duplicate(true)
@@ -59,7 +60,7 @@ static func resolve_paid_policy(country, countries: Array, world, policy: Dictio
 	world.apply_effects(world_effects)
 	if delay_turns <= 0:
 		_apply_spillovers(country, countries, policy, log)
-	_apply_mutations(country, world, policy, card_index, policy_index, log)
+	_apply_mutations(country, world, policy, card_index, policy_index, resolution_state, log)
 	if country.has_assigned_worker("lobbyist") and card_index.has("rent_seeking"):
 		country.deck.push_front(card_index["rent_seeking"])
 		log.append("%s はロビイストを使ったため、利権カードがデッキに残りました。" % country.display_name)
@@ -169,8 +170,29 @@ static func _apply_spillovers(source, countries: Array, policy: Dictionary, log:
 				target.apply_effects(spillover.get("effects", {}))
 				log.append("%s の政策が %s に波及しました。" % [source.display_name, target.display_name])
 
-static func _apply_mutations(country, world, policy: Dictionary, card_index: Dictionary, policy_index: Dictionary, log: Array) -> void:
-	var mutations: Dictionary = policy.get("mutations", {})
+static func _apply_mutations(country, world, policy: Dictionary, card_index: Dictionary, policy_index: Dictionary, resolution_state: String, log: Array) -> void:
+	var mutations: Dictionary = _resolved_mutations(policy, resolution_state)
+	_apply_mutation_payload(country, world, mutations, card_index, policy_index, log)
+
+static func _resolved_mutations(policy: Dictionary, resolution_state: String) -> Dictionary:
+	var mutations: Dictionary = policy.get("mutations", {}).duplicate(true)
+	var by_resolution: Dictionary = policy.get("mutations_by_resolution", {})
+	if by_resolution.has(resolution_state):
+		mutations = _merge_mutations(mutations, by_resolution[resolution_state])
+	return mutations
+
+static func _merge_mutations(base: Dictionary, extra: Dictionary) -> Dictionary:
+	var result := base.duplicate(true)
+	for key in ["add_to_deck", "remove_from_deck", "add_to_policy_catalog", "remove_from_policy_catalog", "replace_in_policy_catalog"]:
+		var values: Array = result.get(key, []).duplicate(true)
+		values.append_array(extra.get(key, []))
+		if not values.is_empty():
+			result[key] = values
+	if extra.has("add_world_card"):
+		result["add_world_card"] = extra["add_world_card"]
+	return result
+
+static func _apply_mutation_payload(country, world, mutations: Dictionary, card_index: Dictionary, policy_index: Dictionary, log: Array) -> void:
 	var added_cards: Array = mutations.get("add_to_deck", [])
 	for i in range(added_cards.size() - 1, -1, -1):
 		var card_id := String(added_cards[i])

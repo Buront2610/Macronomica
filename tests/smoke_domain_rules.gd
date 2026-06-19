@@ -225,6 +225,31 @@ func _init() -> void:
 	_assert(not catalog_country.policy_cooldowns.has("obsolete_probe"), "removing policy catalog cards clears cooldowns")
 	_assert(_contains(catalog_log, "政策カタログ"), "policy catalog mutations are logged")
 
+	var outcome_country = CountryStateScript.new()
+	outcome_country.display_name = "結果別政策国"
+	outcome_country.tracks = {"gdp_gap": 0, "inflation": 0, "expected_inflation": 0, "unemployment": 0, "debt": 0, "financial_stress": 0, "political_capital": 10, "exchange_rate": 0, "current_account": 0, "influence": 0}
+	var outcome_policy_index := {
+		"clean_reform_probe": {"id": "clean_reform_probe", "display_name": "制度化改革", "type": "policy", "tags": ["reform"], "costs": {}, "effects": {"country": {}, "world": {}}},
+		"captured_reform_probe": {"id": "captured_reform_probe", "display_name": "妥協改革", "type": "policy", "tags": ["captured"], "costs": {}, "effects": {"country": {}, "world": {}}}
+	}
+	var outcome_policy := {
+		"display_name": "結果別変質政策",
+		"costs": {"political": 2},
+		"effects": {"country": {}, "world": {}},
+		"mutations_by_resolution": {
+			"full": {"add_to_policy_catalog": ["clean_reform_probe"]},
+			"softened": {"add_to_policy_catalog": ["captured_reform_probe"]}
+		}
+	}
+	PolicyResolverScript.resolve_paid_policy(outcome_country, [], world, outcome_policy, {}, {"success": true, "shortages": {}, "costs": {"political": 2}}, outcome_policy_index)
+	_assert(_policy_catalog_has(outcome_country, "clean_reform_probe"), "full policy resolution can add clean catalog variants")
+	_assert(int(outcome_country.tracks.get("political_capital", 0)) == 10, "resolution-specific mutations do not pay policy costs a second time")
+	var softened_country = CountryStateScript.new()
+	softened_country.display_name = "骨抜き政策国"
+	softened_country.tracks = {"gdp_gap": 0, "inflation": 0, "expected_inflation": 0, "unemployment": 0, "debt": 0, "financial_stress": 0, "political_capital": 10, "exchange_rate": 0, "current_account": 0, "influence": 0}
+	PolicyResolverScript.resolve_paid_policy(softened_country, [], world, outcome_policy, {}, {"success": false, "shortages": {"credibility": 1}, "costs": {"political": 2}}, outcome_policy_index)
+	_assert(_policy_catalog_has(softened_country, "captured_reform_probe"), "softened policy resolution can add captured catalog variants")
+
 	var spillover_policy := {
 		"id": "spillover_probe",
 		"display_name": "先行波及",
