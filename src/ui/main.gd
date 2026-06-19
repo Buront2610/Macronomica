@@ -719,19 +719,19 @@ func _build_policy_preview_panel() -> void:
 	policy_preview_panel = _make_piece("PolicyPreviewPanel", panel_pos, panel_size, Color(0.060, 0.044, 0.026, 0.95), BOARD_LINE, 2, "plaque")
 	policy_preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	policy_preview_panel.z_index = 24
-	_add_label_to(policy_preview_panel, "PolicyPreviewTitle", "選択候補の政策", Vector2(18, 10), Vector2(230, 24), 17, WARN.lightened(0.16), false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	policy_focus_card = _make_child_piece(policy_preview_panel, "PolicyFocusCard", Vector2(18, 40), Vector2(258, 122), CARD_FACE, BOARD_LINE, 2, "card")
+	_add_label_to(policy_preview_panel, "PolicyPreviewTitle", "フォーカス中の政策", Vector2(18, 10), Vector2(260, 24), 18, WARN.lightened(0.16), false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	policy_focus_card = _make_child_piece(policy_preview_panel, "PolicyFocusCard", Vector2(18, 38), Vector2(330, 124), CARD_FACE, BOARD_LINE, 2, "card")
 	policy_focus_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	policy_focus_icon = _make_icon("reform_wrench", Vector2(16, 16), Vector2(70, 70), Color.WHITE, "PolicyFocusIcon")
+	policy_focus_icon = _make_icon("reform_wrench", Vector2(16, 16), Vector2(80, 80), Color.WHITE, "PolicyFocusIcon")
 	policy_focus_card.add_child(policy_focus_icon)
-	policy_focus_title = _add_label_to(policy_focus_card, "PolicyFocusTitle", "", Vector2(98, 12), Vector2(144, 48), 19, INK, true)
+	policy_focus_title = _add_label_to(policy_focus_card, "PolicyFocusTitle", "", Vector2(108, 10), Vector2(204, 52), 23, INK, true)
 	policy_focus_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	policy_focus_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	policy_focus_source = _add_label_to(policy_focus_card, "PolicyFocusSource", "", Vector2(98, 66), Vector2(144, 18), 13, INK.darkened(0.05), false)
+	policy_focus_source = _add_label_to(policy_focus_card, "PolicyFocusSource", "", Vector2(110, 66), Vector2(202, 20), 14, INK.darkened(0.05), false)
 	policy_focus_source.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	policy_focus_cost = _add_label_to(policy_focus_card, "PolicyFocusCost", "", Vector2(16, 94), Vector2(226, 18), 13, INK.darkened(0.05), false)
+	policy_focus_cost = _add_label_to(policy_focus_card, "PolicyFocusCost", "", Vector2(18, 94), Vector2(294, 20), 15, INK.darkened(0.05), false)
 	policy_focus_cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	policy_preview_label = _add_label_to(policy_preview_panel, "PolicyPreviewLabel", "", Vector2(304, 42), Vector2(panel_size.x - 326, panel_size.y - 54), 17, TEXT, true)
+	policy_preview_label = _add_label_to(policy_preview_panel, "PolicyPreviewLabel", "", Vector2(374, 38), Vector2(panel_size.x - 396, panel_size.y - 48), 18, TEXT, true)
 	policy_preview_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	policy_preview_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
@@ -1020,10 +1020,12 @@ func _policy_preview_text(country, policy: Dictionary, index: int) -> String:
 	var cost_text := _policy_menu_cost_summary(country, policy).replace(" ", "")
 	var shortage_brief := shortage_text.replace("不足:", "不:").replace(" ", "")
 	var effects_brief := effect_text.replace("自国:", "国:").replace("世界:", "世:")
-	return "#%02d  %s [%s]\n制約:%s %s %s\n%s" % [
+	var description := _ellipsize(String(policy.get("description", "")), 42)
+	return "#%02d  %s [%s]\n%s\n制約:%s %s %s\n効果:%s" % [
 		index + 1,
 		String(policy.get("display_name", policy.get("id", "政策"))).substr(0, 14),
 		_policy_source_preview(policy),
+		description,
 		pressure_text,
 		cost_text,
 		shortage_brief,
