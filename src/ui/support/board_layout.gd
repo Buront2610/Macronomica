@@ -41,7 +41,7 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var planning_country_size := Vector2(clampf(focus_w * 0.72, 760.0, 1040.0), 132.0)
 	var planning_country_pos := Vector2(focus_x - planning_country_size.x * 0.5, world_pos.y + 12.0)
 	var between_countries_w := maxf(360.0, center_w - country_size.x * 2.0 - 54.0)
-	var negotiation_size := Vector2(clampf(wide_center_w * 0.68, 780.0, 980.0), clampf(viewport_size.y * 0.34, 238.0, 284.0))
+	var negotiation_size := Vector2(clampf(wide_center_w * 0.82, 940.0, 1120.0), clampf(viewport_size.y * 0.35, 252.0, 300.0))
 	var negotiation_pos := Vector2(wide_center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 12.0)
 	var policy_slot_size := Vector2(440.0, 118.0)
 	var policy_slot_pos := Vector2(center_x - policy_slot_size.x * 0.5, negotiation_pos.y + negotiation_size.y + 8.0)
@@ -111,9 +111,9 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"world_tracks_origin": world_pos + Vector2(40.0, 62.0),
 		"world_track_step": Vector2(world_track_w + world_track_gap, world_track_h + world_track_gap),
 		"world_track_size": Vector2(world_track_w, world_track_h),
-		"agenda_origin": negotiation_pos + Vector2(24.0, 82.0),
+		"agenda_origin": negotiation_pos + Vector2(24.0, 92.0),
 		"agenda_step": Vector2((negotiation_size.x - 48.0) / 4.0, 0.0),
-		"agenda_size": Vector2((negotiation_size.x - 84.0) / 4.0, 82.0),
+		"agenda_size": Vector2((negotiation_size.x - 84.0) / 4.0, 104.0),
 		"negotiation_pos": negotiation_pos,
 		"negotiation_size": negotiation_size,
 		"country_seat_positions": [
