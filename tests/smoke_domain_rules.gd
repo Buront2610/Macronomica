@@ -15,6 +15,7 @@ func _init() -> void:
 		_assert(country.deck.size() + country.hand.size() + country.discard.size() == 12, "%s starts with a 12-card state deck" % country.display_name)
 		_assert(_policy_count(country.deck) + _policy_count(country.hand) + _policy_count(country.discard) == 0, "%s state deck contains no policy cards" % country.display_name)
 		_assert(country.policy_menu.size() >= 12, "%s has a persistent policy menu" % country.display_name)
+		_assert(_policy_catalog_menu_count(country) >= 12 and _policy_catalog_menu_count(country) <= 15, "%s starts with a 12-15 card policy catalog" % country.display_name)
 		_assert(country.active_agenda.size() >= 5 and country.active_agenda.size() <= 8, "%s has a bounded active policy agenda" % country.display_name)
 		_assert(_basic_policy_count(country.active_agenda) == 5, "%s keeps every basic policy as an agenda safety valve" % country.display_name)
 		_assert(_all_agenda_from_catalog_or_basic(country), "%s active agenda is generated from basic policies or the policy catalog" % country.display_name)
@@ -355,6 +356,14 @@ func _basic_policy_count(cards: Array) -> int:
 	for card in cards:
 		var policy_id := String(card.get("id", ""))
 		if ["fiscal_stimulus", "austerity", "policy_rate_hike", "rate_cut_and_qe", "social_safety_net"].has(policy_id):
+			count += 1
+	return count
+
+func _policy_catalog_menu_count(country) -> int:
+	var count := 0
+	for policy in country.policy_menu:
+		var policy_id := String(policy.get("id", ""))
+		if not ["fiscal_stimulus", "austerity", "policy_rate_hike", "rate_cut_and_qe", "social_safety_net"].has(policy_id):
 			count += 1
 	return count
 

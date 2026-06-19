@@ -54,6 +54,9 @@ static func build_policy_menu(preset: Dictionary, module_defs: Dictionary, polic
 	for policy_id in preset.get("unique_policies", []):
 		if policy_index.has(policy_id):
 			_append_policy_menu_card(cards, policy_index[policy_id], "unique", COMMON_POLICY_IDS + COOPERATION_POLICY_IDS)
+	for policy_id in preset.get("catalog_fillers", []):
+		if policy_index.has(policy_id):
+			_append_policy_menu_card(cards, policy_index[policy_id], "catalog", COMMON_POLICY_IDS + COOPERATION_POLICY_IDS)
 	for policy_id in COOPERATION_POLICY_IDS:
 		if policy_index.has(policy_id):
 			_append_policy_menu_card(cards, policy_index[policy_id], "cooperation")

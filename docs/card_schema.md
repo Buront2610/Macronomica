@@ -52,6 +52,7 @@
 
 - `election_turn`: 最初の選挙ターン。以後 `election_period` ごとに選挙が来ます
 - `election_period`: 選挙周期。省略時は4ターン
+- `catalog_fillers`: 初期政策カタログを12〜15枚に保つための追加政策。国家構造に沿った政策をデータ側で指定し、コアロジックに `country_id` 分岐を書かない
 - `starting_tracks.expected_inflation`: 期待インフレ。流動性の罠とデフレスパイラルに使います
 - `starting_tracks.influence`: 国際影響力。共同宣言遵守や国際政策で増え、最終スコアと国際容量に効きます
 
