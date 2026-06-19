@@ -63,9 +63,24 @@ static func format_mutations(mutations: Dictionary) -> String:
 		parts.append("追加 " + ", ".join(mutations["add_to_deck"]))
 	if mutations.has("remove_from_deck"):
 		parts.append("除去 " + ", ".join(mutations["remove_from_deck"]))
+	if mutations.has("add_to_policy_catalog"):
+		parts.append("政策追加 " + ", ".join(_mutation_entry_names(mutations["add_to_policy_catalog"])))
+	if mutations.has("remove_from_policy_catalog"):
+		parts.append("政策除去 " + ", ".join(_mutation_entry_names(mutations["remove_from_policy_catalog"])))
+	if mutations.has("replace_in_policy_catalog"):
+		parts.append("政策置換 " + str(mutations["replace_in_policy_catalog"].size()))
 	if mutations.has("add_world_card"):
 		parts.append("世界 " + String(mutations["add_world_card"]))
 	return " / ".join(parts) if not parts.is_empty() else "なし"
+
+static func _mutation_entry_names(entries: Array) -> Array:
+	var names := []
+	for entry in entries:
+		if entry is Dictionary:
+			names.append(String(entry.get("display_name", entry.get("id", ""))))
+		else:
+			names.append(String(entry))
+	return names
 
 static func first_policy(cards: Array) -> Dictionary:
 	for card in cards:

@@ -99,12 +99,54 @@ func discard_active_agenda() -> void:
 		_append_policy_unique(policy_catalog_discard, policy)
 	active_agenda = []
 
+func add_policy_to_catalog(policy: Dictionary, source := "mutation") -> bool:
+	var policy_id := String(policy.get("id", ""))
+	if policy_id.is_empty() or _policy_exists_in_catalog(policy_id):
+		return false
+	var catalog_policy := policy.duplicate(true)
+	if String(catalog_policy.get("_menu_source", "")).is_empty():
+		catalog_policy["_menu_source"] = source
+	policy_menu.append(catalog_policy.duplicate(true))
+	if not _is_basic_policy(catalog_policy):
+		policy_catalog_deck.push_front(catalog_policy.duplicate(true))
+	return true
+
+func remove_policy_from_catalog(policy_id: String) -> bool:
+	if policy_id.is_empty():
+		return false
+	var removed := false
+	removed = _remove_policy_by_id(policy_menu, policy_id, true) or removed
+	removed = _remove_policy_by_id(policy_catalog_deck, policy_id, true) or removed
+	removed = _remove_policy_by_id(policy_catalog_discard, policy_id, true) or removed
+	removed = _remove_policy_by_id(active_agenda, policy_id, true) or removed
+	if removed:
+		policy_cooldowns.erase(policy_id)
+	return removed
+
 func _append_policy_unique(target: Array, policy: Dictionary) -> void:
 	var policy_id := String(policy.get("id", ""))
 	for existing in target:
 		if String(existing.get("id", "")) == policy_id:
 			return
 	target.append(policy.duplicate(true))
+
+func _policy_exists_in_catalog(policy_id: String) -> bool:
+	for zone in [policy_menu, policy_catalog_deck, policy_catalog_discard, active_agenda]:
+		for policy in zone:
+			if String(policy.get("id", "")) == policy_id:
+				return true
+	return false
+
+func _remove_policy_by_id(policies: Array, policy_id: String, keep_basic := false) -> bool:
+	for i in range(policies.size()):
+		var policy: Dictionary = policies[i]
+		if String(policy.get("id", "")) != policy_id:
+			continue
+		if keep_basic and _is_basic_policy(policy):
+			return false
+		policies.remove_at(i)
+		return true
+	return false
 
 func _is_basic_policy(policy: Dictionary) -> bool:
 	var policy_id := String(policy.get("id", ""))

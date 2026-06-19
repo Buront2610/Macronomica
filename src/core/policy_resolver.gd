@@ -1,11 +1,11 @@
 extends RefCounted
 class_name PolicyResolver
 
-static func resolve_policy(country, countries: Array, world, policy: Dictionary, card_index: Dictionary) -> Array:
+static func resolve_policy(country, countries: Array, world, policy: Dictionary, card_index: Dictionary, policy_index := {}) -> Array:
 	var paid: Dictionary = country.pay_costs(policy.get("costs", {}))
-	return resolve_paid_policy(country, countries, world, policy, card_index, paid)
+	return resolve_paid_policy(country, countries, world, policy, card_index, paid, policy_index)
 
-static func resolve_paid_policy(country, countries: Array, world, policy: Dictionary, card_index: Dictionary, paid: Dictionary) -> Array:
+static func resolve_paid_policy(country, countries: Array, world, policy: Dictionary, card_index: Dictionary, paid: Dictionary, policy_index := {}) -> Array:
 	var log: Array = []
 	var success: bool = bool(paid.get("success", true))
 	var shortages: Dictionary = paid.get("shortages", {})
@@ -59,7 +59,7 @@ static func resolve_paid_policy(country, countries: Array, world, policy: Dictio
 	world.apply_effects(world_effects)
 	if delay_turns <= 0:
 		_apply_spillovers(country, countries, policy, log)
-	_apply_mutations(country, world, policy, card_index, log)
+	_apply_mutations(country, world, policy, card_index, policy_index, log)
 	if country.has_assigned_worker("lobbyist") and card_index.has("rent_seeking"):
 		country.deck.push_front(card_index["rent_seeking"])
 		log.append("%s はロビイストを使ったため、利権カードがデッキに残りました。" % country.display_name)
@@ -169,7 +169,7 @@ static func _apply_spillovers(source, countries: Array, policy: Dictionary, log:
 				target.apply_effects(spillover.get("effects", {}))
 				log.append("%s の政策が %s に波及しました。" % [source.display_name, target.display_name])
 
-static func _apply_mutations(country, world, policy: Dictionary, card_index: Dictionary, log: Array) -> void:
+static func _apply_mutations(country, world, policy: Dictionary, card_index: Dictionary, policy_index: Dictionary, log: Array) -> void:
 	var mutations: Dictionary = policy.get("mutations", {})
 	var added_cards: Array = mutations.get("add_to_deck", [])
 	for i in range(added_cards.size() - 1, -1, -1):
@@ -184,6 +184,37 @@ static func _apply_mutations(country, world, policy: Dictionary, card_index: Dic
 	if not world_card_id.is_empty() and card_index.has(world_card_id):
 		world.event_discard.append(card_index[world_card_id])
 		log.append("世界デッキに「%s」が追加されました。" % card_index[world_card_id].get("display_name", world_card_id))
+	for entry in mutations.get("add_to_policy_catalog", []):
+		var added_policy := _policy_from_mutation_entry(entry, policy_index)
+		if not added_policy.is_empty() and country.add_policy_to_catalog(added_policy):
+			log.append("%s の政策カタログに「%s」が追加されました。" % [country.display_name, added_policy.get("display_name", added_policy.get("id", ""))])
+	for entry in mutations.get("remove_from_policy_catalog", []):
+		var policy_id := _mutation_entry_id(entry)
+		if country.remove_policy_from_catalog(policy_id):
+			var display_name := String(policy_index.get(policy_id, {}).get("display_name", policy_id))
+			log.append("%s の政策カタログから「%s」が除去されました。" % [country.display_name, display_name])
+	for replacement in mutations.get("replace_in_policy_catalog", []):
+		var old_id := String(replacement.get("from", replacement.get("remove", "")))
+		var new_entry = replacement.get("to", replacement.get("add", ""))
+		var new_policy := _policy_from_mutation_entry(new_entry, policy_index)
+		if old_id.is_empty() or new_policy.is_empty():
+			continue
+		if country.remove_policy_from_catalog(old_id) and country.add_policy_to_catalog(new_policy):
+			var old_name := String(policy_index.get(old_id, {}).get("display_name", old_id))
+			log.append("%s の政策カタログで「%s」が「%s」に置き換わりました。" % [country.display_name, old_name, new_policy.get("display_name", new_policy.get("id", ""))])
+
+static func _policy_from_mutation_entry(entry, policy_index: Dictionary) -> Dictionary:
+	if entry is Dictionary:
+		return entry.duplicate(true)
+	var policy_id := String(entry)
+	if policy_index.has(policy_id):
+		return policy_index[policy_id].duplicate(true)
+	return {}
+
+static func _mutation_entry_id(entry) -> String:
+	if entry is Dictionary:
+		return String(entry.get("id", ""))
+	return String(entry)
 
 static func _remove_one(country, ids: Array, log: Array) -> void:
 	for card_id in ids:

@@ -20,6 +20,9 @@
   "mutations": {
     "add_to_deck": ["fiscal_rigidity"],
     "remove_from_deck": ["corruption_risk"],
+    "add_to_policy_catalog": ["emergency_liquidity_facility"],
+    "remove_from_policy_catalog": ["obsolete_subsidy_program"],
+    "replace_in_policy_catalog": [{"from": "temporary_relief", "to": "institutionalized_stabilizer"}],
     "add_world_card": "retaliatory_tariffs"
   }
 }
@@ -36,6 +39,9 @@
 - `spillovers`: `target_tag` を持つ他国に効果を与える
 - `mutations.add_to_deck`: 自国の状態デッキの山札トップへ、列挙順に追加（政策カードは追加しない）
 - `mutations.remove_from_deck`: 自国の状態デッキ山札・捨て札・公開状態カードから該当カードを1枚除去
+- `mutations.add_to_policy_catalog`: 自国の政策カタログへ政策を追加し、次ターン以降の `active_agenda` 候補にする
+- `mutations.remove_from_policy_catalog`: 自国の政策カタログ（山札・捨て札・現在議題・メニュー）から該当政策を除去する。基本政策は除去しない
+- `mutations.replace_in_policy_catalog`: 政策カタログ内の政策を別政策へ置換する。改革の制度化・歪曲・恒久化などを表す
 - `mutations.add_world_card`: 世界イベント捨て札へ追加
 
 成立判定はコスト種別ごとに行います。行政不足または `lag` つき政策は `pending_effects` に積まれ、後続ターン開始時に発現します。政治コストだけが不足した場合は補助金混入として扱い、政策効果は出ますが債務と利権カードが増えます。

@@ -46,9 +46,9 @@ const BASIC_POLICY_IDS := [
 	"rate_cut_and_qe",
 	"social_safety_net"
 ]
-const ACTIVE_AGENDA_BASIC_COUNT := 3
-const ACTIVE_AGENDA_CATALOG_COUNT := 4
-const ACTIVE_AGENDA_MAX := 7
+const ACTIVE_AGENDA_BASIC_COUNT := 5
+const ACTIVE_AGENDA_CATALOG_COUNT := 3
+const ACTIVE_AGENDA_MAX := 8
 
 var turn := 1
 var turn_limit := 10
@@ -308,7 +308,7 @@ func resolve_turn() -> void:
 		var country = countries[country_index]
 		if country.selected_policy.is_empty():
 			continue
-		log.append_array(PolicyResolverScript.resolve_paid_policy(country, countries, world, country.selected_policy, card_index, payments.get(country_index, {})))
+		log.append_array(PolicyResolverScript.resolve_paid_policy(country, countries, world, country.selected_policy, card_index, payments.get(country_index, {}), policy_index))
 		_move_selected_to_discard(country)
 	var macro_start_world: Dictionary = world.tracks.duplicate(true)
 	log.append_array(WorldResolverScript.apply_macro_feedback(countries, world, macro_start_world))
@@ -375,7 +375,7 @@ func preview_resolution_outcome() -> Dictionary:
 		var before_world: Dictionary = preview_world.tracks.duplicate(true)
 		var before_cards := _card_zone_snapshot(country, preview_world)
 		var cost_result: Dictionary = payments.get(i, {})
-		var policy_log: Array = PolicyResolverScript.resolve_paid_policy(country, preview_countries, preview_world, policy, card_index, cost_result)
+		var policy_log: Array = PolicyResolverScript.resolve_paid_policy(country, preview_countries, preview_world, policy, card_index, cost_result, policy_index)
 		var after_cards := _card_zone_snapshot(country, preview_world)
 		var country_diffs := _country_track_diffs(before_countries, preview_countries)
 		if payment_diffs.has(i):
@@ -450,6 +450,7 @@ func _build_active_agendas() -> void:
 			_append_agenda_unique(country.active_agenda, policy)
 			if _basic_count(country.active_agenda) >= ACTIVE_AGENDA_BASIC_COUNT:
 				break
+		_surface_pressure_policy(country)
 		for policy in country.draw_catalog_cards(ACTIVE_AGENDA_CATALOG_COUNT, rng):
 			_append_agenda_unique(country.active_agenda, policy)
 		_surface_response_policy(country)
@@ -466,9 +467,19 @@ func _refresh_active_agendas_after_negotiation() -> void:
 
 func _trim_active_agenda(country) -> void:
 	while country.active_agenda.size() > ACTIVE_AGENDA_MAX:
-		var policy: Dictionary = country.active_agenda.pop_back()
+		var remove_index := _last_non_basic_agenda_index(country.active_agenda)
+		if remove_index < 0:
+			remove_index = country.active_agenda.size() - 1
+		var policy: Dictionary = country.active_agenda[remove_index]
+		country.active_agenda.remove_at(remove_index)
 		if not _is_basic_policy(policy):
 			country.policy_catalog_discard.push_front(policy)
+
+func _last_non_basic_agenda_index(agenda: Array) -> int:
+	for i in range(agenda.size() - 1, -1, -1):
+		if not _is_basic_policy(agenda[i]):
+			return i
+	return -1
 
 func _ranked_basic_policies(country) -> Array:
 	var basics := []
@@ -518,15 +529,22 @@ func _surface_response_policy(country) -> void:
 			_append_agenda_unique(country.active_agenda, policy, true)
 			return
 
-func _surface_declared_policy(country) -> void:
-	var tag := String(country.declared_agenda)
-	if tag.is_empty():
-		tag = String(country.support_request_tag)
-	if tag.is_empty():
+func _surface_pressure_policy(country) -> void:
+	var wanted_tags: Array = country.domestic_pressure.get("demand", {}).get("preferred_policy_tags", [])
+	if wanted_tags.is_empty():
 		return
-	var policy := _take_policy_matching_tags(country, [tag])
+	var policy := _take_policy_matching_tags(country, wanted_tags)
 	if not policy.is_empty():
 		_append_agenda_unique(country.active_agenda, policy, true)
+
+func _surface_declared_policy(country) -> void:
+	for tag in [country.declared_agenda, country.support_request_tag, country.support_pledge_tag]:
+		var tag_text := String(tag)
+		if tag_text.is_empty():
+			continue
+		var policy := _take_policy_matching_tags(country, [tag_text])
+		if not policy.is_empty():
+			_append_agenda_unique(country.active_agenda, policy, true)
 
 func _take_policy_matching_tags(country, wanted_tags: Array) -> Dictionary:
 	for i in range(country.policy_catalog_deck.size()):
@@ -538,9 +556,6 @@ func _take_policy_matching_tags(country, wanted_tags: Array) -> Dictionary:
 		var policy: Dictionary = country.policy_catalog_discard[i]
 		if _policy_has_any_tag(policy, wanted_tags):
 			country.policy_catalog_discard.remove_at(i)
-			return policy
-	for policy in country.policy_menu:
-		if _policy_has_any_tag(policy, wanted_tags):
 			return policy
 	return {}
 
@@ -920,6 +935,10 @@ func _card_zone_snapshot(country, preview_world) -> Dictionary:
 		"deck": _card_ids(country.deck),
 		"discard": _card_ids(country.discard),
 		"hand": _card_ids(country.hand),
+		"policy_menu": _card_ids(country.policy_menu),
+		"policy_catalog_deck": _card_ids(country.policy_catalog_deck),
+		"policy_catalog_discard": _card_ids(country.policy_catalog_discard),
+		"active_agenda": _card_ids(country.active_agenda),
 		"world_deck": _card_ids(preview_world.event_deck),
 		"world_discard": _card_ids(preview_world.event_discard)
 	}

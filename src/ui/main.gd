@@ -2738,6 +2738,9 @@ func _mutation_count(policy: Dictionary) -> int:
 	var count := 0
 	count += mutations.get("add_to_deck", []).size()
 	count += mutations.get("remove_from_deck", []).size()
+	count += mutations.get("add_to_policy_catalog", []).size()
+	count += mutations.get("remove_from_policy_catalog", []).size()
+	count += mutations.get("replace_in_policy_catalog", []).size()
 	if not String(mutations.get("add_world_card", "")).is_empty():
 		count += 1
 	return count
