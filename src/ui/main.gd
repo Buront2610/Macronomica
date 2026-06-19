@@ -282,10 +282,10 @@ func _build_event_card() -> void:
 	_add_label_to(card, "EventDeck", "", Vector2(68, 138), Vector2(card.size.x - 78, 20), 12, TEXT)
 
 func _build_world_tracks() -> void:
-	var panel = _make_piece("WorldPanel", board_layout["world_panel_pos"], board_layout["world_panel_size"], Color(0.030, 0.035, 0.034, 0.70), BLUE.lightened(0.05), 2, "plaque")
+	var panel = _make_piece("WorldPanel", board_layout["world_panel_pos"], board_layout["world_panel_size"], Color(0.030, 0.035, 0.034, 0.76), BLUE.lightened(0.05), 2, "plaque")
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_add_label_to(panel, "WorldPanelTitle", "世界危機ボード", Vector2(0, 10), Vector2(panel.size.x, 28), 22, WARN.lightened(0.18))
-	_add_label_to(panel, "WorldPanelHint", "政策の波及先", Vector2(0, panel.size.y - 30), Vector2(panel.size.x, 20), 13, MUTED)
+	_add_label_to(panel, "WorldPanelTitle", "世界危機ボード", Vector2(0, 12), Vector2(panel.size.x, 34), 28, WARN.lightened(0.18))
+	_add_label_to(panel, "WorldPanelHint", "政策の波及先", Vector2(0, panel.size.y - 34), Vector2(panel.size.x, 24), 16, MUTED)
 	var start: Vector2 = board_layout["world_tracks_origin"]
 	var step: Vector2 = board_layout["world_track_step"]
 	for i in range(WORLD_TRACKS.size()):
@@ -293,21 +293,32 @@ func _build_world_tracks() -> void:
 		var col := i % 4
 		var row := floori(float(i) / 4.0)
 		var tile_pos := start + Vector2(step.x * col, step.y * row)
-		var tile = _make_piece("WorldTrack_%s" % key, tile_pos, board_layout["world_track_size"], Color(0.020, 0.019, 0.016, 0.72), BLUE, 1, "card")
+		var tile = _make_piece("WorldTrack_%s" % key, tile_pos, board_layout["world_track_size"], Color(0.020, 0.019, 0.016, 0.78), BLUE, 1, "card")
 		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var icon_size: float = minf(44.0, tile.size.y - 46.0)
-		tile.add_child(_make_icon(UiCatalogScript.track_token(key), Vector2(12, 13), Vector2(icon_size, icon_size), Color.WHITE, "TrackIcon"))
-		var label := _add_label_to(tile, "TrackLabel", _world_short_name(key), Vector2(64, 9), Vector2(tile.size.x - 126, 24), 18, TEXT, true)
+		var icon_size: float = minf(58.0, tile.size.y - 58.0)
+		tile.add_child(_make_icon(UiCatalogScript.track_token(key), Vector2(16, 16), Vector2(icon_size, icon_size), Color.WHITE, "TrackIcon"))
+		var label := _add_label_to(tile, "TrackLabel", _world_short_name(key), Vector2(88, 12), Vector2(tile.size.x - 170, 30), 24, WARN.lightened(0.18), true)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var value_label := _add_label_to(tile, "TrackValue", "", Vector2(tile.size.x - 64, 8), Vector2(52, 28), 20, WARN.lightened(0.18), false)
+		var value_label := _add_label_to(tile, "TrackValue", "", Vector2(tile.size.x - 84, 10), Vector2(68, 34), 26, WARN.lightened(0.18), false)
 		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		var meaning := _add_label_to(tile, "TrackMeaning", "", Vector2(64, 36), Vector2(tile.size.x - 78, 22), 13, MUTED, false)
+		var meaning := _add_label_to(tile, "TrackMeaning", "", Vector2(88, 48), Vector2(tile.size.x - 104, 28), 16, MUTED, false)
 		meaning.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		var rail := Control.new()
 		rail.name = "TrackRail"
-		rail.position = Vector2(16, tile.size.y - 22)
-		rail.size = Vector2(tile.size.x - 32, 14)
+		rail.position = Vector2(20, tile.size.y - 32)
+		rail.size = Vector2(tile.size.x - 40, 20)
 		tile.add_child(rail)
+	var event_slot_pos := start + Vector2(step.x * 3.0, step.y)
+	var event_slot = _make_piece("WorldEventSummary", event_slot_pos, board_layout["world_track_size"], Color(0.058, 0.040, 0.024, 0.88), WARN, 2, "card")
+	event_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	event_slot.add_child(_make_icon("world_demand_globe", Vector2(16, 18), Vector2(52, 52), WARN.lightened(0.16), "WorldEventIcon"))
+	var event_caption := _add_label_to(event_slot, "WorldEventSummaryCaption", "現在イベント", Vector2(84, 12), Vector2(event_slot.size.x - 100, 22), 15, WARN.lightened(0.18), false)
+	event_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var event_title := _add_label_to(event_slot, "WorldEventSummaryTitle", "", Vector2(84, 36), Vector2(event_slot.size.x - 100, 28), 18, TEXT, true)
+	event_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var event_message := _add_label_to(event_slot, "WorldEventSummaryMessage", "", Vector2(18, 76), Vector2(event_slot.size.x - 36, event_slot.size.y - 106), 13, MUTED, true)
+	event_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	event_message.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
 func _build_planning_country_panel() -> void:
 	var panel_pos: Vector2 = board_layout["planning_country_pos"]
@@ -338,9 +349,9 @@ func _build_agenda_tiles() -> void:
 	negotiation_focus_label = _add_label_to(negotiation, "NegotiationFocus", "", Vector2(250, 15), Vector2(negotiation.size.x - 274, 28), 18, TEXT, false)
 	negotiation_focus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	var step_w: float = (negotiation.size.x - 72.0) / 3.0
-	var steps := ["1  国を選ぶ", "2  宣言を押す", "3  政策選択へ"]
+	var steps := ["1 国を選ぶ", "2 宣言を押す", "3 政策選択へ"]
 	for i in range(3):
-		var step = _make_child_piece(negotiation, "NegotiationStep_%d" % i, Vector2(24.0 + step_w * i, 50), Vector2(step_w - 10.0, 30), Color(0.035, 0.030, 0.022, 0.86), BOARD_LINE.darkened(0.15), 1, "card")
+		var step = _make_child_piece(negotiation, "NegotiationStep_%d" % i, Vector2(24.0 + step_w * i, 48), Vector2(step_w - 10.0, 28), Color(0.035, 0.030, 0.022, 0.86), BOARD_LINE.darkened(0.15), 1, "card")
 		step.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_add_label_to(step, "NegotiationStepLabel", steps[i], Vector2.ZERO, step.size, 14, MUTED, false)
 	var start: Vector2 = board_layout["agenda_origin"]
@@ -351,26 +362,27 @@ func _build_agenda_tiles() -> void:
 		tile.tooltip_text = "選択中の国が共同宣言を置きます。"
 		tile.pressed = func(tag := String(item["tag"])) -> void:
 			_on_agenda_declared(tag)
-		_add_label_to(tile, "AgendaIcon", String(item["icon"]), Vector2(0, 9), Vector2(tile.size.x, 32), 28, WARN.lightened(0.05))
-		_add_label_to(tile, "AgendaName", String(item["name"]), Vector2(0, 43), Vector2(tile.size.x, 24), 17, TEXT)
-		_add_label_to(tile, "AgendaAction", "この宣言を置く", Vector2(0, 66), Vector2(tile.size.x, 18), 12, MUTED)
+		_add_label_to(tile, "AgendaIcon", String(item["icon"]), Vector2(0, 8), Vector2(tile.size.x, 30), 26, WARN.lightened(0.05))
+		_add_label_to(tile, "AgendaName", String(item["name"]), Vector2(0, 39), Vector2(tile.size.x, 24), 17, TEXT)
+		_add_label_to(tile, "AgendaAction", "宣言を置く", Vector2(0, 62), Vector2(tile.size.x, 16), 12, MUTED)
 		var pips := Control.new()
 		pips.name = "AgendaPips"
-		pips.position = Vector2(tile.size.x * 0.5 - 28.0, 82)
+		pips.position = Vector2(tile.size.x * 0.5 - 28.0, 76)
 		pips.size = Vector2(70, 8)
 		tile.add_child(pips)
 	var country_w: float = (negotiation.size.x - 60.0) / 4.0
+	var country_y: float = negotiation.size.y - 62.0
 	for i in range(4):
-		var card: Control = _make_child_piece(negotiation, "NegotiationCountry_%d" % i, Vector2(24.0 + country_w * i, 202), Vector2(country_w - 8.0, 40), Color(0.032, 0.030, 0.024, 0.90), COUNTRY_ACCENTS[i], 1, "card")
+		var card: Control = _make_child_piece(negotiation, "NegotiationCountry_%d" % i, Vector2(24.0 + country_w * i, country_y), Vector2(country_w - 8.0, 36), Color(0.032, 0.030, 0.024, 0.90), COUNTRY_ACCENTS[i], 1, "card")
 		card.mouse_filter = Control.MOUSE_FILTER_STOP
 		card.pressed = func(country_index := i) -> void:
 			selected_country_index = country_index
 			_refresh_board(true)
-		var label := _add_label_to(card, "NegotiationCountryLabel", "", Vector2(8, 7), Vector2(card.size.x - 16, 24), 14, TEXT, false)
+		var label := _add_label_to(card, "NegotiationCountryLabel", "", Vector2(8, 6), Vector2(card.size.x - 16, 22), 13, TEXT, false)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		negotiation_country_cards.append(card)
 		negotiation_country_labels.append(label)
-	negotiation_status_label = _add_label_to(negotiation, "NegotiationStatus", "", Vector2(24, 242), Vector2(negotiation.size.x - 48, 20), 13, MUTED, false)
+	negotiation_status_label = _add_label_to(negotiation, "NegotiationStatus", "", Vector2(24, negotiation.size.y - 24), Vector2(negotiation.size.x - 48, 18), 12, MUTED, false)
 	negotiation_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 
 func _build_country_seats() -> void:
@@ -530,15 +542,16 @@ func _build_final_score_overlay() -> void:
 func _build_turn_news_overlay() -> void:
 	var panel_pos: Vector2 = board_layout["news_drawer_pos"]
 	var panel_size: Vector2 = board_layout["news_drawer_size"]
-	turn_news_panel = _make_piece("TurnNewsOverlay", panel_pos, panel_size, Color(0.80, 0.69, 0.49, 0.96), BOARD_LINE, 2, "card")
+	turn_news_panel = _make_piece("TurnNewsOverlay", panel_pos, panel_size, Color(0.045, 0.034, 0.024, 0.97), BOARD_LINE, 2, "card")
 	turn_news_panel.z_index = 56
 	turn_news_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	_add_label_to(turn_news_panel, "TurnNewsTitle", "世界経済新聞 / ログ", Vector2(0, 16), Vector2(panel_size.x, 30), 22, INK)
-	turn_news_label = _add_label_to(turn_news_panel, "TurnNewsText", "", Vector2(22, 58), Vector2(panel_size.x - 44, panel_size.y - 118), 15, INK, true)
+	_add_label_to(turn_news_panel, "TurnNewsTitle", "世界経済新聞 / ログ", Vector2(0, 16), Vector2(panel_size.x, 30), 22, WARN.lightened(0.18))
+	turn_news_label = _add_label_to(turn_news_panel, "TurnNewsText", "", Vector2(24, 64), Vector2(panel_size.x - 48, panel_size.y - 128), 15, TEXT, true)
 	turn_news_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	turn_news_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	turn_news_label.add_theme_constant_override("line_spacing", 4)
 	var next = _make_entry_button(turn_news_panel, "TurnNewsNext", "閉じる", Vector2(panel_size.x - 128, panel_size.y - 48), Vector2(104, 34), _hide_turn_news_overlay)
-	next.set_skin(Color(0.060, 0.044, 0.028, 0.94), BOARD_LINE, 2, "card")
+	next.set_skin(Color(0.15, 0.105, 0.055, 0.94), BOARD_LINE, 2, "card")
 	turn_news_panel.visible = false
 
 func _build_entry_overlays() -> void:
@@ -736,17 +749,17 @@ func _build_status_panels() -> void:
 
 	var log_pos: Vector2 = board_layout["log_pos"]
 	var log_size: Vector2 = board_layout["log_size"]
-	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.78, 0.66, 0.45, 0.94), BOARD_LINE, 2, "card")
+	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.78, 0.66, 0.45, 0.96), BOARD_LINE, 2, "card")
 	log.tooltip_text = "クリックで新聞とログ要約を開きます。"
 	log.pressed = _on_log_panel_pressed
-	_add_label_to(log, "LogTitle", "新聞", Vector2(0, 4), Vector2(log_size.x, 22), 17, INK, false)
+	_add_label_to(log, "LogTitle", "新聞", Vector2(0, 2), Vector2(log_size.x, 16), 13, INK, false)
 	log_panel = Label.new()
 	log_panel.name = "LogComponent"
-	log_panel.position = Vector2(0, 25)
+	log_panel.position = Vector2(0, 18)
 	log_panel.size = Vector2(log_size.x, 16)
 	log_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	log_panel.add_theme_color_override("default_color", INK)
-	log_panel.add_theme_font_size_override("font_size", 10)
+	log_panel.add_theme_font_size_override("font_size", 11)
 	log_panel.autowrap_mode = TextServer.AUTOWRAP_OFF
 	log_panel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	log_panel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1103,6 +1116,8 @@ func _refresh_world() -> void:
 	_set_label("EventTitle", String(event.get("display_name", "")))
 	_set_label("EventMessage", String(event.get("message", "")))
 	_set_label("EventDeck", "山札 %d / 捨札 %d" % [game.world.event_deck.size(), game.world.event_discard.size()])
+	_set_label("WorldEventSummaryTitle", _ellipsize(String(event.get("display_name", "イベントなし")), 14))
+	_set_label("WorldEventSummaryMessage", _ellipsize(String(event.get("message", "世界イベント待ち")), 54))
 	_set_label("WorldPanelHint", _persistent_crisis_summary())
 	for key in WORLD_TRACKS:
 		var tile = board_layer.get_node_or_null("WorldTrack_%s" % key)
@@ -1125,13 +1140,16 @@ func _refresh_world() -> void:
 		_clear_children(rail)
 		var filled := TrackPresenterScript.marker_count(key, value)
 		for i in range(7):
-			var pip_size := 10
+			var pip_size := 13
 			var gap: float = (rail.size.x - float(pip_size)) / 6.0
 			var x: float = gap * float(i)
-			rail.add_child(_make_pip(Vector2(x, 1), pip_size, color if i < filled else TOKEN_EMPTY))
+			rail.add_child(_make_pip(Vector2(x, 3), pip_size, color if i < filled else TOKEN_EMPTY))
 		var icon: TextureRect = tile.get_node_or_null("TrackIcon")
 		if icon != null:
 			icon.modulate = color.lightened(0.20)
+	var event_summary: Control = board_layer.get_node_or_null("WorldEventSummary")
+	if event_summary != null:
+		event_summary.visible = world_visible
 
 func _refresh_planning_country_panel() -> void:
 	if planning_country_panel == null:
@@ -1520,6 +1538,9 @@ func _refresh_context_visibility() -> void:
 		var world_tile: Control = board_layer.get_node_or_null("WorldTrack_%s" % key)
 		if world_tile != null:
 			world_tile.visible = world_visible
+	var event_summary: Control = board_layer.get_node_or_null("WorldEventSummary")
+	if event_summary != null:
+		event_summary.visible = world_visible
 	for node_name in ["EventCard", "CountryDetailPanel"]:
 		var sidebar_node: Control = board_layer.get_node_or_null(node_name)
 		if sidebar_node != null:
@@ -1570,16 +1591,19 @@ func _apply_world_layout(wide: bool) -> void:
 	panel.size = _snap_vec(panel_size)
 	var title: Label = panel.get_node_or_null("WorldPanelTitle")
 	if title != null:
-		title.size = Vector2(panel.size.x, 28)
+		title.position = Vector2(0, 12)
+		title.size = Vector2(panel.size.x, 34)
+		title.add_theme_font_size_override("font_size", 28)
 	var hint: Label = panel.get_node_or_null("WorldPanelHint")
 	if hint != null:
-		hint.position = Vector2(0, panel.size.y - 30)
-		hint.size = Vector2(panel.size.x, 20)
+		hint.position = Vector2(0, panel.size.y - 34)
+		hint.size = Vector2(panel.size.x, 24)
+		hint.add_theme_font_size_override("font_size", 16)
 	var columns := 4
-	var gap := 12.0 if wide else 10.0
-	var track_w := (panel_size.x - 76.0 - gap * float(columns - 1)) / float(columns)
-	var track_h := (panel_size.y - 86.0 - gap) * 0.5
-	var start := panel_pos + Vector2(38.0, 54.0)
+	var gap := 14.0 if wide else 12.0
+	var track_w := (panel_size.x - 80.0 - gap * float(columns - 1)) / float(columns)
+	var track_h := (panel_size.y - 98.0 - gap) * 0.5
+	var start := panel_pos + Vector2(40.0, 62.0)
 	for i in range(WORLD_TRACKS.size()):
 		var key: String = WORLD_TRACKS[i]
 		var tile: Control = board_layer.get_node_or_null("WorldTrack_%s" % key)
@@ -1589,26 +1613,52 @@ func _apply_world_layout(wide: bool) -> void:
 		var row := floori(float(i) / float(columns))
 		tile.position = _snap_vec(start + Vector2((track_w + gap) * col, (track_h + gap) * row))
 		tile.size = _snap_vec(Vector2(track_w, track_h))
-		var icon_size: float = minf(44.0, tile.size.y - 46.0)
+		var icon_size: float = minf(58.0, tile.size.y - 58.0)
 		var icon: TextureRect = tile.get_node_or_null("TrackIcon")
 		if icon != null:
-			icon.position = _snap_vec(Vector2(12, 13))
+			icon.position = _snap_vec(Vector2(16, 16))
 			icon.size = _snap_vec(Vector2(icon_size, icon_size))
 		var label: Label = tile.get_node_or_null("TrackLabel")
 		if label != null:
-			label.position = _snap_vec(Vector2(64, 9))
-			label.size = _snap_vec(Vector2(tile.size.x - 126, 24))
+			label.position = _snap_vec(Vector2(88, 12))
+			label.size = _snap_vec(Vector2(tile.size.x - 170, 30))
+			label.add_theme_color_override("font_color", WARN.lightened(0.18))
+			label.add_theme_font_size_override("font_size", 24)
 		var value_label: Label = tile.get_node_or_null("TrackValue")
 		if value_label != null:
-			value_label.position = _snap_vec(Vector2(tile.size.x - 64, 8))
+			value_label.position = _snap_vec(Vector2(tile.size.x - 84, 10))
+			value_label.size = _snap_vec(Vector2(68, 34))
+			value_label.add_theme_font_size_override("font_size", 26)
 		var meaning: Label = tile.get_node_or_null("TrackMeaning")
 		if meaning != null:
-			meaning.position = _snap_vec(Vector2(64, 36))
-			meaning.size = _snap_vec(Vector2(tile.size.x - 78, 22))
+			meaning.position = _snap_vec(Vector2(88, 48))
+			meaning.size = _snap_vec(Vector2(tile.size.x - 104, 28))
+			meaning.add_theme_font_size_override("font_size", 16)
 		var rail: Control = tile.get_node_or_null("TrackRail")
 		if rail != null:
-			rail.position = _snap_vec(Vector2(16, tile.size.y - 22))
-			rail.size = _snap_vec(Vector2(tile.size.x - 32, 14))
+			rail.position = _snap_vec(Vector2(20, tile.size.y - 32))
+			rail.size = _snap_vec(Vector2(tile.size.x - 40, 20))
+	var event_summary: Control = board_layer.get_node_or_null("WorldEventSummary")
+	if event_summary != null:
+		var event_pos := start + Vector2((track_w + gap) * 3.0, track_h + gap)
+		event_summary.position = _snap_vec(event_pos)
+		event_summary.size = _snap_vec(Vector2(track_w, track_h))
+		var event_icon: TextureRect = event_summary.get_node_or_null("WorldEventIcon")
+		if event_icon != null:
+			event_icon.position = _snap_vec(Vector2(16, 18))
+			event_icon.size = _snap_vec(Vector2(52, 52))
+		var event_caption: Label = event_summary.get_node_or_null("WorldEventSummaryCaption")
+		if event_caption != null:
+			event_caption.position = _snap_vec(Vector2(84, 12))
+			event_caption.size = _snap_vec(Vector2(event_summary.size.x - 100, 22))
+		var event_title: Label = event_summary.get_node_or_null("WorldEventSummaryTitle")
+		if event_title != null:
+			event_title.position = _snap_vec(Vector2(84, 36))
+			event_title.size = _snap_vec(Vector2(event_summary.size.x - 100, 28))
+		var event_message: Label = event_summary.get_node_or_null("WorldEventSummaryMessage")
+		if event_message != null:
+			event_message.position = _snap_vec(Vector2(18, 76))
+			event_message.size = _snap_vec(Vector2(event_summary.size.x - 36, event_summary.size.y - 106))
 
 func _refresh_resolution_links() -> void:
 	if resolution_overlay == null or resolution_marker_layer == null:
@@ -1865,9 +1915,11 @@ func _cost_short_name(key: String) -> String:
 func _turn_news_text() -> String:
 	var event: Dictionary = game.world.current_event
 	var lines: Array = [
-		"公開イベント: %s" % String(event.get("display_name", "なし")),
+		"公開イベント",
+		String(event.get("display_name", "なし")),
 		String(event.get("message", "")),
 		"",
+		"解決ログ",
 		_news_headlines(game.log).replace("\n\n", "\n")
 	]
 	var welfare_parts: Array = []
@@ -1878,13 +1930,15 @@ func _turn_news_text() -> String:
 			_welfare_check_summary(country),
 			int(country.welfare_score)
 		])
-	lines.append("厚生: %s" % " / ".join(welfare_parts))
+	lines.append("")
+	lines.append("厚生")
+	lines.append(" / ".join(welfare_parts))
 	return "\n".join(lines)
 
 func _persistent_crisis_summary() -> String:
 	var crises: Array = game.world.active_crises
 	if crises.is_empty():
-		return "持続危機なし"
+		return ""
 	var parts := []
 	for entry in crises:
 		if not (entry is Dictionary):

@@ -82,9 +82,11 @@ func _run() -> void:
 	var country_detail_panel: Control = ui.board_layer.get_node("CountryDetailPanel")
 	var play_surface: Control = ui.board_layer.get_node("PlaySurface")
 	var world_panel: Control = ui.board_layer.get_node("WorldPanel")
+	var world_event_summary: Control = ui.board_layer.get_node("WorldEventSummary")
 	_assert(play_surface.size.x >= viewport.size.x * 0.66, "play surface owns the screen width")
 	_assert(world_panel.size.x >= viewport.size.x * 0.90, "world board is the primary board surface")
-	_assert(world_panel.size.y >= 260.0, "world board is tall enough to read")
+	_assert(world_panel.size.y >= 320.0, "world board is tall enough to read")
+	_assert(_inside_viewport(world_event_summary, viewport), "world event summary uses the open space inside the world board")
 	_assert(log_panel.size.x * log_panel.size.y < viewport.size.x * viewport.size.y * 0.02, "newspaper stays as a compact drawer tab")
 	if country_detail_panel.visible:
 		_assert(_inside_viewport(country_detail_panel, viewport), "country detail panel remains inside the board viewport")

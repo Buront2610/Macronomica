@@ -35,22 +35,22 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var hand_step := Vector2(hand_card_size.x + hand_gap, hand_card_size.y + hand_gap)
 	var hand_origin := hand_panel_pos + Vector2(32.0, 50.0)
 
-	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.39, 280.0, 336.0))
+	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.47, 330.0, 430.0))
 	var world_pos := Vector2(center_left, header_h + 6.0)
 	var wide_world_size := Vector2(wide_center_w, world_size.y)
 	var planning_country_size := Vector2(clampf(focus_w * 0.72, 760.0, 1040.0), 132.0)
 	var planning_country_pos := Vector2(focus_x - planning_country_size.x * 0.5, world_pos.y + 12.0)
 	var between_countries_w := maxf(360.0, center_w - country_size.x * 2.0 - 54.0)
-	var negotiation_size := Vector2(clampf(wide_center_w * 0.68, 780.0, 980.0), 306.0)
-	var negotiation_pos := Vector2(wide_center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 18.0)
+	var negotiation_size := Vector2(clampf(wide_center_w * 0.68, 780.0, 980.0), clampf(viewport_size.y * 0.34, 238.0, 284.0))
+	var negotiation_pos := Vector2(wide_center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 12.0)
 	var policy_slot_size := Vector2(440.0, 118.0)
 	var policy_slot_pos := Vector2(center_x - policy_slot_size.x * 0.5, negotiation_pos.y + negotiation_size.y + 8.0)
 	var resolution_flow_size := Vector2(clampf(between_countries_w, 500.0, 560.0), 118.0)
 	var resolution_flow_pos := Vector2(center_x - resolution_flow_size.x * 0.5, policy_slot_pos.y + policy_slot_size.y + 8.0)
-	var world_track_gap := 10.0
+	var world_track_gap := 12.0
 	var world_track_columns := 4.0
-	var world_track_w := (world_size.x - 76.0 - world_track_gap * (world_track_columns - 1.0)) / world_track_columns
-	var world_track_h := (world_size.y - 86.0 - world_track_gap) * 0.5
+	var world_track_w := (world_size.x - 80.0 - world_track_gap * (world_track_columns - 1.0)) / world_track_columns
+	var world_track_h := (world_size.y - 98.0 - world_track_gap) * 0.5
 
 	var worker_size := Vector2(306.0, 154.0)
 	var worker_columns := 3.0
@@ -76,8 +76,8 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 	var state_panel_pos := Vector2(center_x - state_panel_size.x * 0.5, minf(state_panel_y, policy_preview_pos.y - state_panel_size.y - 12.0))
 	var right_log_y := event_pos.y + event_size.y + 12.0
 	var detail_h := clampf(viewport_size.y * 0.19, 152.0, 190.0)
-	var log_h := 46.0
-	var drawer_w := clampf(viewport_size.x * 0.28, 340.0, 430.0)
+	var log_h := 36.0
+	var drawer_w := clampf(viewport_size.x * 0.25, 318.0, 390.0)
 
 	return {
 		"play_surface_pos": Vector2(center_left, header_h),
@@ -108,12 +108,12 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"world_panel_wide_size": wide_world_size,
 		"planning_country_pos": planning_country_pos,
 		"planning_country_size": planning_country_size,
-		"world_tracks_origin": world_pos + Vector2(38.0, 54.0),
+		"world_tracks_origin": world_pos + Vector2(40.0, 62.0),
 		"world_track_step": Vector2(world_track_w + world_track_gap, world_track_h + world_track_gap),
 		"world_track_size": Vector2(world_track_w, world_track_h),
-		"agenda_origin": negotiation_pos + Vector2(24.0, 90.0),
+		"agenda_origin": negotiation_pos + Vector2(24.0, 82.0),
 		"agenda_step": Vector2((negotiation_size.x - 48.0) / 4.0, 0.0),
-		"agenda_size": Vector2((negotiation_size.x - 84.0) / 4.0, 92.0),
+		"agenda_size": Vector2((negotiation_size.x - 84.0) / 4.0, 82.0),
 		"negotiation_pos": negotiation_pos,
 		"negotiation_size": negotiation_size,
 		"country_seat_positions": [
@@ -132,8 +132,8 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"resolution_flow_size": resolution_flow_size,
 		"score_pos": Vector2(info_x, 52.0),
 		"score_size": Vector2(info_w, 26.0),
-		"log_pos": Vector2(focus_right - 86.0, header_h + 12.0),
-		"log_size": Vector2(68.0, log_h),
+		"log_pos": Vector2(info_x - 104.0, 42.0),
+		"log_size": Vector2(86.0, log_h),
 		"news_drawer_pos": Vector2(viewport_size.x - drawer_w - margin, header_h + 12.0),
 		"news_drawer_size": Vector2(drawer_w, viewport_size.y - header_h - 36.0),
 		"country_detail_pos": Vector2(info_x, right_log_y + log_h + 8.0),
