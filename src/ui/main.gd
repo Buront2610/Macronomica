@@ -75,6 +75,7 @@ var negotiation_country_cards: Array = []
 var negotiation_country_labels: Array = []
 var negotiation_focus_label: Label
 var negotiation_status_label: Label
+var negotiation_guide_label: Label
 var domestic_state_labels: Array = []
 var domestic_state_cards: Array = []
 var domestic_state_deck_label: Label
@@ -350,6 +351,8 @@ func _build_agenda_tiles() -> void:
 	negotiation_focus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	negotiation_status_label = _add_label_to(negotiation, "NegotiationStatus", "", Vector2(negotiation.size.x - 188, 18), Vector2(158, 30), 18, WARN.lightened(0.10), false)
 	negotiation_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	negotiation_guide_label = _add_label_to(negotiation, "NegotiationGuide", "", Vector2(28, 52), Vector2(negotiation.size.x - 56, 26), 16, MUTED, false)
+	negotiation_guide_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	var start: Vector2 = board_layout["agenda_origin"]
 	var step: Vector2 = board_layout["agenda_step"]
 	for i in range(AGENDA.size()):
@@ -484,16 +487,16 @@ func _build_resolution_flow() -> void:
 	var flow_size: Vector2 = board_layout["resolution_flow_size"]
 	var panel = _make_piece("ResolutionFlow", flow_pos, flow_size, Color(0.055, 0.040, 0.026, 0.88), BOARD_LINE, 2, "plaque")
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var title := _add_label_to(panel, "ResolutionFlowTitle", "解決レビュー", Vector2(18, 8), Vector2(180, 24), 18, WARN.lightened(0.18))
+	var title := _add_label_to(panel, "ResolutionFlowTitle", "解決レビュー", Vector2(16, 8), Vector2(156, 24), 18, WARN.lightened(0.18))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	var hint := _add_label_to(panel, "ResolutionFlowHint", "次=1段階ずつ読む / 自動=このターンを一括解決", Vector2(210, 10), Vector2(flow_size.x - 232, 22), 14, MUTED, false)
+	var hint := _add_label_to(panel, "ResolutionFlowHint", "次=1段階ずつ読む / 一括=このターンを解決", Vector2(184, 10), Vector2(flow_size.x - 204, 22), 13, MUTED, false)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var names := ["圧力", "コスト", "国内", "世界", "デッキ", "合成"]
 	var step_w := (flow_size.x - 38.0) / float(names.size())
 	for i in range(names.size()):
-		var step = _make_child_piece(panel, "ResolutionStep_%d" % i, Vector2(18 + step_w * i, 42), Vector2(step_w - 8, 58), Color(0.030, 0.026, 0.020, 0.84), BOARD_LINE.darkened(0.18), 1, "card")
-		_add_label_to(step, "StepName", names[i], Vector2(0, 6), Vector2(step.size.x, 18), 13, MUTED)
-		var label := _add_label_to(step, "StepValue", "-", Vector2(4, 29), Vector2(step.size.x - 8, 22), 14, TEXT, true)
+		var step = _make_child_piece(panel, "ResolutionStep_%d" % i, Vector2(18 + step_w * i, 44), Vector2(step_w - 8, 50), Color(0.030, 0.026, 0.020, 0.84), BOARD_LINE.darkened(0.18), 1, "card")
+		_add_label_to(step, "StepName", names[i], Vector2(0, 4), Vector2(step.size.x, 17), 12, MUTED)
+		var label := _add_label_to(step, "StepValue", "-", Vector2(4, 25), Vector2(step.size.x - 8, 20), 13, TEXT, true)
 		resolution_step_nodes.append(step)
 		resolution_step_labels.append(label)
 
@@ -746,17 +749,17 @@ func _build_status_panels() -> void:
 
 	var log_pos: Vector2 = board_layout["log_pos"]
 	var log_size: Vector2 = board_layout["log_size"]
-	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.78, 0.66, 0.45, 0.96), BOARD_LINE, 2, "card")
-	log.tooltip_text = "クリックで新聞とログ要約を開きます。"
+	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.070, 0.050, 0.030, 0.96), BOARD_LINE, 2, "card")
+	log.tooltip_text = "ログ/新聞ドロワーを開きます。"
 	log.pressed = _on_log_panel_pressed
-	_add_label_to(log, "LogTitle", "新聞", Vector2(0, 2), Vector2(log_size.x, 16), 13, INK, false)
+	_add_label_to(log, "LogTitle", "ログ/新聞", Vector2(0, 6), Vector2(log_size.x, 22), 17, WARN.lightened(0.18), false)
 	log_panel = Label.new()
 	log_panel.name = "LogComponent"
-	log_panel.position = Vector2(0, 18)
+	log_panel.position = Vector2(0, 28)
 	log_panel.size = Vector2(log_size.x, 16)
 	log_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	log_panel.add_theme_color_override("default_color", INK)
-	log_panel.add_theme_font_size_override("font_size", 11)
+	log_panel.add_theme_color_override("default_color", TEXT)
+	log_panel.add_theme_font_size_override("font_size", 13)
 	log_panel.autowrap_mode = TextServer.AUTOWRAP_OFF
 	log_panel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	log_panel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1116,7 +1119,7 @@ func _refresh_world() -> void:
 	_set_label("EventMessage", String(event.get("message", "")))
 	_set_label("EventDeck", "山札 %d / 捨札 %d" % [game.world.event_deck.size(), game.world.event_discard.size()])
 	_set_label("WorldEventSummaryTitle", _ellipsize(String(event.get("display_name", "イベントなし")), 14))
-	_set_label("WorldEventSummaryMessage", _ellipsize(String(event.get("message", "世界イベント待ち")), 54))
+	_set_label("WorldEventSummaryMessage", _ellipsize(String(event.get("message", "世界イベント待ち")), 28))
 	_set_label("WorldPanelHint", _persistent_crisis_summary())
 	for key in WORLD_TRACKS:
 		var tile = board_layer.get_node_or_null("WorldTrack_%s" % key)
@@ -1241,6 +1244,12 @@ func _refresh_agenda() -> void:
 	if negotiation_status_label != null:
 		var missing := _countries_without_agenda_count()
 		negotiation_status_label.text = "未宣言 %d国" % missing
+	if negotiation_guide_label != null:
+		var missing := _countries_without_agenda_count()
+		if missing > 0:
+			negotiation_guide_label.text = "%s国: 議題カードを1枚押して宣言。宣言しない国は右下「政策選択へ」でスキップできます。" % UiCatalogScript.country_emblem(selected_country_index)
+		else:
+			negotiation_guide_label.text = "全員の宣言が揃いました。右下「政策選択へ」で、各国の政策カード選択へ進みます。"
 
 func _refresh_country_seats() -> void:
 	var phase: String = game.current_phase()
@@ -1533,7 +1542,7 @@ func _refresh_context_visibility() -> void:
 	var planning_focus := phase == "policy_planning"
 	var worker_focus := phase == "worker_assignment"
 	var world_visible := not planning_focus and not worker_focus
-	_apply_world_layout(phase == "negotiation")
+	_apply_world_layout(phase == "negotiation", phase == "resolution" or resolution_review_active)
 	var world_panel: Control = board_layer.get_node_or_null("WorldPanel")
 	if world_panel != null:
 		world_panel.visible = world_visible
@@ -1584,12 +1593,16 @@ func _refresh_context_visibility() -> void:
 			var seat: Control = country_seats[i]
 			seat.visible = target_mode
 
-func _apply_world_layout(wide: bool) -> void:
+func _apply_world_layout(wide: bool, resolution_mode := false) -> void:
 	var panel: Control = board_layer.get_node_or_null("WorldPanel")
 	if panel == null:
 		return
 	var panel_pos: Vector2 = board_layout["world_panel_pos"]
-	var panel_size: Vector2 = board_layout["world_panel_wide_size"] if wide and board_layout.has("world_panel_wide_size") else board_layout["world_panel_size"]
+	var panel_size: Vector2 = board_layout["world_panel_size"]
+	if resolution_mode and board_layout.has("world_panel_resolution_size"):
+		panel_size = board_layout["world_panel_resolution_size"]
+	elif wide and board_layout.has("world_panel_wide_size"):
+		panel_size = board_layout["world_panel_wide_size"]
 	panel.position = _snap_vec(panel_pos)
 	panel.size = _snap_vec(panel_size)
 	var title: Label = panel.get_node_or_null("WorldPanelTitle")
