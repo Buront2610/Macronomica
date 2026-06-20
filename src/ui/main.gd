@@ -45,6 +45,8 @@ const WORLD_TRACKS := [
 ]
 const WORKERS := ["bureaucrats", "central_bank_staff", "diplomat", "auditor", "lobbyist"]
 const COST_KEYS := ["fiscal", "political", "administrative", "credibility", "international", "industrial"]
+const BODY_FONT_MIN := 16
+const MICRO_FONT_MIN := 12
 
 var game
 var token_assets
@@ -305,11 +307,11 @@ func _build_world_tracks() -> void:
 		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var icon_size: float = minf(58.0, tile.size.y - 58.0)
 		tile.add_child(_make_icon(UiCatalogScript.track_token(key), Vector2(16, 16), Vector2(icon_size, icon_size), Color.WHITE, "TrackIcon"))
-		var label := _add_label_to(tile, "TrackLabel", _world_short_name(key), Vector2(88, 12), Vector2(tile.size.x - 170, 30), 24, WARN.lightened(0.18), true)
+		var label := _add_label_to(tile, "TrackLabel", _world_short_name(key), Vector2(88, 10), Vector2(tile.size.x - 170, 34), 26, WARN.lightened(0.18), true)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var value_label := _add_label_to(tile, "TrackValue", "", Vector2(tile.size.x - 84, 10), Vector2(68, 34), 26, WARN.lightened(0.18), false)
+		var value_label := _add_label_to(tile, "TrackValue", "", Vector2(tile.size.x - 90, 8), Vector2(74, 38), 30, WARN.lightened(0.18), false)
 		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		var meaning := _add_label_to(tile, "TrackMeaning", "", Vector2(88, 48), Vector2(tile.size.x - 104, 28), 16, MUTED, false)
+		var meaning := _add_label_to(tile, "TrackMeaning", "", Vector2(88, 50), Vector2(tile.size.x - 104, 30), 18, MUTED, false)
 		meaning.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		var rail := Control.new()
 		rail.name = "TrackRail"
@@ -320,11 +322,11 @@ func _build_world_tracks() -> void:
 	var event_slot = _make_piece("WorldEventSummary", event_slot_pos, board_layout["world_track_size"], Color(0.058, 0.040, 0.024, 0.88), WARN, 2, "card")
 	event_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	event_slot.add_child(_make_icon("world_demand_globe", Vector2(16, 18), Vector2(52, 52), WARN.lightened(0.16), "WorldEventIcon"))
-	var event_caption := _add_label_to(event_slot, "WorldEventSummaryCaption", "現在イベント", Vector2(84, 12), Vector2(event_slot.size.x - 100, 22), 15, WARN.lightened(0.18), false)
+	var event_caption := _add_label_to(event_slot, "WorldEventSummaryCaption", "現在イベント", Vector2(84, 10), Vector2(event_slot.size.x - 100, 24), 16, WARN.lightened(0.18), false)
 	event_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	var event_title := _add_label_to(event_slot, "WorldEventSummaryTitle", "", Vector2(84, 36), Vector2(event_slot.size.x - 100, 28), 18, TEXT, true)
+	var event_title := _add_label_to(event_slot, "WorldEventSummaryTitle", "", Vector2(84, 34), Vector2(event_slot.size.x - 100, 32), 21, TEXT, true)
 	event_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	var event_message := _add_label_to(event_slot, "WorldEventSummaryMessage", "", Vector2(18, 72), Vector2(event_slot.size.x - 36, event_slot.size.y - 84), 13, MUTED, true)
+	var event_message := _add_label_to(event_slot, "WorldEventSummaryMessage", "", Vector2(18, 72), Vector2(event_slot.size.x - 36, event_slot.size.y - 84), 15, MUTED, true)
 	event_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	event_message.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
@@ -544,7 +546,7 @@ func _build_final_score_overlay() -> void:
 		final_score_labels.append(label)
 	var news = _make_child_piece(final_score_panel, "FinalNews", Vector2(22, 318), Vector2(panel_size.x - 44, 150), Color(0.80, 0.69, 0.49, 0.94), BOARD_LINE, 2, "card")
 	_add_label_to(news, "FinalNewsTitle", "世界経済新聞 総括", Vector2(0, 8), Vector2(news.size.x, 20), 15, INK)
-	final_news_label = _add_label_to(news, "FinalNewsText", "", Vector2(18, 34), Vector2(news.size.x - 36, 102), 13, INK, true)
+	final_news_label = _add_label_to(news, "FinalNewsText", "", Vector2(18, 30), Vector2(news.size.x - 36, 114), 13, INK, true)
 	final_news_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	final_news_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	var restart = _make_entry_button(final_score_panel, "FinalRestartButton", "↺  再戦", Vector2(panel_size.x - 128, panel_size.y - 48), Vector2(100, 34), _on_restart_pressed)
@@ -1717,12 +1719,12 @@ func _apply_world_layout(wide: bool, resolution_mode := false) -> void:
 	if title != null:
 		title.position = Vector2(0, 12)
 		title.size = Vector2(panel.size.x, 34)
-		title.add_theme_font_size_override("font_size", 28)
+		title.add_theme_font_size_override("font_size", 30)
 	var hint: Label = panel.get_node_or_null("WorldPanelHint")
 	if hint != null:
 		hint.position = Vector2(0, panel.size.y - 34)
 		hint.size = Vector2(panel.size.x, 24)
-		hint.add_theme_font_size_override("font_size", 16)
+		hint.add_theme_font_size_override("font_size", 18)
 	var columns := 3 if wide and not resolution_mode else 4
 	var gap := 16.0 if wide and not resolution_mode else 12.0
 	var row_count := ceili(float(WORLD_TRACKS.size()) / float(columns))
@@ -1749,21 +1751,21 @@ func _apply_world_layout(wide: bool, resolution_mode := false) -> void:
 			icon.size = _snap_vec(Vector2(icon_size, icon_size))
 		var label: Label = tile.get_node_or_null("TrackLabel")
 		if label != null:
-			label.position = _snap_vec(Vector2(88, 12))
-			label.size = _snap_vec(Vector2(tile.size.x - 170, 30))
+			label.position = _snap_vec(Vector2(88, 10))
+			label.size = _snap_vec(Vector2(tile.size.x - 170, 34))
 			label.add_theme_color_override("font_color", WARN.lightened(0.18))
-			label.add_theme_font_size_override("font_size", 27 if wide and not resolution_mode else 24)
+			label.add_theme_font_size_override("font_size", 29 if wide and not resolution_mode else 26)
 		var value_label: Label = tile.get_node_or_null("TrackValue")
 		if value_label != null:
 			var value_w := 104.0 if wide and not resolution_mode else 84.0
-			value_label.position = _snap_vec(Vector2(tile.size.x - value_w - 16.0, 10))
-			value_label.size = _snap_vec(Vector2(value_w, 34))
-			value_label.add_theme_font_size_override("font_size", 30 if wide and not resolution_mode else 26)
+			value_label.position = _snap_vec(Vector2(tile.size.x - value_w - 16.0, 8))
+			value_label.size = _snap_vec(Vector2(value_w, 38))
+			value_label.add_theme_font_size_override("font_size", 32 if wide and not resolution_mode else 30)
 		var meaning: Label = tile.get_node_or_null("TrackMeaning")
 		if meaning != null:
-			meaning.position = _snap_vec(Vector2(88, 48))
-			meaning.size = _snap_vec(Vector2(tile.size.x - 104, 28))
-			meaning.add_theme_font_size_override("font_size", 18 if wide and not resolution_mode else 16)
+			meaning.position = _snap_vec(Vector2(88, 50))
+			meaning.size = _snap_vec(Vector2(tile.size.x - 104, 30))
+			meaning.add_theme_font_size_override("font_size", 20 if wide and not resolution_mode else 18)
 		var rail: Control = tile.get_node_or_null("TrackRail")
 		if rail != null:
 			rail.position = _snap_vec(Vector2(20, tile.size.y - 32))
@@ -1783,19 +1785,19 @@ func _apply_world_layout(wide: bool, resolution_mode := false) -> void:
 			event_icon.size = _snap_vec(Vector2(52, 52))
 		var event_caption: Label = event_summary.get_node_or_null("WorldEventSummaryCaption")
 		if event_caption != null:
-			event_caption.position = _snap_vec(Vector2(84, 12))
-			event_caption.size = _snap_vec(Vector2(event_summary.size.x - 100, 22))
-			event_caption.add_theme_font_size_override("font_size", 16 if wide and not resolution_mode else 15)
+			event_caption.position = _snap_vec(Vector2(84, 10))
+			event_caption.size = _snap_vec(Vector2(event_summary.size.x - 100, 24))
+			event_caption.add_theme_font_size_override("font_size", 17 if wide and not resolution_mode else 16)
 		var event_title: Label = event_summary.get_node_or_null("WorldEventSummaryTitle")
 		if event_title != null:
-			event_title.position = _snap_vec(Vector2(84, 36))
-			event_title.size = _snap_vec(Vector2(event_summary.size.x - 100, 28))
-			event_title.add_theme_font_size_override("font_size", 22 if wide and not resolution_mode else 18)
+			event_title.position = _snap_vec(Vector2(84, 34))
+			event_title.size = _snap_vec(Vector2(event_summary.size.x - 100, 32))
+			event_title.add_theme_font_size_override("font_size", 24 if wide and not resolution_mode else 21)
 		var event_message: Label = event_summary.get_node_or_null("WorldEventSummaryMessage")
 		if event_message != null:
 			event_message.position = _snap_vec(Vector2(18, 72))
 			event_message.size = _snap_vec(Vector2(event_summary.size.x - 36, event_summary.size.y - 84))
-			event_message.add_theme_font_size_override("font_size", 15 if wide and not resolution_mode else 13)
+			event_message.add_theme_font_size_override("font_size", 17 if wide and not resolution_mode else 15)
 
 func _refresh_resolution_links() -> void:
 	if resolution_overlay == null or resolution_marker_layer == null:
@@ -2608,6 +2610,7 @@ func _make_pip(position: Vector2, pip_size: int, color: Color):
 
 func _add_label(node_name: String, text: String, position: Vector2, label_size: Vector2, font_size: int, color: Color, wrap := false) -> Label:
 	var label := Label.new()
+	var resolved_font_size := _ui_font_size(node_name, font_size)
 	label.name = node_name
 	label.text = text
 	label.position = _snap_vec(position)
@@ -2619,7 +2622,7 @@ func _add_label(node_name: String, text: String, position: Vector2, label_size: 
 	if not wrap:
 		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_font_size_override("font_size", resolved_font_size)
 	_apply_label_outline(label, color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	board_layer.add_child(label)
@@ -2627,6 +2630,7 @@ func _add_label(node_name: String, text: String, position: Vector2, label_size: 
 
 func _add_label_to(parent: Control, node_name: String, text: String, position: Vector2, label_size: Vector2, font_size: int, color: Color, wrap := false) -> Label:
 	var label := Label.new()
+	var resolved_font_size := _ui_font_size(node_name, font_size)
 	label.name = node_name
 	label.text = text
 	label.position = _snap_vec(position)
@@ -2638,11 +2642,32 @@ func _add_label_to(parent: Control, node_name: String, text: String, position: V
 	if not wrap:
 		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_font_size_override("font_size", resolved_font_size)
 	_apply_label_outline(label, color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(label)
 	return label
+
+func _ui_font_size(node_name: String, requested_size: int) -> int:
+	if _is_micro_label(node_name):
+		return maxi(requested_size, MICRO_FONT_MIN)
+	if requested_size < BODY_FONT_MIN:
+		return BODY_FONT_MIN
+	if requested_size <= 17:
+		return requested_size + 2
+	if requested_size <= 22:
+		return requested_size + 1
+	return requested_size
+
+func _is_micro_label(node_name: String) -> bool:
+	return (
+		node_name.begins_with("CostSocketLabel")
+		or node_name == "WorkerCount"
+		or node_name == "StepName"
+		or node_name == "Text"
+		or node_name.begins_with("PhaseLabel_")
+		or node_name.begins_with("TutorialBadgeText")
+	)
 
 func _snap_vec(value: Vector2) -> Vector2:
 	return Vector2(roundf(value.x), roundf(value.y))
