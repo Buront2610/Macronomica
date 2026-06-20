@@ -317,7 +317,7 @@ func _build_world_tracks() -> void:
 	event_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	var event_title := _add_label_to(event_slot, "WorldEventSummaryTitle", "", Vector2(84, 36), Vector2(event_slot.size.x - 100, 28), 18, TEXT, true)
 	event_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	var event_message := _add_label_to(event_slot, "WorldEventSummaryMessage", "", Vector2(18, 76), Vector2(event_slot.size.x - 36, event_slot.size.y - 106), 13, MUTED, true)
+	var event_message := _add_label_to(event_slot, "WorldEventSummaryMessage", "", Vector2(18, 72), Vector2(event_slot.size.x - 36, event_slot.size.y - 84), 13, MUTED, true)
 	event_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	event_message.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
@@ -485,18 +485,23 @@ func _build_resolution_flow() -> void:
 	resolution_step_labels.clear()
 	var flow_pos: Vector2 = board_layout["resolution_flow_pos"]
 	var flow_size: Vector2 = board_layout["resolution_flow_size"]
-	var panel = _make_piece("ResolutionFlow", flow_pos, flow_size, Color(0.055, 0.040, 0.026, 0.88), BOARD_LINE, 2, "plaque")
+	var panel = _make_piece("ResolutionFlow", flow_pos, flow_size, Color(0.055, 0.040, 0.026, 0.94), BOARD_LINE, 2, "plaque")
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var title := _add_label_to(panel, "ResolutionFlowTitle", "解決レビュー", Vector2(16, 8), Vector2(156, 24), 18, WARN.lightened(0.18))
+	var title := _add_label_to(panel, "ResolutionFlowTitle", "解決レビュー", Vector2(18, 10), Vector2(190, 30), 23, WARN.lightened(0.18))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	var hint := _add_label_to(panel, "ResolutionFlowHint", "次=1段階ずつ読む / 一括=このターンを解決", Vector2(184, 10), Vector2(flow_size.x - 204, 22), 13, MUTED, false)
+	var hint := _add_label_to(panel, "ResolutionFlowHint", "次 = 1段階ずつ読む / 一括 = このターンを即解決", Vector2(flow_size.x - 430, 13), Vector2(408, 24), 15, MUTED, false)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var stage_title := _add_label_to(panel, "ResolutionStageTitle", "", Vector2(28, 43), Vector2(242, 30), 20, TEXT, false)
+	stage_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var stage_help := _add_label_to(panel, "ResolutionStageHelp", "", Vector2(282, 42), Vector2(flow_size.x - 312, 34), 16, TEXT, true)
+	stage_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	stage_help.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var names := ["圧力", "コスト", "国内", "世界", "デッキ", "合成"]
 	var step_w := (flow_size.x - 38.0) / float(names.size())
 	for i in range(names.size()):
-		var step = _make_child_piece(panel, "ResolutionStep_%d" % i, Vector2(18 + step_w * i, 44), Vector2(step_w - 8, 50), Color(0.030, 0.026, 0.020, 0.84), BOARD_LINE.darkened(0.18), 1, "card")
-		_add_label_to(step, "StepName", names[i], Vector2(0, 4), Vector2(step.size.x, 17), 12, MUTED)
-		var label := _add_label_to(step, "StepValue", "-", Vector2(4, 25), Vector2(step.size.x - 8, 20), 13, TEXT, true)
+		var step = _make_child_piece(panel, "ResolutionStep_%d" % i, Vector2(18 + step_w * i, 92), Vector2(step_w - 8, 50), Color(0.030, 0.026, 0.020, 0.84), BOARD_LINE.darkened(0.18), 1, "card")
+		_add_label_to(step, "StepName", names[i], Vector2(0, 4), Vector2(step.size.x, 17), 13, MUTED)
+		var label := _add_label_to(step, "StepValue", "-", Vector2(4, 24), Vector2(step.size.x - 8, 20), 14, TEXT, true)
 		resolution_step_nodes.append(step)
 		resolution_step_labels.append(label)
 
@@ -1118,8 +1123,15 @@ func _refresh_world() -> void:
 	_set_label("EventTitle", String(event.get("display_name", "")))
 	_set_label("EventMessage", String(event.get("message", "")))
 	_set_label("EventDeck", "山札 %d / 捨札 %d" % [game.world.event_deck.size(), game.world.event_discard.size()])
-	_set_label("WorldEventSummaryTitle", _ellipsize(String(event.get("display_name", "イベントなし")), 14))
-	_set_label("WorldEventSummaryMessage", _ellipsize(String(event.get("message", "世界イベント待ち")), 28))
+	var event_title_text := String(event.get("display_name", ""))
+	var event_message_text := String(event.get("message", ""))
+	if event_title_text.is_empty():
+		event_title_text = "世界イベント待ち"
+	if event_message_text.is_empty():
+		event_message_text = "次の世界イベントで各国の状態デッキや政策カタログが変化します。"
+	_set_label("WorldEventSummaryCaption", "現在イベント: %s" % _ellipsize(event_title_text, 28))
+	_set_label("WorldEventSummaryTitle", _ellipsize(event_title_text, 24))
+	_set_label("WorldEventSummaryMessage", _ellipsize(event_message_text, 72))
 	_set_label("WorldPanelHint", _persistent_crisis_summary())
 	for key in WORLD_TRACKS:
 		var tile = board_layer.get_node_or_null("WorldTrack_%s" % key)
@@ -1501,6 +1513,14 @@ func _refresh_resolution_flow() -> void:
 		panel.visible = game.current_phase() == "resolution" or resolution_review_active
 	var items: Array = _resolution_items()
 	var has_items := not items.is_empty()
+	var active_index := clampi(resolution_step_index, 0, 5) if resolution_review_active else 5
+	var stage_title: Label = board_layer.find_child("ResolutionStageTitle", true, false)
+	if stage_title != null:
+		stage_title.text = "今見る: %s" % _resolution_step_name(active_index)
+		stage_title.add_theme_color_override("font_color", WARN.lightened(0.20))
+	var stage_help: Label = board_layer.find_child("ResolutionStageHelp", true, false)
+	if stage_help != null:
+		stage_help.text = _resolution_step_help(active_index)
 	var satisfied := 0
 	var costs := 0
 	var country_effects := 0
@@ -1615,10 +1635,15 @@ func _apply_world_layout(wide: bool, resolution_mode := false) -> void:
 		hint.position = Vector2(0, panel.size.y - 34)
 		hint.size = Vector2(panel.size.x, 24)
 		hint.add_theme_font_size_override("font_size", 16)
-	var columns := 4
-	var gap := 14.0 if wide else 12.0
+	var columns := 3 if wide and not resolution_mode else 4
+	var gap := 16.0 if wide and not resolution_mode else 12.0
+	var row_count := ceili(float(WORLD_TRACKS.size()) / float(columns))
+	if wide and not resolution_mode:
+		row_count += 1
+	else:
+		row_count = maxi(row_count, 2)
 	var track_w := (panel_size.x - 80.0 - gap * float(columns - 1)) / float(columns)
-	var track_h := (panel_size.y - 98.0 - gap) * 0.5
+	var track_h := (panel_size.y - 98.0 - gap * float(row_count - 1)) / float(row_count)
 	var start := panel_pos + Vector2(40.0, 62.0)
 	for i in range(WORLD_TRACKS.size()):
 		var key: String = WORLD_TRACKS[i]
@@ -1629,7 +1654,7 @@ func _apply_world_layout(wide: bool, resolution_mode := false) -> void:
 		var row := floori(float(i) / float(columns))
 		tile.position = _snap_vec(start + Vector2((track_w + gap) * col, (track_h + gap) * row))
 		tile.size = _snap_vec(Vector2(track_w, track_h))
-		var icon_size: float = minf(58.0, tile.size.y - 58.0)
+		var icon_size: float = minf(70.0 if wide and not resolution_mode else 58.0, tile.size.y - 58.0)
 		var icon: TextureRect = tile.get_node_or_null("TrackIcon")
 		if icon != null:
 			icon.position = _snap_vec(Vector2(16, 16))
@@ -1639,17 +1664,18 @@ func _apply_world_layout(wide: bool, resolution_mode := false) -> void:
 			label.position = _snap_vec(Vector2(88, 12))
 			label.size = _snap_vec(Vector2(tile.size.x - 170, 30))
 			label.add_theme_color_override("font_color", WARN.lightened(0.18))
-			label.add_theme_font_size_override("font_size", 24)
+			label.add_theme_font_size_override("font_size", 27 if wide and not resolution_mode else 24)
 		var value_label: Label = tile.get_node_or_null("TrackValue")
 		if value_label != null:
-			value_label.position = _snap_vec(Vector2(tile.size.x - 84, 10))
-			value_label.size = _snap_vec(Vector2(68, 34))
-			value_label.add_theme_font_size_override("font_size", 26)
+			var value_w := 104.0 if wide and not resolution_mode else 84.0
+			value_label.position = _snap_vec(Vector2(tile.size.x - value_w - 16.0, 10))
+			value_label.size = _snap_vec(Vector2(value_w, 34))
+			value_label.add_theme_font_size_override("font_size", 30 if wide and not resolution_mode else 26)
 		var meaning: Label = tile.get_node_or_null("TrackMeaning")
 		if meaning != null:
 			meaning.position = _snap_vec(Vector2(88, 48))
 			meaning.size = _snap_vec(Vector2(tile.size.x - 104, 28))
-			meaning.add_theme_font_size_override("font_size", 16)
+			meaning.add_theme_font_size_override("font_size", 18 if wide and not resolution_mode else 16)
 		var rail: Control = tile.get_node_or_null("TrackRail")
 		if rail != null:
 			rail.position = _snap_vec(Vector2(20, tile.size.y - 32))
@@ -1657,8 +1683,12 @@ func _apply_world_layout(wide: bool, resolution_mode := false) -> void:
 	var event_summary: Control = board_layer.get_node_or_null("WorldEventSummary")
 	if event_summary != null:
 		var event_pos := start + Vector2((track_w + gap) * 3.0, track_h + gap)
+		var event_size := Vector2(track_w, track_h)
+		if wide and not resolution_mode:
+			event_pos = start + Vector2(0.0, (track_h + gap) * float(row_count - 1))
+			event_size = Vector2(panel_size.x - 80.0, track_h)
 		event_summary.position = _snap_vec(event_pos)
-		event_summary.size = _snap_vec(Vector2(track_w, track_h))
+		event_summary.size = _snap_vec(event_size)
 		var event_icon: TextureRect = event_summary.get_node_or_null("WorldEventIcon")
 		if event_icon != null:
 			event_icon.position = _snap_vec(Vector2(16, 18))
@@ -1667,14 +1697,17 @@ func _apply_world_layout(wide: bool, resolution_mode := false) -> void:
 		if event_caption != null:
 			event_caption.position = _snap_vec(Vector2(84, 12))
 			event_caption.size = _snap_vec(Vector2(event_summary.size.x - 100, 22))
+			event_caption.add_theme_font_size_override("font_size", 16 if wide and not resolution_mode else 15)
 		var event_title: Label = event_summary.get_node_or_null("WorldEventSummaryTitle")
 		if event_title != null:
 			event_title.position = _snap_vec(Vector2(84, 36))
 			event_title.size = _snap_vec(Vector2(event_summary.size.x - 100, 28))
+			event_title.add_theme_font_size_override("font_size", 22 if wide and not resolution_mode else 18)
 		var event_message: Label = event_summary.get_node_or_null("WorldEventSummaryMessage")
 		if event_message != null:
-			event_message.position = _snap_vec(Vector2(18, 76))
-			event_message.size = _snap_vec(Vector2(event_summary.size.x - 36, event_summary.size.y - 106))
+			event_message.position = _snap_vec(Vector2(18, 72))
+			event_message.size = _snap_vec(Vector2(event_summary.size.x - 36, event_summary.size.y - 84))
+			event_message.add_theme_font_size_override("font_size", 15 if wide and not resolution_mode else 13)
 
 func _refresh_resolution_links() -> void:
 	if resolution_overlay == null or resolution_marker_layer == null:
@@ -2079,7 +2112,7 @@ func _advance_token_text() -> String:
 	if game.current_phase() == "negotiation":
 		return "政策選択へ"
 	if resolution_review_active or game.current_phase() == "resolution":
-		return "解決"
+		return "次段階" if resolution_review_active and resolution_step_index < 5 else "ターン\n解決"
 	if game.is_finished:
 		return "終了"
 	return "進行"
@@ -2778,6 +2811,19 @@ func _resolution_step_name(index: int) -> String:
 	if index < 0 or index >= names.size():
 		return "解決処理"
 	return names[index]
+
+func _resolution_step_help(index: int) -> String:
+	var helps := [
+		"国内圧力に応えたか確認。満たせない公約は政治資本を削る。",
+		"政策コストと国家能力を照合。不足は補助金混入・延期・骨抜きへ。",
+		"GDP・物価・失業・金融ストレスなど、自国への直接効果。",
+		"世界需要・保護主義・金融不安など、共有ボードへの波及。",
+		"状態デッキと政策カタログの変質。国家の歴史がここに残る。",
+		"貿易・期待・利払い・資本移動・デフレスパイラルを合成。"
+	]
+	if index < 0 or index >= helps.size():
+		return "上から順に、政策が国内・世界・デッキ・マクロ動学へ及ぼす結果を確認します。"
+	return helps[index]
 
 func _agenda_display_name(tag: String) -> String:
 	for item in AGENDA:

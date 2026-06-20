@@ -37,17 +37,17 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 
 	var world_size := Vector2(center_w, clampf(viewport_size.y * 0.52, 380.0, 520.0))
 	var world_pos := Vector2(center_left, header_h + 6.0)
-	var wide_world_size := Vector2(wide_center_w, world_size.y)
+	var wide_world_size := Vector2(wide_center_w, clampf(viewport_size.y * 0.62, 500.0, 620.0))
 	var planning_country_size := Vector2(clampf(focus_w * 0.72, 760.0, 1040.0), 132.0)
 	var planning_country_pos := Vector2(focus_x - planning_country_size.x * 0.5, world_pos.y + 12.0)
 	var seat_y := world_pos.y + world_size.y + 10.0
 	var left_x := center_left + 12.0
 	var right_x := center_right - country_size.x - 330.0
 	var between_countries_w := maxf(360.0, center_w - country_size.x * 2.0 - 54.0)
-	var resolution_flow_size := Vector2(clampf(between_countries_w, 500.0, 560.0), 104.0)
+	var resolution_flow_size := Vector2(clampf(center_w * 0.54, 760.0, 900.0), 156.0)
 	var resolution_world_size := Vector2(center_w, maxf(360.0, world_size.y - resolution_flow_size.y - 30.0))
 	var negotiation_size := Vector2(clampf(wide_center_w * 0.82, 940.0, 1120.0), clampf(viewport_size.y * 0.30, 234.0, 286.0))
-	var negotiation_pos := Vector2(wide_center_x - negotiation_size.x * 0.5, world_pos.y + world_size.y + 8.0)
+	var negotiation_pos := Vector2(wide_center_x - negotiation_size.x * 0.5, world_pos.y + wide_world_size.y + 8.0)
 	var policy_slot_size := Vector2(440.0, 118.0)
 	var policy_slot_pos := Vector2(center_x - policy_slot_size.x * 0.5, negotiation_pos.y + negotiation_size.y + 8.0)
 	var resolution_flow_pos := Vector2(center_x - resolution_flow_size.x * 0.5, world_pos.y + resolution_world_size.y + 10.0)
