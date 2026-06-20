@@ -724,24 +724,25 @@ func _build_domestic_state_panel() -> void:
 func _build_policy_preview_panel() -> void:
 	var panel_pos: Vector2 = board_layout["policy_preview_pos"]
 	var panel_size: Vector2 = board_layout["policy_preview_size"]
-	policy_preview_panel = _make_piece("PolicyPreviewPanel", panel_pos, panel_size, Color(0.060, 0.044, 0.026, 0.95), BOARD_LINE, 2, "plaque")
+	policy_preview_panel = _make_piece("PolicyPreviewPanel", panel_pos, panel_size, Color(0.030, 0.024, 0.018, 0.985), WARN.darkened(0.08), 3, "plaque")
 	policy_preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	policy_preview_panel.z_index = 24
-	_add_label_to(policy_preview_panel, "PolicyPreviewTitle", "フォーカス中の政策", Vector2(18, 10), Vector2(260, 24), 18, WARN.lightened(0.16), false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	policy_focus_card = _make_child_piece(policy_preview_panel, "PolicyFocusCard", Vector2(18, 38), Vector2(330, 124), CARD_FACE, BOARD_LINE, 2, "card")
+	_add_label_to(policy_preview_panel, "PolicyPreviewTitle", "フォーカス中の政策: 説明と判定", Vector2(22, 10), Vector2(360, 28), 21, WARN.lightened(0.18), false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	policy_focus_card = _make_child_piece(policy_preview_panel, "PolicyFocusCard", Vector2(22, 44), Vector2(288, 126), CARD_FACE, BOARD_LINE, 2, "card")
 	policy_focus_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	policy_focus_icon = _make_icon("reform_wrench", Vector2(16, 16), Vector2(80, 80), Color.WHITE, "PolicyFocusIcon")
+	policy_focus_icon = _make_icon("reform_wrench", Vector2(16, 17), Vector2(76, 76), Color.WHITE, "PolicyFocusIcon")
 	policy_focus_card.add_child(policy_focus_icon)
-	policy_focus_title = _add_label_to(policy_focus_card, "PolicyFocusTitle", "", Vector2(108, 10), Vector2(204, 52), 23, INK, true)
+	policy_focus_title = _add_label_to(policy_focus_card, "PolicyFocusTitle", "", Vector2(104, 10), Vector2(168, 52), 23, INK, true)
 	policy_focus_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	policy_focus_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	policy_focus_source = _add_label_to(policy_focus_card, "PolicyFocusSource", "", Vector2(110, 66), Vector2(202, 20), 14, INK.darkened(0.05), false)
+	policy_focus_source = _add_label_to(policy_focus_card, "PolicyFocusSource", "", Vector2(106, 66), Vector2(166, 20), 14, INK.darkened(0.05), false)
 	policy_focus_source.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	policy_focus_cost = _add_label_to(policy_focus_card, "PolicyFocusCost", "", Vector2(18, 94), Vector2(294, 20), 15, INK.darkened(0.05), false)
+	policy_focus_cost = _add_label_to(policy_focus_card, "PolicyFocusCost", "", Vector2(16, 96), Vector2(256, 22), 15, INK.darkened(0.05), false)
 	policy_focus_cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	policy_preview_label = _add_label_to(policy_preview_panel, "PolicyPreviewLabel", "", Vector2(374, 38), Vector2(panel_size.x - 396, panel_size.y - 48), 18, TEXT, true)
+	policy_preview_label = _add_label_to(policy_preview_panel, "PolicyPreviewLabel", "", Vector2(330, 42), Vector2(panel_size.x - 356, panel_size.y - 58), 20, TEXT.lightened(0.08), true)
 	policy_preview_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	policy_preview_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	policy_preview_label.add_theme_constant_override("line_spacing", 5)
 
 func _build_status_panels() -> void:
 	var score_pos: Vector2 = board_layout["score_pos"]
@@ -1002,7 +1003,6 @@ func _policy_source_preview(card: Dictionary) -> String:
 	return "出所?"
 
 func _policy_preview_text(country, policy: Dictionary, index: int) -> String:
-	var tags: Array = policy.get("tags", [])
 	var preview: Dictionary = game._preview_policy_cost(country, policy)
 	var shortages: Dictionary = preview.get("shortages", {}) if preview is Dictionary else {}
 	var shortage_parts := []
@@ -1013,31 +1013,29 @@ func _policy_preview_text(country, policy: Dictionary, index: int) -> String:
 		shortage_parts.append("%s%d" % [_cost_short_name(key), value])
 		if shortage_parts.size() >= 3:
 			break
-	var shortage_text := "不足なし" if shortage_parts.is_empty() else "不足:%s" % " ".join(shortage_parts)
+	var shortage_text := "不足なし" if shortage_parts.is_empty() else "不足 %s" % " / ".join(shortage_parts)
 	var effects: Dictionary = policy.get("effects", {})
 	var country_effect := _short_effect_scope(effects.get("country", {}))
 	var world_effect := _short_effect_scope(effects.get("world", {}))
 	if String(policy.get("target", "")) == "country":
 		country_effect = _short_effect_scope(effects.get("donor", {}))
 		world_effect = _short_effect_scope(effects.get("recipient", {}))
-	var effect_text := "自国:%s / 世界:%s" % [
+	var effect_text := "自国 %s / 世界 %s" % [
 		country_effect if not country_effect.is_empty() else "-",
 		world_effect if not world_effect.is_empty() else "-"
 	]
-	var pressure_text := "圧OK" if PolicyRecommenderScript.pressure_matches(country, policy) else "圧外"
-	var cost_text := _policy_menu_cost_summary(country, policy).replace(" ", "")
-	var shortage_brief := shortage_text.replace("不足:", "不:").replace(" ", "")
-	var effects_brief := effect_text.replace("自国:", "国:").replace("世界:", "世:")
-	var description := _ellipsize(String(policy.get("description", "")), 42)
-	return "#%02d  %s [%s]\n%s\n制約:%s %s %s\n効果:%s" % [
+	var pressure_text := "国内圧力に合う" if PolicyRecommenderScript.pressure_matches(country, policy) else "国内圧力とはズレる"
+	var cost_text := _policy_menu_cost_summary(country, policy)
+	var description := _ellipsize(String(policy.get("description", "")), 64)
+	return "#%02d  %s  [%s]\n%s\n判定: %s / コスト %s / %s\n効果: %s" % [
 		index + 1,
-		String(policy.get("display_name", policy.get("id", "政策"))).substr(0, 14),
+		String(policy.get("display_name", policy.get("id", "政策"))).substr(0, 18),
 		_policy_source_preview(policy),
 		description,
 		pressure_text,
 		cost_text,
-		shortage_brief,
-		effects_brief
+		shortage_text,
+		effect_text
 	]
 
 func _plain_card_detail(country, card: Dictionary) -> String:
