@@ -28,6 +28,11 @@ func _run() -> void:
 		await process_frame
 		_save_preview()
 		return
+	if preview_state == "tutorial":
+		ui._show_tutorial_overlay("country_select")
+		await process_frame
+		_save_preview()
+		return
 	ui._hide_entry_overlays()
 	if preview_state == "negotiation":
 		ui._refresh_board(false)

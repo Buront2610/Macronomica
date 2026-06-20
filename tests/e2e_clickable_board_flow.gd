@@ -17,7 +17,10 @@ func _run() -> void:
 
 	_click(ui.title_overlay.get_node("TitleStart"))
 	await _settle()
-	_assert(ui.country_select_overlay.visible, "start click opens country selection")
+	_assert(ui.tutorial_overlay.visible, "start click opens the tutorial")
+	_click(ui.tutorial_overlay.get_node("TutorialPrimary"))
+	await _settle()
+	_assert(ui.country_select_overlay.visible, "tutorial primary opens country selection")
 	_click(ui.country_select_overlay.get_node("CountryChoice_0"))
 	await _settle()
 	_assert(ui.game.current_phase() == "negotiation", "country click enters negotiation")

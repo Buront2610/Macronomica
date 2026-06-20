@@ -111,6 +111,8 @@ var final_score_labels: Array = []
 var final_news_label: Label
 var entry_state := "title"
 var title_overlay: Control
+var tutorial_overlay: Control
+var tutorial_return_state := "country_select"
 var country_select_overlay: Control
 var player_country_index := -1
 var turn_news_panel
@@ -143,6 +145,9 @@ func _apply_preview_state_from_env() -> void:
 		return
 	if preview_state == "country_select":
 		_show_country_select()
+		return
+	if preview_state == "tutorial":
+		_show_tutorial_overlay("country_select")
 		return
 	_hide_entry_overlays()
 	if preview_state == "negotiation":
@@ -269,6 +274,8 @@ func _build_table_marks() -> void:
 		_add_label("PhaseLabel_%d" % i, _phase_short_name(String(GameStateScript.PHASES[i])), phase_start + phase_step * i + Vector2(-10, 20), Vector2(62, 18), 12, MUTED)
 		phase_pips.append(pip)
 	_add_action_token("RestartToken", "↺", board_layout["utility_command_pos"], board_layout["action_size"], _on_restart_pressed)
+	var help = _add_action_token("HelpToken", "? 遊び方", board_layout["help_command_pos"], board_layout["help_command_size"], _on_help_pressed)
+	help.tooltip_text = "遊び方とこのターンで見る場所を確認します。"
 	var recommend = _add_action_token("RecommendToken", "自動", board_layout["recommend_command_pos"], board_layout["recommend_command_size"], _on_recommend_pressed)
 	recommend.tooltip_text = "テストプレイ補助"
 	_add_action_token("AdvanceToken", "次", board_layout["advance_command_pos"], Vector2(108, 108), _on_advance_pressed)
@@ -561,6 +568,7 @@ func _build_turn_news_overlay() -> void:
 
 func _build_entry_overlays() -> void:
 	_build_title_overlay()
+	_build_tutorial_overlay()
 	_build_country_select_overlay()
 	_apply_entry_state()
 
@@ -584,16 +592,68 @@ func _build_title_overlay() -> void:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_add_label_to(panel, "TitleOverlayName", "マクロノミカ", Vector2(0, 40), Vector2(panel_size.x, 56), 44, TEXT)
 	_add_label_to(panel, "TitleOverlaySub", "世界経済戦略ボードゲーム", Vector2(0, 104), Vector2(panel_size.x, 28), 18, WARN.lightened(0.16))
-	var memo = _make_child_piece(panel, "TitleMemo", Vector2(46, 156), Vector2(panel_size.x - 92, 104), Color(0.80, 0.69, 0.49, 0.94), BOARD_LINE, 2, "card")
-	_add_label_to(memo, "TitleMemoText", "カード・担当印・世界トラックを卓上で読み、10ターン後のレガシー目標を競います。", Vector2(22, 18), Vector2(memo.size.x - 44, 68), 18, INK, true)
-	var start = _make_entry_button(title_overlay, "TitleStart", "開始", panel_pos + Vector2(panel_size.x * 0.5 - 102, panel_size.y - 112), Vector2(204, 62), _show_country_select)
-	_add_label_to(start, "StartHint", "国家を選ぶ", Vector2(0, 38), Vector2(start.size.x, 18), 11, MUTED)
+	var memo = _make_child_piece(panel, "TitleMemo", Vector2(46, 156), Vector2(panel_size.x - 92, 116), Color(0.80, 0.69, 0.49, 0.94), BOARD_LINE, 2, "card")
+	_add_label_to(memo, "TitleMemoText", "4つの国家が、世界危機を壊しすぎないよう交渉しながら、自国の厚生とレガシーを伸ばすゲームです。", Vector2(22, 18), Vector2(memo.size.x - 44, 80), 18, INK, true)
+	var start = _make_entry_button(title_overlay, "TitleStart", "遊び方を見る", panel_pos + Vector2(panel_size.x * 0.5 - 124, panel_size.y - 112), Vector2(248, 62), _show_tutorial_from_title)
+	_add_label_to(start, "StartHint", "初回はここから", Vector2(0, 38), Vector2(start.size.x, 18), 11, MUTED)
 	var continue_token = _make_overlay_piece(title_overlay, "TitleContinue", panel_pos + Vector2(panel_size.x * 0.5 - 206, panel_size.y - 42), Vector2(160, 34), Color(0.024, 0.022, 0.020, 0.72), BOARD_LINE.darkened(0.42), 1, "card")
 	continue_token.modulate = Color(1, 1, 1, 0.58)
 	_add_label_to(continue_token, "ContinueText", "続きから（準備中）", Vector2.ZERO, continue_token.size, 13, MUTED)
 	var settings_token = _make_overlay_piece(title_overlay, "TitleSettings", panel_pos + Vector2(panel_size.x * 0.5 + 46, panel_size.y - 42), Vector2(160, 34), Color(0.024, 0.022, 0.020, 0.72), BOARD_LINE.darkened(0.42), 1, "card")
 	settings_token.modulate = Color(1, 1, 1, 0.58)
 	_add_label_to(settings_token, "SettingsText", "設定（準備中）", Vector2.ZERO, settings_token.size, 13, MUTED)
+
+func _build_tutorial_overlay() -> void:
+	var screen := _screen()
+	tutorial_overlay = Control.new()
+	tutorial_overlay.name = "TutorialOverlay"
+	tutorial_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tutorial_overlay.z_index = 72
+	tutorial_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	board_layer.add_child(tutorial_overlay)
+	var scrim := ColorRect.new()
+	scrim.name = "TutorialScrim"
+	scrim.color = Color(0.012, 0.010, 0.008, 0.78)
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scrim.mouse_filter = Control.MOUSE_FILTER_STOP
+	tutorial_overlay.add_child(scrim)
+	var panel_size := Vector2(minf(screen.x - 120.0, 1180.0), minf(screen.y - 100.0, 720.0))
+	var panel_pos := (screen - panel_size) * 0.5
+	var panel = _make_overlay_piece(tutorial_overlay, "TutorialPlaque", panel_pos, panel_size, Color(0.052, 0.038, 0.024, 0.985), BOARD_LINE, 3, "plaque")
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add_label_to(panel, "TutorialTitle", "まず何をするゲームか", Vector2(0, 24), Vector2(panel_size.x, 42), 34, TEXT)
+	var lead := _add_label_to(panel, "TutorialLead", "毎ターン、世界危機と自国の状態を読み、政策議題から1枚選び、ワーカーで通して、結果を段階ごとに確認します。", Vector2(80, 74), Vector2(panel_size.x - 160, 48), 18, MUTED, true)
+	lead.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	var cards_origin := Vector2(44, 146)
+	var gap := 16.0
+	var card_w := (panel_size.x - 88.0 - gap * 2.0) / 3.0
+	var card_h := 154.0
+	_add_tutorial_card(panel, "TutorialCardWorld", cards_origin, Vector2(card_w, card_h), "1", "世界危機を見る", "需要・金利・保護主義・恐慌を確認。\n恐慌10なら全員敗北。", "world_demand_globe", BLUE)
+	_add_tutorial_card(panel, "TutorialCardTalk", cards_origin + Vector2(card_w + gap, 0), Vector2(card_w, card_h), "2", "交渉で議題を作る", "協調刺激・流動性・関税凍結・債務再編を宣言。\n宣言は政策議題に影響。", "diplomat_seal", WARN)
+	_add_tutorial_card(panel, "TutorialCardAgenda", cards_origin + Vector2((card_w + gap) * 2.0, 0), Vector2(card_w, card_h), "3", "政策議題から選ぶ", "全政策一覧ではない。\n今ターン会議に上がった候補と、弱い基本政策から1枚選ぶ。", "reform_wrench", COUNTRY_ACCENTS[0])
+	var row2_y := cards_origin.y + card_h + gap
+	_add_tutorial_card(panel, "TutorialCardWorker", Vector2(cards_origin.x, row2_y), Vector2(card_w, card_h), "4", "ワーカーで通す", "官僚・中銀・外交官・監査を置く。\n不足は骨抜きや延期を生む。", "bureaucrat_seal", COUNTRY_ACCENTS[1])
+	_add_tutorial_card(panel, "TutorialCardResolve", Vector2(cards_origin.x + card_w + gap, row2_y), Vector2(card_w, card_h), "5", "解決を段階で読む", "圧力→コスト→国内→世界→デッキ→マクロ合成。\n「次段階」で止めて読む。", "depression_shadow", BAD)
+	_add_tutorial_card(panel, "TutorialCardScore", Vector2(cards_origin.x + (card_w + gap) * 2.0, row2_y), Vector2(card_w, card_h), "勝", "勝ち方", "毎ターン厚生点を積み、レガシーと国際影響力を足す。\n世界危機を抑えながら自国の形を作る。", "international_influence_globe", GOOD)
+	var footer = _make_child_piece(panel, "TutorialFooter", Vector2(44, panel_size.y - 138), Vector2(panel_size.x - 88, 68), Color(0.82, 0.72, 0.52, 0.96), BOARD_LINE, 2, "card")
+	var footer_text := _add_label_to(footer, "TutorialFooterText", "操作に迷ったら、画面上部の「? 遊び方」でこの画面を開けます。", Vector2(22, 12), Vector2(footer.size.x - 44, 44), 17, INK, true)
+	footer_text.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	var primary = _make_entry_button(tutorial_overlay, "TutorialPrimary", "国家選択へ", panel_pos + Vector2(panel_size.x - 228, panel_size.y - 56), Vector2(184, 40), _tutorial_primary_action)
+	primary.set_skin(Color(0.15, 0.105, 0.055, 0.98), WARN.lightened(0.12), 2, "card")
+	var secondary = _make_entry_button(tutorial_overlay, "TutorialBack", "戻る", panel_pos + Vector2(44, panel_size.y - 56), Vector2(118, 40), _tutorial_back_action)
+	secondary.set_skin(Color(0.044, 0.034, 0.026, 0.96), BOARD_LINE.darkened(0.08), 2, "card")
+
+func _add_tutorial_card(parent: Control, node_name: String, position: Vector2, card_size: Vector2, number: String, title: String, body: String, icon_name: String, accent: Color) -> void:
+	var card = _make_child_piece(parent, node_name, position, card_size, Color(0.075, 0.055, 0.034, 0.96), accent, 2, "card")
+	card.add_child(_make_icon(icon_name, Vector2(16, 18), Vector2(50, 50), Color.WHITE, "TutorialIcon", true))
+	var badge = _make_child_piece(card, "TutorialBadge", Vector2(card_size.x - 58, 16), Vector2(38, 38), Color(0.024, 0.022, 0.018, 0.78), accent, 1, "circle")
+	_add_label_to(badge, "TutorialBadgeText", number, Vector2.ZERO, badge.size, 18, accent.lightened(0.22), false)
+	var title_label := _add_label_to(card, "TutorialCardTitle", title, Vector2(78, 18), Vector2(card_size.x - 146, 28), 20, TEXT, false)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var body_label := _add_label_to(card, "TutorialCardBody", body, Vector2(18, 76), Vector2(card_size.x - 36, card_size.y - 88), 15, MUTED, true)
+	body_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	body_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
 func _build_country_select_overlay() -> void:
 	var screen := _screen()
@@ -648,11 +708,26 @@ func _build_country_select_overlay() -> void:
 func _apply_entry_state() -> void:
 	if title_overlay != null:
 		title_overlay.visible = entry_state == "title"
+	if tutorial_overlay != null:
+		tutorial_overlay.visible = entry_state == "tutorial"
 	if country_select_overlay != null:
 		country_select_overlay.visible = entry_state == "country_select"
+	if tutorial_overlay != null:
+		var primary_text := "国家選択へ" if tutorial_return_state == "country_select" else "盤面へ戻る"
+		var back_text := "タイトルへ" if tutorial_return_state == "country_select" else "閉じる"
+		_set_label_in(tutorial_overlay, "TutorialPrimaryText", primary_text)
+		_set_label_in(tutorial_overlay, "TutorialBackText", back_text)
 
 func _show_title_overlay() -> void:
 	entry_state = "title"
+	_apply_entry_state()
+
+func _show_tutorial_from_title() -> void:
+	_show_tutorial_overlay("country_select")
+
+func _show_tutorial_overlay(return_state := "country_select") -> void:
+	tutorial_return_state = return_state
+	entry_state = "tutorial"
 	_apply_entry_state()
 
 func _show_country_select() -> void:
@@ -662,6 +737,18 @@ func _show_country_select() -> void:
 func _hide_entry_overlays() -> void:
 	entry_state = "hidden"
 	_apply_entry_state()
+
+func _tutorial_primary_action() -> void:
+	if tutorial_return_state == "country_select":
+		_show_country_select()
+	else:
+		_hide_entry_overlays()
+
+func _tutorial_back_action() -> void:
+	if tutorial_return_state == "country_select":
+		_show_title_overlay()
+	else:
+		_hide_entry_overlays()
 
 func _show_turn_news_overlay() -> void:
 	if turn_news_panel == null:
@@ -1103,6 +1190,9 @@ func _refresh_title() -> void:
 	var restart = board_layer.get_node_or_null("RestartToken")
 	if restart != null:
 		restart.tooltip_text = "現在のゲームを破棄してタイトルに戻ります。"
+	var help = board_layer.get_node_or_null("HelpToken")
+	if help != null:
+		help.tooltip_text = "ゲームの目的とターンの読み方を開きます。"
 
 func _refresh_phase() -> void:
 	for i in range(phase_pips.size()):
@@ -2226,6 +2316,9 @@ func _on_log_panel_pressed() -> void:
 		if track != null:
 			_bump(track)
 	_show_turn_news_overlay()
+
+func _on_help_pressed() -> void:
+	_show_tutorial_overlay("hidden")
 
 func _on_agenda_declared(tag: String) -> void:
 	if game.current_phase() != "negotiation":

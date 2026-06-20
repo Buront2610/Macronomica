@@ -24,21 +24,25 @@ func _run() -> void:
 
 	_click(ui.title_overlay.get_node("TitleStart"))
 	await _settle()
-	await _save_frame("01_country_select")
+	await _save_frame("01_tutorial")
+
+	_click(ui.tutorial_overlay.get_node("TutorialPrimary"))
+	await _settle()
+	await _save_frame("02_country_select")
 
 	_click(ui.country_select_overlay.get_node("CountryChoice_0"))
 	await _settle()
-	await _save_frame("02_negotiation")
+	await _save_frame("03_negotiation")
 
 	_click(ui.board_layer.get_node("AdvanceToken"))
 	await _settle()
-	await _save_frame("03_policy_menu")
+	await _save_frame("04_policy_menu")
 
 	var next_page: Control = ui.board_layer.get_node_or_null("PolicyPageNext")
 	if next_page != null and next_page.visible:
 		_click(next_page)
 		await _settle()
-		await _save_frame("04_policy_menu_page_2")
+		await _save_frame("05_policy_menu_page_2")
 		_click(ui.board_layer.get_node("PolicyPagePrev"))
 		await _settle()
 

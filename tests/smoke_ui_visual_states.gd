@@ -89,7 +89,7 @@ func _check_state(viewport_size: Vector2i, state: String) -> void:
 				_assert(not info_label.text.is_empty(), "%s %s keeps visible %s populated on %s" % [state, viewport_size, label_name, seat.name])
 	for card in ui.policy_menu_nodes:
 		_assert(_inside_viewport(card, viewport), "%s %s keeps policy menu card inside viewport: %s" % [state, viewport_size, card.name])
-	for token_name in ["RestartToken", "RecommendToken", "AdvanceToken"]:
+	for token_name in ["RestartToken", "HelpToken", "RecommendToken", "AdvanceToken"]:
 		var token: Control = ui.board_layer.get_node_or_null(token_name)
 		_assert(token != null and _inside_viewport(token, viewport), "%s %s keeps action token inside viewport: %s" % [state, viewport_size, token_name])
 	var final_overlay: Control = ui.board_layer.get_node_or_null("FinalScoreOverlay")

@@ -64,6 +64,8 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 
 	var action_size := Vector2(54.0, 54.0)
 	var utility_command_pos := Vector2(focus_right - 172.0, 36.0)
+	var help_command_pos := Vector2(632.0, 30.0)
+	var help_command_size := Vector2(112.0, 42.0)
 	var recommend_command_size := Vector2(156.0, 74.0)
 	var recommend_command_pos := Vector2(focus_right - 310.0, viewport_size.y - 122.0)
 	var advance_command_pos := Vector2(focus_right - 126.0, viewport_size.y - 138.0)
@@ -95,6 +97,8 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"phase_pip_step": Vector2(62.0, 0.0),
 		"phase_pip_size": Vector2(48.0, 18.0),
 		"utility_command_pos": utility_command_pos,
+		"help_command_pos": help_command_pos,
+		"help_command_size": help_command_size,
 		"recommend_command_pos": recommend_command_pos,
 		"recommend_command_size": recommend_command_size,
 		"advance_command_pos": advance_command_pos,

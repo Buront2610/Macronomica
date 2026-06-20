@@ -72,7 +72,7 @@ func _run() -> void:
 		_assert(_inside_viewport(ui.worker_nodes[worker], viewport), "worker token remains inside the board viewport: %s" % worker)
 	for pip in ui.phase_pips:
 		_assert(_inside_viewport(pip, viewport), "phase pip remains inside the board viewport: %s" % pip.name)
-	for token_name in ["RestartToken", "RecommendToken", "AdvanceToken"]:
+	for token_name in ["RestartToken", "HelpToken", "RecommendToken", "AdvanceToken"]:
 		var token: Control = ui.board_layer.get_node_or_null(token_name)
 		_assert(token != null, "action token exists on the board: %s" % token_name)
 		_assert(_inside_viewport(token, viewport), "action token remains inside the board viewport: %s" % token_name)
