@@ -70,11 +70,15 @@ func _check_state(viewport_size: Vector2i, state: String) -> void:
 				_assert(_inside_viewport(card, viewport), "%s %s keeps paged policy card inside viewport: %s" % [state, viewport_size, card.name])
 	else:
 		_assert(ui.policy_menu_nodes.is_empty(), "%s %s hides policy menu outside policy planning" % [state, viewport_size])
-	for node_name in ["WorldPanel", "EventCard", "PolicySlot", "ResolutionFlow", "DomesticStatePanel", "PolicyPreviewPanel", "ScorePanel", "LogPanel", "CountryDetailPanel"]:
+	for node_name in ["ObjectiveHeader", "WorldPanel", "EventCard", "PolicySlot", "ResolutionFlow", "DomesticStatePanel", "PolicyPreviewPanel", "ScorePanel", "LogPanel", "CountryDetailPanel"]:
 		var node: Control = ui.board_layer.get_node_or_null(node_name)
 		_assert(node != null, "%s %s has %s" % [state, viewport_size, node_name])
 		if node != null and node.visible:
 			_assert(_inside_viewport(node, viewport), "%s %s keeps %s inside viewport" % [state, viewport_size, node_name])
+	var objective: Control = ui.board_layer.get_node_or_null("ObjectiveHeader")
+	if objective != null and objective.visible:
+		_assert(not _label_text(objective, "ObjectiveText").is_empty(), "%s %s objective headline is populated" % [state, viewport_size])
+		_assert(not _label_text(objective, "ObjectiveHint").is_empty(), "%s %s objective hint is populated" % [state, viewport_size])
 	var collapse_warning: Control = ui.board_layer.get_node_or_null("CollapseWarning")
 	_assert(collapse_warning != null, "%s %s has collapse warning node" % [state, viewport_size])
 	if state == "resolution" and collapse_warning != null:

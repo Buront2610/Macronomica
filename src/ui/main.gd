@@ -266,6 +266,11 @@ func _build_surfaces() -> void:
 
 func _build_table_marks() -> void:
 	_add_label("Title", "マクロノミカ", board_layout["title_pos"], board_layout["title_size"], 39, TEXT)
+	var objective = _make_piece("ObjectiveHeader", board_layout["objective_pos"], board_layout["objective_size"], Color(0.070, 0.046, 0.020, 0.94), WARN.lightened(0.10), 2, "card")
+	objective.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add_label_to(objective, "ObjectiveKicker", "", Vector2(14, 8), Vector2(58, 22), 15, WARN.lightened(0.22), false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_add_label_to(objective, "ObjectiveText", "", Vector2(80, 5), Vector2(objective.size.x - 96, 31), 24, TEXT, false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_add_label_to(objective, "ObjectiveHint", "", Vector2(80, 38), Vector2(objective.size.x - 96, 21), 16, MUTED, false).horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_add_label("TurnLabel", "", board_layout["turn_pos"], board_layout["turn_size"], 20, TEXT)
 	phase_pips.clear()
 	var phase_start: Vector2 = board_layout["phase_pip_start"]
@@ -273,10 +278,9 @@ func _build_table_marks() -> void:
 	for i in range(GameStateScript.PHASES.size()):
 		var pip = _make_piece("PhasePip_%d" % i, phase_start + phase_step * i, board_layout["phase_pip_size"], Color(0.04, 0.035, 0.026, 0.55), BOARD_LINE)
 		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_add_label("PhaseLabel_%d" % i, _phase_short_name(String(GameStateScript.PHASES[i])), phase_start + phase_step * i + Vector2(-10, 20), Vector2(62, 18), 12, MUTED)
 		phase_pips.append(pip)
 	_add_action_token("RestartToken", "↺", board_layout["utility_command_pos"], board_layout["action_size"], _on_restart_pressed)
-	var help = _add_action_token("HelpToken", "? 遊び方", board_layout["help_command_pos"], board_layout["help_command_size"], _on_help_pressed)
+	var help = _add_action_token("HelpToken", "?", board_layout["help_command_pos"], board_layout["help_command_size"], _on_help_pressed)
 	help.tooltip_text = "遊び方とこのターンで見る場所を確認します。"
 	var recommend = _add_action_token("RecommendToken", "自動", board_layout["recommend_command_pos"], board_layout["recommend_command_size"], _on_recommend_pressed)
 	recommend.tooltip_text = "テストプレイ補助"
@@ -847,7 +851,7 @@ func _build_status_panels() -> void:
 	var log = _make_piece("LogPanel", log_pos, log_size, Color(0.070, 0.050, 0.030, 0.96), BOARD_LINE, 2, "card")
 	log.tooltip_text = "ログ/新聞ドロワーを開きます。"
 	log.pressed = _on_log_panel_pressed
-	_add_label_to(log, "LogTitle", "ログ/新聞", Vector2(0, 6), Vector2(log_size.x, 22), 17, WARN.lightened(0.18), false)
+	_add_label_to(log, "LogTitle", "ログ", Vector2(0, 6), Vector2(log_size.x, 22), 17, WARN.lightened(0.18), false)
 	log_panel = Label.new()
 	log_panel.name = "LogComponent"
 	log_panel.position = Vector2(0, 28)
@@ -1159,7 +1163,9 @@ func _refresh_board(animate: bool) -> void:
 func _refresh_title() -> void:
 	var turn := board_layer.get_node_or_null("TurnLabel")
 	if turn != null:
-		turn.text = "ターン %d/%d  %s" % [game.turn, game.turn_limit, game.current_phase_name()]
+		turn.visible = false
+		turn.text = "T%d/%d" % [game.turn, game.turn_limit]
+	_refresh_objective_header()
 	_set_label("AdvanceTokenLabel", _advance_token_text())
 	var advance = board_layer.get_node_or_null("AdvanceToken")
 	if advance != null:
@@ -1195,6 +1201,91 @@ func _refresh_title() -> void:
 	var help = board_layer.get_node_or_null("HelpToken")
 	if help != null:
 		help.tooltip_text = "ゲームの目的とターンの読み方を開きます。"
+
+func _refresh_objective_header() -> void:
+	var panel = board_layer.get_node_or_null("ObjectiveHeader")
+	if panel == null:
+		return
+	panel.visible = entry_state == "hidden"
+	var accent := _objective_accent()
+	panel.set_skin(Color(0.072, 0.044, 0.018, 0.97), accent, 3, "card")
+	_set_label_in(panel, "ObjectiveKicker", "T%d/%d" % [game.turn, game.turn_limit])
+	_set_label_in(panel, "ObjectiveText", _objective_text())
+	_set_label_in(panel, "ObjectiveHint", _objective_hint())
+	var kicker: Label = panel.get_node_or_null("ObjectiveKicker")
+	if kicker != null:
+		kicker.add_theme_color_override("font_color", accent.lightened(0.20))
+	var text: Label = panel.get_node_or_null("ObjectiveText")
+	if text != null:
+		text.add_theme_color_override("font_color", TEXT)
+	var hint: Label = panel.get_node_or_null("ObjectiveHint")
+	if hint != null:
+		hint.add_theme_color_override("font_color", MUTED.lightened(0.08))
+
+func _objective_text() -> String:
+	if turn_news_active:
+		return "新聞/ログを確認"
+	if game.is_finished:
+		return "最終評議会を確認"
+	var phase: String = game.current_phase()
+	var country_name := _active_country_name()
+	if phase == "negotiation":
+		return "%s: 交渉議題を宣言" % country_name if _countries_without_agenda_count() > 0 else "交渉完了: 政策選択へ"
+	if phase == "policy_planning":
+		var country = game.countries[selected_country_index]
+		if not country.selected_policy.is_empty() and String(country.selected_policy.get("target", "")) == "country":
+			return "%s: 対象国を選ぶ" % country_name
+		if country.selected_policy.is_empty():
+			return "%s: 政策議題から1枚選ぶ" % country_name
+		return "%s: 提出済み、次の国へ" % country_name
+	if phase == "worker_assignment":
+		return "%s: ワーカーを配置" % country_name if not _all_workers_confirmed() else "配置完了: 政策公開へ"
+	if phase == "simultaneous_reveal":
+		return "4国の政策を同時公開"
+	if phase == "resolution":
+		return "今見る結果: %s" % _resolution_step_name(resolution_step_index) if resolution_review_active else "ターン結果を解決"
+	return game.current_phase_name()
+
+func _objective_hint() -> String:
+	if turn_news_active:
+		return "閉じると盤面へ戻る"
+	if game.is_finished:
+		return "順位とレガシー目標を見る"
+	var phase: String = game.current_phase()
+	if phase == "negotiation":
+		return "議題カードを押す / スキップは右下"
+	if phase == "policy_planning":
+		return "%d/4 提出済み" % _submitted_policy_count()
+	if phase == "worker_assignment":
+		var confirmed := 0
+		for item in worker_assignment_confirmed:
+			if bool(item):
+				confirmed += 1
+		return "%d/4 配置確定" % confirmed
+	if phase == "simultaneous_reveal":
+		return "右下の公開で解決レビューへ"
+	if phase == "resolution":
+		return "中央の解決レビューを読み、右下で次へ" if resolution_review_active else "一括解決中"
+	return "次の処理へ"
+
+func _objective_accent() -> Color:
+	if turn_news_active:
+		return WARN.lightened(0.16)
+	if game.is_finished:
+		return GOOD.lightened(0.10)
+	var phase: String = game.current_phase()
+	if phase == "resolution":
+		return BAD.lightened(0.16)
+	if phase == "simultaneous_reveal":
+		return WARN.lightened(0.18)
+	if selected_country_index >= 0 and selected_country_index < COUNTRY_ACCENTS.size():
+		return COUNTRY_ACCENTS[selected_country_index].lightened(0.18)
+	return WARN.lightened(0.10)
+
+func _active_country_name() -> String:
+	if selected_country_index < 0 or selected_country_index >= game.countries.size():
+		return "担当国"
+	return "%s国" % UiCatalogScript.country_emblem(selected_country_index)
 
 func _refresh_phase() -> void:
 	for i in range(phase_pips.size()):

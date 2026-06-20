@@ -64,8 +64,10 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 
 	var action_size := Vector2(54.0, 54.0)
 	var utility_command_pos := Vector2(focus_right - 172.0, 36.0)
-	var help_command_pos := Vector2(632.0, 30.0)
-	var help_command_size := Vector2(112.0, 42.0)
+	var objective_pos := Vector2(278.0, 14.0)
+	var objective_size := Vector2(760.0, 64.0)
+	var help_command_size := Vector2(54.0, 54.0)
+	var help_command_pos := Vector2(viewport_size.x - margin - 108.0 - 10.0 - help_command_size.x, 24.0)
 	var recommend_command_size := Vector2(156.0, 74.0)
 	var recommend_command_pos := Vector2(focus_right - 310.0, viewport_size.y - 122.0)
 	var advance_command_pos := Vector2(focus_right - 126.0, viewport_size.y - 138.0)
@@ -93,9 +95,11 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"title_size": Vector2(240.0, 48.0),
 		"turn_pos": Vector2(264.0, 38.0),
 		"turn_size": Vector2(360.0, 32.0),
-		"phase_pip_start": Vector2(center_x - 190.0, 40.0),
-		"phase_pip_step": Vector2(62.0, 0.0),
-		"phase_pip_size": Vector2(48.0, 18.0),
+		"objective_pos": objective_pos,
+		"objective_size": objective_size,
+		"phase_pip_start": objective_pos + Vector2(objective_size.x - 248.0, 16.0),
+		"phase_pip_step": Vector2(42.0, 0.0),
+		"phase_pip_size": Vector2(34.0, 18.0),
 		"utility_command_pos": utility_command_pos,
 		"help_command_pos": help_command_pos,
 		"help_command_size": help_command_size,
@@ -136,10 +140,10 @@ static func for_screen(viewport_size: Vector2) -> Dictionary:
 		"policy_slot_size": policy_slot_size,
 		"resolution_flow_pos": resolution_flow_pos,
 		"resolution_flow_size": resolution_flow_size,
-		"score_pos": Vector2(viewport_size.x - margin - 174.0 - 334.0, 52.0),
+		"score_pos": Vector2(viewport_size.x - margin - 108.0 - 10.0 - help_command_size.x - 10.0 - 316.0, 52.0),
 		"score_size": Vector2(316.0, 26.0),
-		"log_pos": Vector2(viewport_size.x - margin - 174.0, 30.0),
-		"log_size": Vector2(156.0, log_h),
+		"log_pos": Vector2(viewport_size.x - margin - 108.0, 30.0),
+		"log_size": Vector2(108.0, log_h),
 		"news_drawer_pos": Vector2(viewport_size.x - drawer_w - margin, header_h + 12.0),
 		"news_drawer_size": Vector2(drawer_w, viewport_size.y - header_h - 36.0),
 		"country_detail_pos": Vector2(info_x, right_log_y + log_h + 8.0),
