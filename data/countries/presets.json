@@ -4,7 +4,11 @@
     "display_name": "A国：基軸通貨・金融大国",
     "summary": "巨大な内需と金融市場を持つ。金融政策と国債発行に強いが、金融バブルと世界波及責任を抱える。",
     "modules": ["large_domestic_demand", "reserve_currency_system", "deep_bond_market", "pluralist_democracy", "financialized_society"],
-    "starting_tracks": {"gdp_gap": 0, "inflation": 2, "unemployment": 3, "debt": 5, "financial_stress": 2, "political_capital": 5, "exchange_rate": 1, "current_account": -1},
+    "election_turn": 3,
+    "unique_policies": ["swap_line"],
+    "catalog_fillers": ["infrastructure_investment", "structural_reform", "capital_controls"],
+    "deck_fillers": ["consumer_confidence", "housing_bubble", "safe_asset_demand", "debt_complacency", "election_pressure", "financial_sector_lobby", "asset_price_sensitivity", "private_debt_overhang"],
+    "starting_tracks": {"gdp_gap": 0, "inflation": 2, "expected_inflation": 2, "unemployment": 3, "debt": 5, "financial_stress": 2, "political_capital": 5, "exchange_rate": 1, "current_account": -1, "influence": 1},
     "legacy_goal": "世界金融秩序を維持し、基軸通貨信認を守る。"
   },
   {
@@ -12,7 +16,11 @@
     "display_name": "B国：輸出工業・デフレ国",
     "summary": "製造業と輸出が強い。技術投資に強いが、外需依存とデフレに弱い。",
     "modules": ["export_industrial_economy", "managed_floating_currency", "balanced_budget_norm", "coalition_democracy", "aging_deflationary_society"],
-    "starting_tracks": {"gdp_gap": -1, "inflation": 1, "unemployment": 3, "debt": 6, "financial_stress": 2, "political_capital": 4, "exchange_rate": 0, "current_account": 2},
+    "election_turn": 4,
+    "unique_policies": ["export_subsidy"],
+    "catalog_fillers": ["infrastructure_investment"],
+    "deck_fillers": ["external_demand_dependence", "deflation_expectations", "fiscal_rigidity", "elderly_health_costs", "export_lobby_capture", "aging_society", "reform_fatigue"],
+    "starting_tracks": {"gdp_gap": -1, "inflation": 1, "expected_inflation": 1, "unemployment": 3, "debt": 6, "financial_stress": 2, "political_capital": 4, "exchange_rate": 0, "current_account": 2, "influence": 0},
     "legacy_goal": "輸出競争力と技術力を高め、デフレを避ける。"
   },
   {
@@ -20,7 +28,10 @@
     "display_name": "C国：資源国",
     "summary": "資源輸出に依存する。資源収入と安定化基金を持つが、価格暴落と汚職に弱い。",
     "modules": ["resource_export_economy", "commodity_currency", "stabilization_fund", "patronage_politics", "resource_dependence"],
-    "starting_tracks": {"gdp_gap": 0, "inflation": 3, "unemployment": 4, "debt": 3, "financial_stress": 2, "political_capital": 4, "exchange_rate": 0, "current_account": 2},
+    "election_turn": 5,
+    "unique_policies": ["stabilization_fund_drawdown", "resource_diversification"],
+    "deck_fillers": ["resource_revenue", "commodity_price_dependence", "commodity_currency_swings", "capital_inflow_cycle", "rent_seeking", "corruption_risk"],
+    "starting_tracks": {"gdp_gap": 0, "inflation": 3, "expected_inflation": 3, "unemployment": 4, "debt": 3, "financial_stress": 2, "political_capital": 4, "exchange_rate": 0, "current_account": 2, "influence": 0},
     "legacy_goal": "資源依存を減らし、安定化基金を育てる。"
   },
   {
@@ -28,8 +39,11 @@
     "display_name": "D国：新興・外貨債務国",
     "summary": "成長率が高いが外貨債務を抱える。インフラ投資に強いが、資本流出と通貨危機に弱い。",
     "modules": ["urbanizing_growth_economy", "fragile_currency_system", "foreign_currency_debt", "developmental_state", "young_unequal_society"],
-    "starting_tracks": {"gdp_gap": 1, "inflation": 4, "unemployment": 4, "debt": 4, "financial_stress": 3, "political_capital": 5, "exchange_rate": -1, "current_account": -2},
+    "election_turn": 6,
+    "unique_policies": ["infrastructure_investment", "capital_controls", "debt_restructuring"],
+    "catalog_fillers": ["export_subsidy"],
+    "deck_fillers": ["currency_crisis_risk", "foreign_currency_debt_burden", "infrastructure_gap", "sudden_stop", "urban_unrest"],
+    "starting_tracks": {"gdp_gap": 1, "inflation": 3, "expected_inflation": 3, "unemployment": 3, "debt": 3, "financial_stress": 2, "political_capital": 6, "exchange_rate": -1, "current_account": -1, "influence": 1},
     "legacy_goal": "高成長を維持し、通貨危機を避け、外貨準備を確保する。"
   }
 ]
-

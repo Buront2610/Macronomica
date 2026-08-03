@@ -15,6 +15,12 @@ static func load_cards(path: String) -> Array:
 static func index_by_id(cards: Array) -> Dictionary:
 	var result := {}
 	for card in cards:
-		result[card["id"]] = card
+		if not (card is Dictionary):
+			push_error("Card entry must be a dictionary.")
+			continue
+		var id := String(card.get("id", ""))
+		if id.is_empty():
+			push_error("Card entry is missing id.")
+			continue
+		result[id] = card
 	return result
-

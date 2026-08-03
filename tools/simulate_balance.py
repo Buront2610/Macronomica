@@ -28,6 +28,7 @@ def bounds_for(key: str) -> tuple[int, int]:
         "debt",
         "financial_stress",
         "political_capital",
+        "influence",
     }
     if key in non_negative:
         return 0, 10

@@ -2,6 +2,7 @@
 .import/
 exports/web/*
 !exports/web/.gitkeep
+docs/assets/uiux/qa/*.import
 
 *.tmp
 *.log
@@ -9,4 +10,5 @@ exports/web/*
 
 __pycache__/
 .pytest_cache/
-tmp/
+tmp/*
+!tmp/.gdignore

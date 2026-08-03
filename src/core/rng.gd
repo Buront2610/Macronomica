@@ -1,19 +1,18 @@
 extends RefCounted
 class_name MacronomicaRng
 
-var _state: int
+var _rng := RandomNumberGenerator.new()
 
 func _init(seed_value: int = 1) -> void:
-	_state = max(seed_value, 1)
+	_rng.seed = int(seed_value)
 
 func next_int() -> int:
-	_state = int((_state * 1103515245 + 12345) & 0x7fffffff)
-	return _state
+	return int(_rng.randi() & 0x7fffffff)
 
 func range_int(min_value: int, max_value: int) -> int:
 	if max_value <= min_value:
 		return min_value
-	return min_value + (next_int() % (max_value - min_value + 1))
+	return _rng.randi_range(min_value, max_value)
 
 func pick(array: Array) -> Variant:
 	if array.is_empty():
@@ -28,4 +27,3 @@ func shuffle(array: Array) -> Array:
 		result[i] = result[j]
 		result[j] = temp
 	return result
-

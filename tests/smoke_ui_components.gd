@@ -8,6 +8,8 @@ const WorldBoardScript := preload("res://src/ui/components/world_board.gd")
 const CountryMatScript := preload("res://src/ui/components/country_mat.gd")
 const LegacyScorePanelScript := preload("res://src/ui/components/legacy_score_panel.gd")
 const ResolutionLogScript := preload("res://src/ui/components/resolution_log.gd")
+const UiCatalogScript := preload("res://src/ui/support/ui_catalog.gd")
+const CardTextFormatterScript := preload("res://src/ui/support/card_text_formatter.gd")
 
 const COLORS := {
 	"panel": Color(0.08, 0.09, 0.10, 0.88),
@@ -36,6 +38,14 @@ func _init() -> void:
 	var game = GameStateScript.new()
 	game.new_game()
 	var token_assets = TokenAssetsScript.new()
+	_assert(token_assets.texture(UiCatalogScript.track_token("expected_inflation")) != null, "expected inflation token asset loads")
+	_assert(token_assets.texture(UiCatalogScript.track_token("influence")) != null, "influence token asset loads")
+	var target_effect_text := CardTextFormatterScript.format_effects({
+		"donor": {"influence": 2},
+		"recipient": {"financial_stress": -2},
+		"world": {"global_coordination": 1}
+	})
+	_assert(target_effect_text.contains("供与") and target_effect_text.contains("受入"), "target policy effects label donor and recipient scopes")
 
 	var header = PhaseHeaderScript.new()
 	get_root().add_child(header)
@@ -60,6 +70,8 @@ func _init() -> void:
 	country_mat.setup(0, "compact", Vector2(340, 330), token_assets, COLORS, COLORS["accents"][0])
 	country_mat.refresh(game.countries[0], 0, game.current_phase(), game.revealed_policies, game.is_finished)
 	_assert(country_mat.get_child_count() > 0, "country mat builds controls")
+	_assert(country_mat.track_views.has("expected_inflation"), "country mat shows expected inflation")
+	_assert(country_mat.track_views.has("influence"), "country mat shows influence")
 
 	var score_panel = LegacyScorePanelScript.new()
 	get_root().add_child(score_panel)

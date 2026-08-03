@@ -5,7 +5,7 @@
     "display_name": "輸出企業ロビー",
     "tags": ["exporter", "public_choice", "currency"],
     "message": "輸出企業が通貨安と輸出支援を求めています。",
-    "demand": {"preferred_policy_tags": ["currency_depreciation", "industrial", "tariff"], "if_satisfied": {"political_capital": 1}, "if_ignored": {"political_capital": -1, "gdp_gap": -1}}
+    "demand": {"preferred_policy_tags": ["export_subsidy", "currency_depreciation"], "if_satisfied": {"political_capital": 1}, "if_ignored": {"political_capital": -1, "gdp_gap": -1}}
   },
   {
     "id": "workers_demand_jobs",
@@ -13,7 +13,7 @@
     "display_name": "雇用対策要求",
     "tags": ["employment", "public_choice"],
     "message": "労働者が雇用対策を求めています。",
-    "demand": {"preferred_policy_tags": ["demand", "employment", "fiscal"], "if_satisfied": {"political_capital": 1}, "if_ignored": {"political_capital": -1, "unemployment": 1}}
+    "demand": {"preferred_policy_tags": ["employment"], "if_satisfied": {"political_capital": 1}, "if_ignored": {"political_capital": -1, "unemployment": 1}}
   },
   {
     "id": "bond_market_alarm",
@@ -21,7 +21,7 @@
     "display_name": "債券市場の警告",
     "tags": ["debt", "credibility"],
     "message": "債券市場が財政規律と信認回復を求めています。",
-    "demand": {"preferred_policy_tags": ["austerity", "credibility", "stability"], "if_satisfied": {"debt": -1}, "if_ignored": {"debt": 1, "financial_stress": 1}}
+    "demand": {"preferred_policy_tags": ["austerity", "credibility"], "if_satisfied": {"debt": -1}, "if_ignored": {"debt": 1, "financial_stress": 1}}
   },
   {
     "id": "financial_sector_bailout_demand",
@@ -29,7 +29,7 @@
     "display_name": "金融業界の救済要求",
     "tags": ["finance", "public_choice"],
     "message": "金融業界が流動性供給と救済を求めています。",
-    "demand": {"preferred_policy_tags": ["qe", "liquidity", "financial_regulation"], "if_satisfied": {"financial_stress": -1}, "if_ignored": {"financial_stress": 1, "political_capital": -1}}
+    "demand": {"preferred_policy_tags": ["qe", "liquidity"], "if_satisfied": {"financial_stress": -1}, "if_ignored": {"financial_stress": 1, "political_capital": -1}}
   },
   {
     "id": "elderly_welfare_resistance",
@@ -37,7 +37,7 @@
     "display_name": "社会保障削減反発",
     "tags": ["aging", "public_choice"],
     "message": "高齢者層が社会保障削減に反発しています。",
-    "demand": {"preferred_policy_tags": ["fiscal", "demand"], "if_satisfied": {"political_capital": 1}, "if_ignored": {"political_capital": -2}}
+    "demand": {"preferred_policy_tags": ["social_policy"], "if_satisfied": {"political_capital": 1}, "if_ignored": {"political_capital": -2}}
   },
   {
     "id": "youth_unemployment_protest",
@@ -45,7 +45,7 @@
     "display_name": "若年失業デモ",
     "tags": ["young", "employment"],
     "message": "若年層が雇用と成長投資を求めています。",
-    "demand": {"preferred_policy_tags": ["growth", "infrastructure", "employment"], "if_satisfied": {"unemployment": -1}, "if_ignored": {"political_capital": -1, "financial_stress": 1}}
+    "demand": {"preferred_policy_tags": ["growth", "infrastructure"], "if_satisfied": {"unemployment": -1}, "if_ignored": {"political_capital": -1, "financial_stress": 1}}
   },
   {
     "id": "resource_sector_rent_demand",
@@ -53,7 +53,6 @@
     "display_name": "資源部門の利権要求",
     "tags": ["resource", "rent"],
     "message": "資源部門が補助と規制緩和を求めています。",
-    "demand": {"preferred_policy_tags": ["resource", "fiscal", "industrial"], "if_satisfied": {"political_capital": 1}, "if_ignored": {"political_capital": -1}}
+    "demand": {"preferred_policy_tags": ["resource", "fund"], "if_satisfied": {"political_capital": 1}, "if_ignored": {"political_capital": -1}}
   }
 ]
-

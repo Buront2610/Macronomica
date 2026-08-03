@@ -8,12 +8,14 @@ var shape := "plaque"
 var pressed := Callable()
 var hover_lift := 4.0
 var home_position := Vector2.ZERO
+var home_z_index := 0
 
 func _ready() -> void:
 	if mouse_filter != Control.MOUSE_FILTER_IGNORE:
 		mouse_filter = Control.MOUSE_FILTER_STOP
 	pivot_offset = size * 0.5
 	home_position = position
+	home_z_index = z_index
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 
@@ -55,7 +57,7 @@ func _points() -> PackedVector2Array:
 	return PackedVector2Array([Vector2(c, 0), Vector2(w - c, 0), Vector2(w, c), Vector2(w, h - c), Vector2(w - c, h), Vector2(c, h), Vector2(0, h - c), Vector2(0, c)])
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and pressed.is_valid():
+	if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT and pressed.is_valid():
 		_press_feedback()
 		pressed.call()
 
@@ -68,7 +70,7 @@ func _on_mouse_entered() -> void:
 func _on_mouse_exited() -> void:
 	if mouse_filter == Control.MOUSE_FILTER_IGNORE:
 		return
-	z_index = 0
+	z_index = home_z_index
 	_tween_to(home_position, Vector2.ONE, 0.12)
 
 func _press_feedback() -> void:

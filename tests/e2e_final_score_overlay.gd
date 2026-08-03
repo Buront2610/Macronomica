@@ -22,15 +22,17 @@ func _run() -> void:
 	await process_frame
 
 	for country_index in range(ui.game.countries.size()):
-		var policy_index := _first_policy_index(ui.game.countries[country_index].hand)
+		var policy_index := _first_policy_index(ui.game.policy_options(country_index))
 		_assert(policy_index >= 0, "country %d has a policy card" % country_index)
-		var card: Control = ui.hand_nodes[policy_index]
+		var card: Control = ui.policy_menu_nodes[policy_index]
 		ui._on_policy_selected(country_index, policy_index, card.position)
 		await process_frame
 
 	var workers := ["bureaucrats", "central_bank_staff", "diplomat", "auditor"]
 	for country_index in range(ui.game.countries.size()):
 		ui._on_worker_assigned(country_index, workers[country_index % workers.size()], ui.worker_nodes[workers[country_index % workers.size()]].position)
+		await process_frame
+		ui._on_advance_pressed()
 		await process_frame
 
 	_assert(ui.game.current_phase() == "simultaneous_reveal", "final-score E2E reaches simultaneous reveal")
@@ -62,14 +64,14 @@ func _run() -> void:
 
 func _first_policy_index(hand: Array) -> int:
 	for i in range(hand.size()):
-		if hand[i].get("type", "") == "policy":
+		if hand[i].get("type", "") == "policy" and String(hand[i].get("target", "")) != "country":
 			return i
 	return -1
 
 func _click(control: Control) -> void:
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = true
+	click.pressed = false
 	control._gui_input(click)
 
 func _assert(condition: bool, message: String) -> void:

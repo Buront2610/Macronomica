@@ -18,6 +18,7 @@ func _run() -> void:
 
 	_assert(ui.title_overlay != null and ui.title_overlay.visible, "entry flow starts on title overlay")
 	_assert(ui.title_overlay.mouse_filter == Control.MOUSE_FILTER_STOP, "title overlay blocks board input behind it")
+	_assert(ui.tutorial_overlay != null and not ui.tutorial_overlay.visible, "tutorial overlay is hidden on title")
 	_assert(ui.country_select_overlay != null and not ui.country_select_overlay.visible, "country selection is hidden on title")
 	var continue_label: Label = ui.title_overlay.find_child("ContinueText", true, false)
 	var settings_label: Label = ui.title_overlay.find_child("SettingsText", true, false)
@@ -29,7 +30,18 @@ func _run() -> void:
 	await process_frame
 
 	_assert(not ui.title_overlay.visible, "title overlay closes after start")
-	_assert(ui.country_select_overlay.visible, "country selection opens after start")
+	_assert(ui.tutorial_overlay.visible, "tutorial opens after start")
+	_assert(not ui.country_select_overlay.visible, "country selection stays hidden until tutorial continues")
+	_assert(ui.tutorial_overlay.mouse_filter == Control.MOUSE_FILTER_STOP, "tutorial overlay blocks board input behind it")
+	var tutorial_primary: Control = ui.tutorial_overlay.get_node_or_null("TutorialPrimary")
+	_assert(tutorial_primary != null and tutorial_primary.size.x >= 180.0 and tutorial_primary.size.y >= 40.0, "tutorial primary action is large enough")
+	var tutorial_title: Label = ui.tutorial_overlay.find_child("TutorialTitle", true, false)
+	_assert(tutorial_title != null and tutorial_title.text.contains("何をするゲーム"), "tutorial explains the game before country selection")
+	_click(tutorial_primary)
+	await process_frame
+
+	_assert(not ui.tutorial_overlay.visible, "tutorial closes after primary action")
+	_assert(ui.country_select_overlay.visible, "country selection opens after tutorial")
 	_assert(ui.country_select_overlay.mouse_filter == Control.MOUSE_FILTER_STOP, "country selection overlay blocks board input behind it")
 	for i in range(ui.game.countries.size()):
 		var choice: Control = ui.country_select_overlay.get_node_or_null("CountryChoice_%d" % i)
@@ -40,8 +52,8 @@ func _run() -> void:
 
 	_assert(not ui.title_overlay.visible and not ui.country_select_overlay.visible, "entry overlays close after country choice")
 	_assert(ui.player_country_index == 2, "entry flow stores the chosen country")
-	_assert(ui.selected_country_index == 2, "chosen country becomes the active board hand")
-	_assert(ui.hand_nodes.size() == ui.game.countries[2].hand.size(), "chosen country hand is visible on the board")
+	_assert(ui.selected_country_index == 2, "chosen country becomes the active board country")
+	_assert(ui.policy_menu_nodes.is_empty(), "entry starts at negotiation without crowding the board with policy menu")
 
 	if failed:
 		quit(1)
@@ -52,7 +64,7 @@ func _run() -> void:
 func _click(control: Control) -> void:
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = true
+	click.pressed = false
 	control._gui_input(click)
 
 func _assert(condition: bool, message: String) -> void:

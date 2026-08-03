@@ -1,7 +1,7 @@
 {
   "id": "v0_1_default",
   "display_name": "v0.1 標準シナリオ",
-  "turn_limit": 8,
+  "turn_limit": 10,
   "seed": 20260604,
   "countries": [
     "reserve_currency_financial_power",
@@ -13,10 +13,9 @@
     "world_demand": 0,
     "world_interest_rate": 0,
     "trade_openness": 3,
-    "international_financial_instability": 1,
+    "international_financial_instability": 2,
     "depression": 0,
     "protectionism": 0,
     "global_coordination": 0
   }
 }
-

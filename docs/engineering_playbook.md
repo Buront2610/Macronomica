@@ -17,8 +17,9 @@ The current component baseline is `PhaseHeader`, `NegotiationTable`, `WorldBoard
 Before changing behavior, add or update the smallest smoke or unit-style script that proves the expected behavior.
 
 - Phase flow and aggregate invariants: `tests/smoke_game_flow.gd`
+- Domain rules, v0.2 macro/politics hooks, and scoring invariants: `tests/smoke_domain_rules.gd`
 - Policy recommendation use case: `tests/smoke_policy_recommender.gd`
-- Responsive breakpoints: `tests/smoke_ui_layout.gd`
+- Project UI settings and bundled font: `tests/smoke_project_settings.gd`
 - UI component construction and refresh: `tests/smoke_ui_components.gd`
 
 New rules should get domain tests first. New UI components should at least get a construction/refresh smoke test before they are wired into `main.gd`.
@@ -32,6 +33,7 @@ New rules should get domain tests first. New UI components should at least get a
 - known worker id before assignment
 - valid phase index and turn range
 - required country tracks present after setup and turn transitions
+- v0.2 tracks `expected_inflation` and `influence` present on every country
 
 UI components should not duplicate these domain contracts. They may guard display assumptions, but command validity belongs to the aggregate.
 
@@ -39,7 +41,7 @@ UI components should not duplicate these domain contracts. They may guard displa
 
 Treat `GameState` as the only mutable game aggregate exposed to the UI. UI components emit intent signals such as:
 
-- `policy_selected(country_index, hand_index)`
+- `policy_selected(country_index, policy_index)`
 - `worker_assigned(country_index, worker_id)`
 - `advance_requested`
 
@@ -63,6 +65,7 @@ Every new screen or component should make one part of that loop clearer. If it a
 - Let domain services own rule calculations.
 - Avoid direct mutation from UI widgets; emit intent and let `main.gd` call `GameState`.
 - Keep generated assets separate from rules. Asset filenames may map to display tokens, but rules should depend on card tags and ids.
+- Re-run `tools/monte_carlo_balance.gd` after changing macro feedback, scoring, deck composition, or recommendation heuristics, and commit the refreshed `docs/balancing_notes.md` when balance changes intentionally.
 
 ## Component Checklist
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cffts3t6abwsv"
-path="res://.godot/imported/uiux_design_03_main_board_example.png-10156b558e6b9ea8b00587fc2a1cce65.ctex"
+uid="uid://dwcusstsvj1py"
+path="res://.godot/imported/international_influence_globe.png-799592a162e0504543f00a68fd841e2b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/assets/uiux/uiux_design_03_main_board_example.png"
-dest_files=["res://.godot/imported/uiux_design_03_main_board_example.png-10156b558e6b9ea8b00587fc2a1cce65.ctex"]
+source_file="res://assets/ui/tokens/international_influence_globe.png"
+dest_files=["res://.godot/imported/international_influence_globe.png-799592a162e0504543f00a68fd841e2b.ctex"]
 
 [params]
 

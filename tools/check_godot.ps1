@@ -2,6 +2,10 @@ $ErrorActionPreference = "Stop"
 
 $repo = Resolve-Path (Join-Path $PSScriptRoot "..")
 $godot = Get-Command godot_console -ErrorAction SilentlyContinue
+$wingetGodot = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64_console.exe"
+if (-not $godot -and (Test-Path $wingetGodot)) {
+    $godot = [pscustomobject]@{ Source = $wingetGodot }
+}
 if (-not $godot) {
     $godot = Get-Command godot -ErrorAction SilentlyContinue
 }
@@ -15,7 +19,7 @@ if ($godot) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_policy_recommender.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & $godot.Source --headless --path $repo --script "res://tests/smoke_ui_layout.gd"
+    & $godot.Source --headless --path $repo --script "res://tests/smoke_project_settings.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_board_surface_contract.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -23,7 +27,13 @@ if ($godot) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/smoke_board_interaction.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $godot.Source --headless --path $repo --script "res://tests/smoke_ui_visual_states.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $godot.Source --headless --path $repo --script "res://tools/audit_ui_label_fit.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/e2e_entry_flow.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $godot.Source --headless --path $repo --script "res://tests/e2e_clickable_board_flow.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $godot.Source --headless --path $repo --script "res://tests/e2e_main_board_flow.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -35,7 +45,6 @@ if ($godot) {
     exit $LASTEXITCODE
 }
 
-$wingetGodot = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.6.3-stable_win64_console.exe"
 if (Test-Path $wingetGodot) {
     & $wingetGodot --headless --path $repo --scene "res://scenes/main/main.tscn" --quit-after 3
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -45,7 +54,7 @@ if (Test-Path $wingetGodot) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_policy_recommender.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & $wingetGodot --headless --path $repo --script "res://tests/smoke_ui_layout.gd"
+    & $wingetGodot --headless --path $repo --script "res://tests/smoke_project_settings.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_board_surface_contract.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -53,7 +62,13 @@ if (Test-Path $wingetGodot) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/smoke_board_interaction.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $wingetGodot --headless --path $repo --script "res://tests/smoke_ui_visual_states.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $wingetGodot --headless --path $repo --script "res://tools/audit_ui_label_fit.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/e2e_entry_flow.gd"
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    & $wingetGodot --headless --path $repo --script "res://tests/e2e_clickable_board_flow.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & $wingetGodot --headless --path $repo --script "res://tests/e2e_main_board_flow.gd"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

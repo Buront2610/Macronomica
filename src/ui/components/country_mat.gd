@@ -2,7 +2,7 @@ extends PanelContainer
 class_name CountryMat
 
 signal country_selected(country_index: int)
-signal policy_selected(country_index: int, hand_index: int)
+signal policy_selected(country_index: int, policy_index: int)
 signal worker_assigned(country_index: int, worker_id: String)
 
 const CountryStateScript := preload("res://src/core/country_state.gd")
@@ -18,7 +18,9 @@ const COUNTRY_TRACKS := [
 	"financial_stress",
 	"political_capital",
 	"exchange_rate",
-	"current_account"
+	"current_account",
+	"expected_inflation",
+	"influence"
 ]
 
 var country_index := 0
@@ -67,8 +69,9 @@ func refresh(country, selected_index: int, phase: String, revealed_policies: boo
 	pressure_card.text = "[b]%s[/b]\n%s" % [pressure_title.text, pressure_message.text]
 	planned.text = CardTextFormatterScript.planned_text(country, revealed_policies, phase, is_finished)
 
+	var assigned_workers: Array = country.assigned_worker_list()
 	for worker in worker_buttons.keys():
-		worker_buttons[worker].button_pressed = worker == country.assigned_worker
+		worker_buttons[worker].button_pressed = assigned_workers.has(worker)
 		worker_buttons[worker].disabled = phase != "worker_assignment" or is_finished
 	for key in track_views.keys():
 		_update_track_chip(track_views[key], int(country.tracks.get(key, 0)))
@@ -76,7 +79,7 @@ func refresh(country, selected_index: int, phase: String, revealed_policies: boo
 
 	var detail_card: Dictionary = country.selected_policy
 	if detail_card.is_empty():
-		detail_card = CardTextFormatterScript.first_policy(country.hand)
+		detail_card = CardTextFormatterScript.first_policy(country.policy_menu)
 	detail.text = CardTextFormatterScript.card_detail(country, detail_card)
 
 func _build() -> void:
@@ -196,7 +199,7 @@ func _build() -> void:
 
 	track_views.clear()
 	var track_grid := GridContainer.new()
-	track_grid.columns = 4 if mode == "compact" else 8
+	track_grid.columns = 5 if mode == "compact" else 10
 	track_grid.add_theme_constant_override("h_separation", 5)
 	track_grid.add_theme_constant_override("v_separation", 5)
 	box.add_child(_mat_zone(track_grid, accent, "国家トラック"))
@@ -215,8 +218,8 @@ func _build() -> void:
 func _rebuild_hand(country, phase: String, is_finished: bool) -> void:
 	for child in hand_box.get_children():
 		child.queue_free()
-	for i in range(country.hand.size()):
-		hand_box.add_child(_make_hand_card(country, i, country.hand[i], phase, is_finished))
+	for i in range(country.policy_menu.size()):
+		hand_box.add_child(_make_hand_card(country, i, country.policy_menu[i], phase, is_finished))
 
 func _make_hand_card(country, hand_index: int, card: Dictionary, phase: String, is_finished: bool) -> Control:
 	var disabled: bool = card.get("type", "") != "policy" or phase != "policy_planning" or is_finished
